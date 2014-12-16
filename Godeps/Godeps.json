@@ -1,0 +1,37 @@
+{
+	"ImportPath": "bitbucket.org/springersbm/firehose-to-logstash",
+	"GoVersion": "go1.4",
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/gogoprotobuf/proto",
+			"Rev": "5c5c9e5ec21508be656c201ec53c68cd882d36fb"
+		},
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.6.2-5-g7096056",
+			"Rev": "7096056d3cab4d7d11436441f5fc2935cb1cf58c"
+		},
+		{
+			"ImportPath": "github.com/alecthomas/units",
+			"Rev": "eaf541876f0d9e17c669524a99f6f585ba362fbd"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/noaa",
+			"Rev": "da595891ae163425fd8f7d23b2caa3c69c0edf2e"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "9007e29a7c93fc3dcebbdbf742ce0efaf19e6510"
+		},
+		{
+			"ImportPath": "github.com/parnurzeal/gorequest",
+			"Comment": "v0.2.1-6-g345adb4",
+			"Rev": "345adb424b976a7ad7cb4f08a1dda3ecb1db5a92"
+		},
+		{
+			"ImportPath": "gopkg.in/alecthomas/kingpin.v1",
+			"Comment": "v1.3.2",
+			"Rev": "261e7fbc88a2987695fb2240a6d8ec3ee15739c8"
+		}
+	]
+}
