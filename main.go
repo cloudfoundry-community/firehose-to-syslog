@@ -47,14 +47,7 @@ func FilterEvents(in chan *events.Envelope) chan *events.Envelope {
 		for msg := range in {
 			switch msg.GetEventType().String() {
 			case "LogMessage":
-				// We only want logs.
-				switch msg.GetLogMessage().GetSourceType() {
-				// We only want logs from routers and apps, not from staging.
-				case "RTR":
-					out <- msg
-				case "App":
-					out <- msg
-				}
+				out <- msg
 			}
 		}
 	}()
