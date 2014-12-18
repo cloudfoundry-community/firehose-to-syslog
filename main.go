@@ -72,12 +72,13 @@ func setupLogging(syslogServer string, debug bool) {
 	log.SetFormatter(&log.JSONFormatter{})
 	if !debug {
 		log.SetOutput(ioutil.Discard)
+	}
+	if syslogServer != "" {
 		hook, err := logrus_syslog.NewSyslogHook("tcp", syslogServer, syslog.LOG_INFO, "doppler")
 		if err != nil {
 			log.Error("Unable to connect to syslog server.")
 		} else {
 			log.AddHook(hook)
-
 		}
 	}
 }
