@@ -1,12 +1,13 @@
 package token
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/parnurzeal/gorequest"
 	"regexp"
 )
 
-func makeRequest(uaa string, user string, password string) string {
+func makeRequest(uaa string, user string, password string, skipSSLValidation bool) string {
 	/*
 		So, this is hacky deluxe, but it works.
 		We will get redirected to a bogus redirect_uri with a uri parameter containing the token
@@ -14,6 +15,7 @@ func makeRequest(uaa string, user string, password string) string {
 		TODO, figure out if there is any library that can do this for us.
 	*/
 	_, _, err := gorequest.New().
+		TLSClientConfig(&tls.Config{InsecureSkipVerify: skipSSLValidation}).
 		Post(uaa).
 		Set("content-type", "application/x-www-form-urlencoded;charset=utf-8").
 		Set("accept", "application/json;charset=utf-8").
@@ -40,7 +42,7 @@ func metTokenFromRedirectURL(redirect string) string {
 	return fmt.Sprintf("bearer %s", token)
 }
 
-func GetToken(uaa string, user string, password string) string {
-	err := makeRequest(uaa, user, password)
+func GetToken(uaa string, user string, password string, skipSSLValidation bool) string {
+	err := makeRequest(uaa, user, password, skipSSLValidation)
 	return metTokenFromRedirectURL(err)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/Sirupsen/logrus/hooks/syslog"
@@ -14,17 +15,18 @@ import (
 )
 
 var (
-	debug            = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Bool()
-	uaaEndpoint      = kingpin.Flag("uaa-endpoint", "UAA endpoint.").Required().String()
-	dopplerEndpoint  = kingpin.Flag("doppler-endpoint", "UAA endpoint.").Required().String()
-	syslogServer     = kingpin.Flag("syslog-server", "Syslog server.").String()
-	subscriptionId   = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
-	firehoseUser     = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
-	firehosePassword = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
+	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Bool()
+	uaaEndpoint       = kingpin.Flag("uaa-endpoint", "UAA endpoint.").Required().String()
+	dopplerEndpoint   = kingpin.Flag("doppler-endpoint", "UAA endpoint.").Required().String()
+	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").String()
+	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
+	firehoseUser      = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
+	firehosePassword  = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
+	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
 )
 
-func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string) chan *events.Envelope {
-	connection := noaa.NewConsumer(DopplerEndpoint, nil, nil)
+func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
+	connection := noaa.NewConsumer(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
 	msgChan := make(chan *events.Envelope)
 	go func() {
 		errorChan := make(chan error)
@@ -88,9 +90,9 @@ func main() {
 	kingpin.Parse()
 
 	setupLogging(*syslogServer, *debug)
-	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword)
+	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
 
-	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId)
+	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 	logs := FilterEvents(firehose)
 	Logger(logs)
 }
