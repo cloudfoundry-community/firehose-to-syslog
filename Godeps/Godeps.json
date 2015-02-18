@@ -25,8 +25,8 @@
 		},
 		{
 			"ImportPath": "github.com/parnurzeal/gorequest",
-			"Comment": "v0.2.1-6-g345adb4",
-			"Rev": "345adb424b976a7ad7cb4f08a1dda3ecb1db5a92"
+			"Comment": "v0.2.2-15-g1fbcea9",
+			"Rev": "1fbcea99088e51e74de0569c3446af6899b6fee2"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v1",
