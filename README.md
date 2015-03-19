@@ -42,3 +42,14 @@ Then you should be able to do this and get some nice logs.
 # Run with Docker
 
 	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa..... --doppler-endpoint=wss://doppler.... --syslog-server=syslog-blablabla:port
+
+# Devel
+1. Code away, not on master plz, use feature branches.
+2. When merging into master
+   * Make sure repo is clean
+   * Node down the current commit
+   * update the version following semantic versioning in format
+   ```
+   x.y.z - git-commit-from-above
+   ```
+   * Build, commit and tag with version number.
