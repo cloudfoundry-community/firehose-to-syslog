@@ -23,7 +23,7 @@ var (
 	firehoseUser      = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
 	firehosePassword  = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
-	allEvents         = kingpin.Flag("all-events", "Please don't").Bool()
+	allEvents         = kingpin.Flag("all-events", "Process all events. If this is unset we will only consume log messages from the routing layer and application logs.").Bool()
 )
 
 func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
