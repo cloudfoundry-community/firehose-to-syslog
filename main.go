@@ -70,6 +70,7 @@ func LogLogMessage(msg *events.Envelope) {
 		"source_type":     logmsg.GetSourceType(),
 		"message_type":    logmsg.GetMessageType().String(),
 		"source_instance": logmsg.GetSourceInstance(),
+		"event_type":      msg.GetEventType().String(),
 	}).Info(string(logmsg.GetMessage()))
 }
 
