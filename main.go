@@ -71,6 +71,7 @@ func LogLogMessage(msg *events.Envelope) {
 		"message_type":    logmsg.GetMessageType().String(),
 		"source_instance": logmsg.GetSourceInstance(),
 		"event_type":      msg.GetEventType().String(),
+		"origin":          msg.GetOrigin(),
 	}).Info(string(logmsg.GetMessage()))
 }
 
