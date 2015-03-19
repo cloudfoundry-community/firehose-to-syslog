@@ -61,17 +61,24 @@ func FilterEvents(in chan *events.Envelope, allEvents bool) chan *events.Envelop
 	return out
 }
 
+func LogLogMessage(msg *events.Envelope) {
+	logmsg := msg.GetLogMessage()
+	app_id := logmsg.GetAppId()
+
+	log.WithFields(log.Fields{
+		"cf_app_id":       app_id,
+		"source_type":     logmsg.GetSourceType(),
+		"message_type":    logmsg.GetMessageType().String(),
+		"source_instance": logmsg.GetSourceInstance(),
+	}).Info(string(logmsg.GetMessage()))
+}
+
 func Logger(in chan *events.Envelope) {
 	for msg := range in {
-		logmsg := msg.GetLogMessage()
-		app_id := logmsg.GetAppId()
-
-		log.WithFields(log.Fields{
-			"cf_app_id":       app_id,
-			"source_type":     logmsg.GetSourceType(),
-			"message_type":    logmsg.GetMessageType().String(),
-			"source_instance": logmsg.GetSourceInstance(),
-		}).Info(string(logmsg.GetMessage()))
+		switch msg.GetEventType().String() {
+		case "LogMessage":
+			LogLogMessage(msg)
+		}
 	}
 }
 
