@@ -75,11 +75,24 @@ func LogLogMessage(msg *events.Envelope) {
 	}).Info(string(logmsg.GetMessage()))
 }
 
+func LogValueMetric(msg *events.Envelope) {
+	valueMetric := msg.GetValueMetric()
+	log.WithFields(log.Fields{
+		"name":       valueMetric.GetName(),
+		"value":      valueMetric.GetValue(),
+		"unit":       valueMetric.GetUnit(),
+		"origin":     msg.GetOrigin(),
+		"event_type": msg.GetEventType().String(),
+	}).Info()
+}
+
 func Logger(in chan *events.Envelope) {
 	for msg := range in {
 		switch msg.GetEventType().String() {
 		case "LogMessage":
 			LogLogMessage(msg)
+		case "ValueMetric":
+			LogValueMetric(msg)
 		}
 	}
 }
