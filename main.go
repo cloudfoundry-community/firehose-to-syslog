@@ -23,6 +23,7 @@ var (
 	firehoseUser      = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
 	firehosePassword  = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
+	allEvents         = kingpin.Flag("all-events", "Please don't").Bool()
 )
 
 func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
@@ -42,14 +43,18 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 	return msgChan
 }
 
-func FilterEvents(in chan *events.Envelope) chan *events.Envelope {
+func FilterEvents(in chan *events.Envelope, allEvents bool) chan *events.Envelope {
 	out := make(chan *events.Envelope)
 	go func() {
 		defer close(out)
 		for msg := range in {
-			switch msg.GetEventType().String() {
-			case "LogMessage":
+			if allEvents {
 				out <- msg
+			} else {
+				// We only care for LogMessages
+				if msg.GetEventType().String() == "LogMessage" {
+					out <- msg
+				}
 			}
 		}
 	}()
@@ -93,6 +98,6 @@ func main() {
 	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
 
 	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
-	logs := FilterEvents(firehose)
+	logs := FilterEvents(firehose, *allEvents)
 	Logger(logs)
 }
