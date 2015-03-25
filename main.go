@@ -23,6 +23,7 @@ var (
 	firehoseUser      = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
 	firehosePassword  = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
+	allEvents         = kingpin.Flag("all-events", "Process all events. If this is unset we will only consume log messages from the routing layer and application logs.").Bool()
 )
 
 func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
@@ -42,31 +43,57 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 	return msgChan
 }
 
-func FilterEvents(in chan *events.Envelope) chan *events.Envelope {
+func FilterEvents(in chan *events.Envelope, allEvents bool) chan *events.Envelope {
 	out := make(chan *events.Envelope)
 	go func() {
 		defer close(out)
 		for msg := range in {
-			switch msg.GetEventType().String() {
-			case "LogMessage":
+			if allEvents {
 				out <- msg
+			} else {
+				// We only care for LogMessages
+				if msg.GetEventType().String() == "LogMessage" {
+					out <- msg
+				}
 			}
 		}
 	}()
 	return out
 }
 
+func LogLogMessage(msg *events.Envelope) {
+	logmsg := msg.GetLogMessage()
+	app_id := logmsg.GetAppId()
+
+	log.WithFields(log.Fields{
+		"cf_app_id":       app_id,
+		"source_type":     logmsg.GetSourceType(),
+		"message_type":    logmsg.GetMessageType().String(),
+		"source_instance": logmsg.GetSourceInstance(),
+		"event_type":      msg.GetEventType().String(),
+		"origin":          msg.GetOrigin(),
+	}).Info(string(logmsg.GetMessage()))
+}
+
+func LogValueMetric(msg *events.Envelope) {
+	valueMetric := msg.GetValueMetric()
+	log.WithFields(log.Fields{
+		"name":       valueMetric.GetName(),
+		"value":      valueMetric.GetValue(),
+		"unit":       valueMetric.GetUnit(),
+		"origin":     msg.GetOrigin(),
+		"event_type": msg.GetEventType().String(),
+	}).Info()
+}
+
 func Logger(in chan *events.Envelope) {
 	for msg := range in {
-		logmsg := msg.GetLogMessage()
-		app_id := logmsg.GetAppId()
-
-		log.WithFields(log.Fields{
-			"cf_app_id":       app_id,
-			"source_type":     logmsg.GetSourceType(),
-			"message_type":    logmsg.GetMessageType().String(),
-			"source_instance": logmsg.GetSourceInstance(),
-		}).Info(string(logmsg.GetMessage()))
+		switch msg.GetEventType().String() {
+		case "LogMessage":
+			LogLogMessage(msg)
+		case "ValueMetric":
+			LogValueMetric(msg)
+		}
 	}
 }
 
@@ -93,6 +120,6 @@ func main() {
 	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
 
 	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
-	logs := FilterEvents(firehose)
+	logs := FilterEvents(firehose, *allEvents)
 	Logger(logs)
 }
