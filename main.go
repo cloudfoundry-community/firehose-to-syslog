@@ -5,9 +5,9 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/SpringerPE/firehose-to-syslog/token"
 	"github.com/cloudfoundry/noaa"
 	"github.com/cloudfoundry/noaa/events"
-	"github.com/malston/firehose-to-syslog/token"
 	"gopkg.in/alecthomas/kingpin.v1"
 	"io/ioutil"
 	"log/syslog"
@@ -142,7 +142,7 @@ func CounterEvents(in chan *events.Envelope) {
 			"delta":      evt.GetDelta(),
 			"total":      evt.GetTotal(),
 			"event_type": "CounterEvent",
-		}).Info(evt.String())
+		}).Info("")
 	}
 }
 
