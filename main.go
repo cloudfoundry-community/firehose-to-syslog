@@ -86,7 +86,7 @@ func setupLogging(syslogServer string, debug bool) {
 }
 
 func main() {
-	kingpin.Version("0.0.1 - 2a962c4")
+	kingpin.Version("0.0.2 - ba541ca")
 	kingpin.Parse()
 
 	setupLogging(*syslogServer, *debug)
