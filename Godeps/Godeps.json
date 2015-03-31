@@ -1,11 +1,10 @@
 {
 	"ImportPath": "github.com/SpringerPE/firehose-to-syslog",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
-		{
-			"ImportPath": "code.google.com/p/gogoprotobuf/proto",
-			"Rev": "5c5c9e5ec21508be656c201ec53c68cd882d36fb"
-		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.2-5-g7096056",
@@ -17,7 +16,11 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "da595891ae163425fd8f7d23b2caa3c69c0edf2e"
+			"Rev": "92d89517244c5da5c279f889af344538a86891d1"
+		},
+		{
+			"ImportPath": "github.com/gogo/protobuf/proto",
+			"Rev": "bc946d07d1016848dfd2507f90f0859c9471681e"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
