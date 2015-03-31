@@ -41,7 +41,11 @@ Then you should be able to do this and get some nice logs.
 
 # Run with Docker
 
-	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa..... --doppler-endpoint=wss://doppler.... --syslog-server=syslog-blablabla:port
+	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize --doppler-endpoint=wss://doppler.10.244.0.34.xip.io:443 --firehose-user=admin --firehose-password=admin --subscription-id=firehose-a --debug --skip-ssl-validation
+
+# Run with bosh-lite
+
+    godep go run main.go --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize --doppler-endpoint=wss://doppler.10.244.0.34.xip.io:443 --firehose-user=admin --firehose-password=admin --subscription-id=firehose-a --debug --skip-ssl-validation
 
 # Devel
 1. Code away, not on master plz, use feature branches.
