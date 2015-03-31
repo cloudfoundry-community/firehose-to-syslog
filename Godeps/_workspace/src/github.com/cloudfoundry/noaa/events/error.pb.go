@@ -4,13 +4,14 @@
 
 package events
 
-import proto "code.google.com/p/gogoprotobuf/proto"
+import proto "github.com/gogo/protobuf/proto"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = math.Inf
 
+// / An Error event represents an error in the originating process.
 type Error struct {
 	Source           *string `protobuf:"bytes,1,req,name=source" json:"source,omitempty"`
 	Code             *int32  `protobuf:"varint,2,req,name=code" json:"code,omitempty"`

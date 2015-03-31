@@ -42,36 +42,84 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 	return msgChan
 }
 
-func FilterEvents(in chan *events.Envelope) chan *events.Envelope {
-	out := make(chan *events.Envelope)
+func FilterEvent(in chan *events.Envelope, eventType string) chan *events.Envelope {
+	evts := make(chan *events.Envelope)
 	go func() {
-		defer close(out)
+		defer close(evts)
 		for msg := range in {
 			switch msg.GetEventType().String() {
-			case "LogMessage":
-				out <- msg
+			case eventType:
+				evts <- msg
 			}
 		}
 	}()
-	return out
+	return evts
 }
 
-func Logger(in chan *events.Envelope) {
+func ValueMetrics(in chan *events.Envelope) {
+	for msg := range in {
+		valMetric := msg.GetValueMetric()
+
+		valueName := valMetric.GetName()
+		valueUnit := valMetric.GetUnit()
+		value := valMetric.GetValue()
+
+		log.WithFields(log.Fields{
+			"name":       valueName,
+			"unit":       valueUnit,
+			"value":      value,
+			"event_type": "ValueMetric",
+		}).Info("")
+	}
+}
+
+func ContainerMetrics(in chan *events.Envelope) {
+	for msg := range in {
+		contMetric := msg.GetContainerMetric()
+
+		log.WithFields(log.Fields{
+			"cf_app_id":      contMetric.GetApplicationId(),
+			"cpu_percentage": contMetric.GetCpuPercentage(),
+			"disk_bytes":     contMetric.GetDiskBytes(),
+			"instance_index": contMetric.GetInstanceIndex(),
+			"memory_bytes":   contMetric.GetMemoryBytes(),
+			"event_type":     "ContainerMetric",
+		}).Info("")
+	}
+}
+
+func Heartbeats(in chan *events.Envelope) {
+	for msg := range in {
+		heartbeat := msg.GetHeartbeat()
+
+		log.WithFields(log.Fields{
+			"error_count":    heartbeat.GetErrorCount(),
+			"received_count": heartbeat.GetReceivedCount(),
+			"sent_count":     heartbeat.GetSentCount(),
+			"event_type":     "Heartbeat",
+		}).Info("")
+	}
+}
+
+func LogMessages(in chan *events.Envelope) {
 	for msg := range in {
 		logmsg := msg.GetLogMessage()
 		app_id := logmsg.GetAppId()
 
 		log.WithFields(log.Fields{
 			"cf_app_id":       app_id,
+			"timestamp":       logmsg.GetTimestamp(),
 			"source_type":     logmsg.GetSourceType(),
 			"message_type":    logmsg.GetMessageType().String(),
 			"source_instance": logmsg.GetSourceInstance(),
+			"event_type":      "LogMessage",
 		}).Info(string(logmsg.GetMessage()))
 	}
 }
 
 func setupLogging(syslogServer string, debug bool) {
 	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stderr)
 	if !debug {
 		log.SetOutput(ioutil.Discard)
 	}
@@ -85,14 +133,48 @@ func setupLogging(syslogServer string, debug bool) {
 	}
 }
 
+func CounterEvents(in chan *events.Envelope) {
+	for msg := range in {
+		evt := msg.GetCounterEvent()
+
+		log.WithFields(log.Fields{
+			"name":       evt.GetName(),
+			"delta":      evt.GetDelta(),
+			"total":      evt.GetTotal(),
+			"event_type": "CounterEvent",
+		}).Info("")
+	}
+}
+
+func ErrorEvents(in chan *events.Envelope) {
+	for msg := range in {
+		evt := msg.GetError()
+
+		log.WithFields(log.Fields{
+			"code":       evt.GetCode(),
+			"delta":      evt.GetSource(),
+			"event_type": "ErrorEvent",
+		}).Info(evt.GetMessage())
+	}
+}
+
 func main() {
 	kingpin.Version("0.0.1 - 2a962c4")
 	kingpin.Parse()
 
 	setupLogging(*syslogServer, *debug)
+
 	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
 
 	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
-	logs := FilterEvents(firehose)
-	Logger(logs)
+
+	go Heartbeats(FilterEvent(firehose, "Heartbeat"))
+	// httpstart := FilterEvent(firehose, "HttpStart")
+	// httpstop := FilterEvent(firehose, "HttpStop")
+	// httpstartstop := FilterEvent(firehose, "HttpStartStop")
+	go LogMessages(FilterEvent(firehose, "LogMessage"))
+	go ValueMetrics(FilterEvent(firehose, "ValueMetric"))
+	go CounterEvents(FilterEvent(firehose, "CounterEvent"))
+	go ErrorEvents(FilterEvent(firehose, "Error"))
+	ContainerMetrics(FilterEvent(firehose, "ContainerMetric"))
 }
