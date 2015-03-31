@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	"github.com/cloudfoundry/loggregatorlib/server/handlers"
 	"github.com/cloudfoundry/noaa"
 	noaa_errors "github.com/cloudfoundry/noaa/errors"
 	"github.com/cloudfoundry/noaa/events"
+	"github.com/gogo/protobuf/proto"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -236,7 +236,7 @@ var _ = Describe("Noaa", func() {
 
 						var err error
 						Eventually(errorChan).Should(Receive(&err))
-						Expect(err.Error()).To(ContainSubstring("websocket: close 1005"))
+						Expect(err.Error()).To(ContainSubstring("EOF"))
 
 						close(done)
 					})
@@ -603,15 +603,20 @@ var _ = Describe("Noaa", func() {
 	})
 
 	Describe("Close", func() {
+		var incomingChan chan *events.Envelope
+		var streamErrorChan chan error
+
+		perform := func() {
+			streamErrorChan = make(chan error, 10)
+			connection = noaa.NewConsumer(trafficControllerUrl, nil, nil)
+			go func() {
+				streamErrorChan <- connection.StreamWithoutReconnect(appGuid, authToken, incomingChan)
+			}()
+		}
+
 		BeforeEach(func() {
-			fakeHandler = &FakeHandler{
-				InputChan: make(chan []byte, 10),
-				GenerateHandler: func(input chan []byte) http.Handler {
-					return handlers.NewWebsocketHandler(input, 100*time.Millisecond, loggertesthelper.Logger())
-				},
-			}
-			testServer = httptest.NewServer(fakeHandler)
-			trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			incomingChan = make(chan *events.Envelope)
+			startFakeTrafficController()
 		})
 
 		Context("when a connection is not open", func() {
@@ -625,23 +630,16 @@ var _ = Describe("Noaa", func() {
 
 		Context("when a connection is open", func() {
 			It("terminates the blocking function call", func(done Done) {
-				connection = noaa.NewConsumer(trafficControllerUrl, nil, nil)
-
-				incomingChan := make(chan *events.LogMessage)
-				errChan := make(chan error)
-				go func() {
-					errChan <- connection.TailingLogsWithoutReconnect("app-guid", "auth-token", incomingChan)
-				}()
-
+				perform()
 				fakeHandler.Close()
 
 				Eventually(fakeHandler.wasCalled).Should(BeTrue())
-
-				connection.Close()
+				connErr := connection.Close()
+				Expect(connErr.Error()).To(ContainSubstring("use of closed network connection"))
 
 				var err error
-				Eventually(errChan).Should(Receive(&err))
-				Expect(err.Error()).To(ContainSubstring("websocket: close 1005"))
+				Eventually(streamErrorChan).Should(Receive(&err))
+				Expect(err.Error()).To(ContainSubstring("EOF"))
 
 				close(done)
 			})
@@ -672,7 +670,6 @@ var _ = Describe("Noaa", func() {
 		})
 
 		Context("when the connection can be established", func() {
-
 			BeforeEach(func() {
 				testServer = httptest.NewServer(handlers.NewHttpHandler(messagesToSend, loggertesthelper.Logger()))
 				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
@@ -693,7 +690,6 @@ var _ = Describe("Noaa", func() {
 
 		Context("when the content type is missing", func() {
 			BeforeEach(func() {
-
 				serverMux := http.NewServeMux()
 				serverMux.HandleFunc("/apps/appGuid/recentlogs", func(resp http.ResponseWriter, req *http.Request) {
 					resp.Header().Set("Content-Type", "")
@@ -703,13 +699,12 @@ var _ = Describe("Noaa", func() {
 				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
 			})
 
-			It("it returns a bad reponse error message", func() {
+			It("returns a bad reponse error message", func() {
 				perform()
 
 				Expect(recentError).To(HaveOccurred())
 				Expect(recentError).To(Equal(noaa.ErrBadResponse))
 			})
-
 		})
 
 		Context("when the content length is unknown", func() {
@@ -725,7 +720,7 @@ var _ = Describe("Noaa", func() {
 				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
 			})
 
-			It("it does not throw an error", func() {
+			It("does not throw an error", func() {
 				fakeHandler.InputChan <- marshalMessage(createMessage("bad-content-length", 0))
 				fakeHandler.Close()
 				perform()
@@ -747,7 +742,7 @@ var _ = Describe("Noaa", func() {
 				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
 			})
 
-			It("it returns a bad reponse error message", func() {
+			It("returns a bad reponse error message", func() {
 				perform()
 
 				Expect(recentError).To(HaveOccurred())
@@ -768,7 +763,7 @@ var _ = Describe("Noaa", func() {
 				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
 			})
 
-			It("it returns a bad reponse error message", func() {
+			It("returns a bad reponse error message", func() {
 				perform()
 
 				Expect(recentError).To(HaveOccurred())
@@ -788,7 +783,7 @@ var _ = Describe("Noaa", func() {
 				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
 			})
 
-			It("it returns a not found reponse error message", func() {
+			It("returns a not found reponse error message", func() {
 				perform()
 
 				Expect(recentError).To(HaveOccurred())
@@ -808,7 +803,188 @@ var _ = Describe("Noaa", func() {
 				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
 			})
 
-			It("it returns a helpful error message", func() {
+			It("returns a helpful error message", func() {
+				perform()
+
+				Expect(recentError).To(HaveOccurred())
+				Expect(recentError.Error()).To(ContainSubstring("You are not authorized. Helpful message"))
+				Expect(recentError).To(BeAssignableToTypeOf(&noaa_errors.UnauthorizedError{}))
+			})
+		})
+	})
+
+	Describe("ContainerMetrics", func() {
+		var (
+			appGuid                  = "appGuid"
+			authToken                = "authToken"
+			receivedContainerMetrics []*events.ContainerMetric
+			recentError              error
+		)
+
+		perform := func() {
+			close(messagesToSend)
+			connection = noaa.NewConsumer(trafficControllerUrl, nil, nil)
+			receivedContainerMetrics, recentError = connection.ContainerMetrics(appGuid, authToken)
+		}
+
+		Context("when the connection cannot be established", func() {
+			It("invalid urls return error", func() {
+				trafficControllerUrl = "invalid-url"
+				perform()
+
+				Expect(recentError).ToNot(BeNil())
+			})
+		})
+
+		Context("when the connection can be established", func() {
+			BeforeEach(func() {
+				testServer = httptest.NewServer(handlers.NewHttpHandler(messagesToSend, loggertesthelper.Logger()))
+				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			})
+
+			Context("with a successful connection", func() {
+				It("returns messages from the server", func() {
+					messagesToSend <- marshalMessage(createContainerMetric(2, 2000))
+					messagesToSend <- marshalMessage(createContainerMetric(1, 1000))
+
+					perform()
+
+					Expect(recentError).NotTo(HaveOccurred())
+					Expect(receivedContainerMetrics).To(HaveLen(2))
+					Expect(receivedContainerMetrics[0].GetInstanceIndex()).To(Equal(int32(1)))
+					Expect(receivedContainerMetrics[1].GetInstanceIndex()).To(Equal(int32(2)))
+				})
+			})
+
+			Context("when trafficcontroller returns an error as a log message", func() {
+				It("returns the error", func() {
+					messagesToSend <- marshalMessage(createContainerMetric(2, 2000))
+					messagesToSend <- marshalMessage(createMessage("an error occurred", 2000))
+
+					perform()
+
+					Expect(recentError).To(HaveOccurred())
+					Expect(recentError).To(MatchError("Upstream error: an error occurred"))
+				})
+			})
+		})
+
+		Context("when the content type is missing", func() {
+			BeforeEach(func() {
+				serverMux := http.NewServeMux()
+				serverMux.HandleFunc("/apps/appGuid/containermetrics", func(resp http.ResponseWriter, req *http.Request) {
+					resp.Header().Set("Content-Type", "")
+					resp.Write([]byte("OK"))
+				})
+				testServer = httptest.NewServer(serverMux)
+				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			})
+
+			It("returns a bad reponse error message", func() {
+				perform()
+
+				Expect(recentError).To(HaveOccurred())
+				Expect(recentError).To(Equal(noaa.ErrBadResponse))
+			})
+		})
+
+		Context("when the content length is unknown", func() {
+			BeforeEach(func() {
+				fakeHandler = &FakeHandler{
+					contentLen: "-1",
+					InputChan:  make(chan []byte, 10),
+					GenerateHandler: func(input chan []byte) http.Handler {
+						return handlers.NewHttpHandler(input, loggertesthelper.Logger())
+					},
+				}
+				testServer = httptest.NewServer(fakeHandler)
+				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			})
+
+			It("does not throw an error", func() {
+				fakeHandler.InputChan <- marshalMessage(createContainerMetric(2, 2000))
+				fakeHandler.Close()
+				perform()
+
+				Expect(recentError).NotTo(HaveOccurred())
+				Expect(receivedContainerMetrics).To(HaveLen(1))
+			})
+
+		})
+
+		Context("when the content type doesn't have a boundary", func() {
+			BeforeEach(func() {
+
+				serverMux := http.NewServeMux()
+				serverMux.HandleFunc("/apps/appGuid/containermetrics", func(resp http.ResponseWriter, req *http.Request) {
+					resp.Write([]byte("OK"))
+				})
+				testServer = httptest.NewServer(serverMux)
+				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			})
+
+			It("returns a bad reponse error message", func() {
+				perform()
+
+				Expect(recentError).To(HaveOccurred())
+				Expect(recentError).To(Equal(noaa.ErrBadResponse))
+			})
+
+		})
+
+		Context("when the content type's boundary is blank", func() {
+			BeforeEach(func() {
+
+				serverMux := http.NewServeMux()
+				serverMux.HandleFunc("/apps/appGuid/containermetrics", func(resp http.ResponseWriter, req *http.Request) {
+					resp.Header().Set("Content-Type", "boundary=")
+					resp.Write([]byte("OK"))
+				})
+				testServer = httptest.NewServer(serverMux)
+				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			})
+
+			It("returns a bad reponse error message", func() {
+				perform()
+
+				Expect(recentError).To(HaveOccurred())
+				Expect(recentError).To(Equal(noaa.ErrBadResponse))
+			})
+
+		})
+
+		Context("when the path is not found", func() {
+			BeforeEach(func() {
+
+				serverMux := http.NewServeMux()
+				serverMux.HandleFunc("/apps/appGuid/containermetrics", func(resp http.ResponseWriter, req *http.Request) {
+					resp.WriteHeader(http.StatusNotFound)
+				})
+				testServer = httptest.NewServer(serverMux)
+				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			})
+
+			It("returns a not found reponse error message", func() {
+				perform()
+
+				Expect(recentError).To(HaveOccurred())
+				Expect(recentError).To(Equal(noaa.ErrNotFound))
+			})
+
+		})
+
+		Context("when the authorization fails", func() {
+			var failer authFailer
+
+			BeforeEach(func() {
+				failer = authFailer{Message: "Helpful message"}
+				serverMux := http.NewServeMux()
+				serverMux.Handle("/apps/appGuid/containermetrics", failer)
+				testServer = httptest.NewServer(serverMux)
+				trafficControllerUrl = "ws://" + testServer.Listener.Addr().String()
+			})
+
+			It("returns a helpful error message", func() {
 				perform()
 
 				Expect(recentError).To(HaveOccurred())
@@ -1026,6 +1202,24 @@ func createMessage(message string, timestamp int64) *events.Envelope {
 		EventType:  events.Envelope_LogMessage.Enum(),
 		Origin:     proto.String("fake-origin-1"),
 		Timestamp:  proto.Int64(timestamp),
+	}
+}
+
+func createContainerMetric(instanceIndex int32, timestamp int64) *events.Envelope {
+	if timestamp == 0 {
+		timestamp = time.Now().UnixNano()
+	}
+
+	cm := &events.ContainerMetric{
+		ApplicationId: proto.String("appId"),
+		InstanceIndex: proto.Int32(instanceIndex),
+	}
+
+	return &events.Envelope{
+		ContainerMetric: cm,
+		EventType:       events.Envelope_ContainerMetric.Enum(),
+		Origin:          proto.String("fake-origin-1"),
+		Timestamp:       proto.Int64(timestamp),
 	}
 }
 

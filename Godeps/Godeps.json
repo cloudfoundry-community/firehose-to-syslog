@@ -1,11 +1,10 @@
 {
-	"ImportPath": "github.com/SpringerPE/firehose-to-syslog",
-	"GoVersion": "go1.4.1",
+	"ImportPath": "github.com/malston/firehose-to-syslog",
+	"GoVersion": "go1.4",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
-		{
-			"ImportPath": "code.google.com/p/gogoprotobuf/proto",
-			"Rev": "5c5c9e5ec21508be656c201ec53c68cd882d36fb"
-		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.2-5-g7096056",
@@ -17,7 +16,11 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "da595891ae163425fd8f7d23b2caa3c69c0edf2e"
+			"Rev": "92d89517244c5da5c279f889af344538a86891d1"
+		},
+		{
+			"ImportPath": "github.com/gogo/protobuf/proto",
+			"Rev": "bc946d07d1016848dfd2507f90f0859c9471681e"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
@@ -27,6 +30,10 @@
 			"ImportPath": "github.com/parnurzeal/gorequest",
 			"Comment": "v0.2.2-15-g1fbcea9",
 			"Rev": "1fbcea99088e51e74de0569c3446af6899b6fee2"
+		},
+		{
+			"ImportPath": "golang.org/x/net/publicsuffix",
+			"Rev": "7dbad50ab5b31073856416cdcfeb2796d682f844"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v1",
