@@ -23,6 +23,7 @@ var (
 	firehoseUser      = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
 	firehosePassword  = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
+	allEvents         = kingpin.Flag("all-events", "Process all events. If this is unset we will only consume log messages from the routing layer and application logs.").Bool()
 )
 
 func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
@@ -168,13 +169,18 @@ func main() {
 
 	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 
-	go Heartbeats(FilterEvent(firehose, "Heartbeat"))
-	// httpstart := FilterEvent(firehose, "HttpStart")
-	// httpstop := FilterEvent(firehose, "HttpStop")
-	// httpstartstop := FilterEvent(firehose, "HttpStartStop")
-	go LogMessages(FilterEvent(firehose, "LogMessage"))
-	go ValueMetrics(FilterEvent(firehose, "ValueMetric"))
-	go CounterEvents(FilterEvent(firehose, "CounterEvent"))
-	go ErrorEvents(FilterEvent(firehose, "Error"))
-	ContainerMetrics(FilterEvent(firehose, "ContainerMetric"))
+	if *allEvents {
+		go Heartbeats(FilterEvent(firehose, "Heartbeat"))
+		// httpstart := FilterEvent(firehose, "HttpStart")
+		// httpstop := FilterEvent(firehose, "HttpStop")
+		// httpstartstop := FilterEvent(firehose, "HttpStartStop")
+		go LogMessages(FilterEvent(firehose, "LogMessage"))
+		go ValueMetrics(FilterEvent(firehose, "ValueMetric"))
+		go CounterEvents(FilterEvent(firehose, "CounterEvent"))
+		go ErrorEvents(FilterEvent(firehose, "Error"))
+		ContainerMetrics(FilterEvent(firehose, "ContainerMetric"))
+	} else {
+		LogMessages(FilterEvent(firehose, "LogMessage"))
+	}
+
 }
