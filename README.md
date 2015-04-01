@@ -31,8 +31,8 @@ Then you should be able to do this and get some nice logs.
 # To build
 
     # Setup repo
-    go get github.com/SpringerPE/firehose-to-syslog
-    cd $GOPATH/src/github.com/SpringerPE/firehose-to-syslog
+    go get github.com/cloudfoundry-community/firehose-to-syslog
+    cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
 
     # Build binary
     godep go build

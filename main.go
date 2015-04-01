@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/SpringerPE/firehose-to-syslog/firehose"
-	"github.com/SpringerPE/firehose-to-syslog/logging"
-	"github.com/SpringerPE/firehose-to-syslog/token"
+	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
+	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/firehose-to-syslog/token"
 	"github.com/cloudfoundry/noaa/events"
 	"gopkg.in/alecthomas/kingpin.v1"
 	"strings"

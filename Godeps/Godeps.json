@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/SpringerPE/firehose-to-syslog",
+	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
 	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
