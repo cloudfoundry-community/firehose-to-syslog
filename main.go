@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/SpringerPE/firehose-to-syslog/firehose"
 	"github.com/SpringerPE/firehose-to-syslog/token"
 	"github.com/cloudfoundry/noaa"
 	"github.com/cloudfoundry/noaa/events"
@@ -25,22 +26,6 @@ var (
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
 )
 
-func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
-	connection := noaa.NewConsumer(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
-	msgChan := make(chan *events.Envelope)
-	go func() {
-		errorChan := make(chan error)
-		defer close(msgChan)
-		defer close(errorChan)
-
-		go connection.Firehose(subId, Token, msgChan, errorChan, nil)
-
-		for err := range errorChan {
-			fmt.Fprintf(os.Stderr, "%v\n", err.Error())
-		}
-	}()
-	return msgChan
-}
 
 func FilterEvents(in chan *events.Envelope) {
 	for msg := range in {
@@ -225,8 +210,6 @@ func main() {
 	setupLogging(*syslogServer, *debug)
 
 	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
-
-	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
-
 	FilterEvents(firehose)
+	firehose := firehose.CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 }
