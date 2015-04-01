@@ -54,6 +54,13 @@ Then you should be able to do this and get some nice logs.
     --all-events \
     --skip-ssl-validation
 
+# Parsing the logs with Logstash
+
+There is a grok-pattern folder with a couple of filters for app
+and and routing logs. But I would strongy encourage to use
+[Logsearch](https://github.com/logsearch/logsearch-for-cloudfoundry)
+that provides >= functionality but in a nicer package.
+
 # Devel
 
 This is a
