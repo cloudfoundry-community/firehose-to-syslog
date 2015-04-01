@@ -1,8 +1,7 @@
-This nifty util aggregates all the routing logs and stdout/stderr from the applications via a the firehose and forwards it to syslog
+This nifty util aggregates all the events from the firehose feature in
+CloudFoundry.
 
-This is full of hacks and naughty stuff. To make it work you will need the following
-
-In your CF manifest
+To make it work you will need the following in your CF manifest
 
 ```
 	uaa:
@@ -20,7 +19,6 @@ Then you should be able to do this and get some nice logs.
 	./firehose-to-logstash \
 		--uaa-endpoint=https://uaa.domain.com/oauth/authorize \
 		--doppler-endpoint=wss://doppler.domain.com \
-		--syslog-server=syslogserver:syslogport \
 		--firehose-user=firehoseuser \
 		--firehose-password=firehosepassword \
 		--all-events \
@@ -44,7 +42,7 @@ Then you should be able to do this and get some nice logs.
 
 	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize --doppler-endpoint=wss://doppler.10.244.0.34.xip.io:443 --firehose-user=admin --firehose-password=admin --subscription-id=firehose-a --debug --skip-ssl-validation --all-events
 
-# Run with bosh-lite
+# Run agains a bosh-lite CF deployment
 
     godep go run main.go \
     --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize \
@@ -57,12 +55,6 @@ Then you should be able to do this and get some nice logs.
     --skip-ssl-validation
 
 # Devel
-1. Code away, not on master plz, use feature branches.
-2. When merging into master
-   * Make sure repo is clean
-   * Node down the current commit
-   * update the version following semantic versioning in format
-   ```
-   x.y.z - git-commit-from-above
-   ```
-   * Build, commit and tag with version number.
+This is a
+[Git Flow](http://nvie.com/posts/a-successful-git-branching-model/)
+project. Please fork and branch your features from develop.
