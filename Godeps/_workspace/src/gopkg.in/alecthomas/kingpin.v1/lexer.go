@@ -1,6 +1,11 @@
 package kingpin
 
-import "strings"
+import (
+	"bufio"
+	"os"
+
+	"strings"
+)
 
 type TokenType int
 
@@ -77,20 +82,54 @@ func (t Tokens) Peek() *Token {
 
 func Tokenize(args []string) *ParseContext {
 	tokens := make(Tokens, 0, len(args))
+	allowFlags := true
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") {
-			parts := strings.SplitN(arg[2:], "=", 2)
-			tokens = append(tokens, &Token{TokenLong, parts[0]})
-			if len(parts) == 2 {
-				tokens = append(tokens, &Token{TokenArg, parts[1]})
+		if allowFlags {
+			if arg == "--" {
+				allowFlags = false
+				continue
 			}
-		} else if strings.HasPrefix(arg, "-") {
-			for _, a := range arg[1:] {
-				tokens = append(tokens, &Token{TokenShort, string(a)})
+			if strings.HasPrefix(arg, "--") {
+				parts := strings.SplitN(arg[2:], "=", 2)
+				tokens = append(tokens, &Token{TokenLong, parts[0]})
+				if len(parts) == 2 {
+					tokens = append(tokens, &Token{TokenArg, parts[1]})
+				}
+				continue
 			}
-		} else {
-			tokens = append(tokens, &Token{TokenArg, arg})
+			if strings.HasPrefix(arg, "-") {
+				for _, a := range arg[1:] {
+					tokens = append(tokens, &Token{TokenShort, string(a)})
+				}
+				continue
+			}
 		}
+		tokens = append(tokens, &Token{TokenArg, arg})
 	}
 	return &ParseContext{Tokens: tokens}
+}
+
+// ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-
+// line read from that file.
+func ExpandArgsFromFiles(args []string) ([]string, error) {
+	out := []string{}
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "@") {
+			r, err := os.Open(arg[1:])
+			if err != nil {
+				return nil, err
+			}
+			scanner := bufio.NewScanner(r)
+			for scanner.Scan() {
+				out = append(out, scanner.Text())
+			}
+			r.Close()
+			if scanner.Err() != nil {
+				return nil, scanner.Err()
+			}
+		} else {
+			out = append(out, arg)
+		}
+	}
+	return out, nil
 }
