@@ -43,79 +43,189 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 	return msgChan
 }
 
-func FilterEvent(in chan *events.Envelope, eventType string) chan *events.Envelope {
-	evts := make(chan *events.Envelope)
-	go func() {
-		defer close(evts)
-		for msg := range in {
-			switch msg.GetEventType().String() {
-			case eventType:
-				evts <- msg
-			}
+func FilterEvents(in chan *events.Envelope) {
+	for msg := range in {
+		switch msg.GetEventType() {
+		case events.Envelope_Heartbeat:
+			Heartbeats(msg)
+		case events.Envelope_HttpStart:
+			HttpStarts(msg)
+		case events.Envelope_HttpStop:
+			HttpStops(msg)
+		case events.Envelope_HttpStartStop:
+			HttpStartStops(msg)
+		case events.Envelope_LogMessage:
+			LogMessages(msg)
+		case events.Envelope_ValueMetric:
+			ValueMetrics(msg)
+		case events.Envelope_CounterEvent:
+			CounterEvents(msg)
+		case events.Envelope_Error:
+			ErrorEvents(msg)
+		case events.Envelope_ContainerMetric:
+			ContainerMetrics(msg)
 		}
-	}()
-	return evts
-}
-
-func ValueMetrics(in chan *events.Envelope) {
-	for msg := range in {
-		valMetric := msg.GetValueMetric()
-
-		valueName := valMetric.GetName()
-		valueUnit := valMetric.GetUnit()
-		value := valMetric.GetValue()
-
-		log.WithFields(log.Fields{
-			"name":       valueName,
-			"unit":       valueUnit,
-			"value":      value,
-			"event_type": "ValueMetric",
-		}).Info("")
 	}
 }
 
-func ContainerMetrics(in chan *events.Envelope) {
-	for msg := range in {
-		contMetric := msg.GetContainerMetric()
+func Heartbeats(msg *events.Envelope) {
+	metric := msg.GetHeartbeat()
 
-		log.WithFields(log.Fields{
-			"cf_app_id":      contMetric.GetApplicationId(),
-			"cpu_percentage": contMetric.GetCpuPercentage(),
-			"disk_bytes":     contMetric.GetDiskBytes(),
-			"instance_index": contMetric.GetInstanceIndex(),
-			"memory_bytes":   contMetric.GetMemoryBytes(),
-			"event_type":     "ContainerMetric",
-		}).Info("")
-	}
+	log.WithFields(log.Fields{
+		"ctl_msg_id":     metric.GetControlMessageIdentifier(),
+		"error_count":    metric.GetErrorCount(),
+		"event_type":     msg.GetEventType(),
+		"origin":         msg.GetOrigin(),
+		"received_count": metric.GetReceivedCount(),
+		"sent_count":     metric.GetSentCount(),
+	}).Info("")
 }
 
-func Heartbeats(in chan *events.Envelope) {
-	for msg := range in {
-		heartbeat := msg.GetHeartbeat()
+func HttpStarts(msg *events.Envelope) {
+	metric := msg.GetHttpStart()
 
-		log.WithFields(log.Fields{
-			"error_count":    heartbeat.GetErrorCount(),
-			"received_count": heartbeat.GetReceivedCount(),
-			"sent_count":     heartbeat.GetSentCount(),
-			"event_type":     "Heartbeat",
-		}).Info("")
-	}
+	log.WithFields(log.Fields{
+		"event_type":        msg.GetEventType(),
+		"origin":            msg.GetOrigin(),
+		"cf_app_id":         metric.GetApplicationId(),
+		"instance_id":       metric.GetInstanceId(),
+		"instance_index":    metric.GetInstanceIndex(),
+		"method":            metric.GetMethod(),
+		"parent_request_id": metric.GetParentRequestId(),
+		"peer_type":         metric.GetPeerType(),
+		"request_id":        metric.GetRequestId(),
+		"remote_addr":       metric.GetRemoteAddress(),
+		"timestamp":         metric.GetTimestamp(),
+		"uri":               metric.GetUri(),
+		"user_agent":        metric.GetUserAgent(),
+	}).Info("")
 }
 
-func LogMessages(in chan *events.Envelope) {
-	for msg := range in {
-		logmsg := msg.GetLogMessage()
-		app_id := logmsg.GetAppId()
+func HttpStops(msg *events.Envelope) {
+	metric := msg.GetHttpStop()
 
-		log.WithFields(log.Fields{
-			"cf_app_id":       app_id,
-			"timestamp":       logmsg.GetTimestamp(),
-			"source_type":     logmsg.GetSourceType(),
-			"message_type":    logmsg.GetMessageType().String(),
-			"source_instance": logmsg.GetSourceInstance(),
-			"event_type":      "LogMessage",
-		}).Info(string(logmsg.GetMessage()))
+	log.WithFields(log.Fields{
+		"event_type":     msg.GetEventType(),
+		"origin":         msg.GetOrigin(),
+		"cf_app_id":      metric.GetApplicationId(),
+		"content_length": metric.GetContentLength(),
+		"peer_type":      metric.GetPeerType(),
+		"request_id":     metric.GetRequestId(),
+		"status_code":    metric.GetStatusCode(),
+		"timestamp":      metric.GetTimestamp(),
+		"uri":            metric.GetUri(),
+	}).Info("")
+}
+
+func HttpStartStops(msg *events.Envelope) {
+	metric := msg.GetHttpStartStop()
+
+	log.WithFields(log.Fields{
+		"event_type":        msg.GetEventType(),
+		"origin":            msg.GetOrigin(),
+		"cf_app_id":         metric.GetApplicationId(),
+		"content_length":    metric.GetContentLength(),
+		"instance_id":       metric.GetInstanceId(),
+		"instance_index":    metric.GetInstanceIndex(),
+		"method":            metric.GetMethod(),
+		"parent_request_id": metric.GetParentRequestId(),
+		"peer_type":         metric.GetPeerType(),
+		"remote_addr":       metric.GetRemoteAddress(),
+		"request_id":        metric.GetRequestId(),
+		"start_timestamp":   metric.GetStartTimestamp(),
+		"status_code":       metric.GetStatusCode(),
+		"stop_timestamp":    metric.GetStopTimestamp(),
+		"uri":               metric.GetUri(),
+		"user_agent":        metric.GetUserAgent(),
+	}).Info("")
+}
+
+func LogMessages(msg *events.Envelope) {
+	logmsg := msg.GetLogMessage()
+	app_id := logmsg.GetAppId()
+
+	log.WithFields(log.Fields{
+		"event_type":      msg.GetEventType(),
+		"origin":          msg.GetOrigin(),
+		"cf_app_id":       app_id,
+		"timestamp":       logmsg.GetTimestamp(),
+		"source_type":     logmsg.GetSourceType(),
+		"message_type":    logmsg.GetMessageType().String(),
+		"source_instance": logmsg.GetSourceInstance(),
+	}).Info(string(logmsg.GetMessage()))
+}
+
+func ValueMetrics(msg *events.Envelope) {
+	valMetric := msg.GetValueMetric()
+	valueName := valMetric.GetName()
+	valueUnit := valMetric.GetUnit()
+	value := valMetric.GetValue()
+
+	log.WithFields(log.Fields{
+		"event_type": msg.GetEventType(),
+		"origin":     msg.GetOrigin(),
+		"name":       valueName,
+		"unit":       valueUnit,
+		"value":      value,
+	}).Info("")
+}
+
+func CounterEvents(msg *events.Envelope) {
+	evt := msg.GetCounterEvent()
+
+	log.WithFields(log.Fields{
+		"event_type": msg.GetEventType(),
+		"origin":     msg.GetOrigin(),
+		"name":       evt.GetName(),
+		"delta":      evt.GetDelta(),
+		"total":      evt.GetTotal(),
+	}).Info("")
+}
+
+func ErrorEvents(msg *events.Envelope) {
+	evt := msg.GetError()
+
+	log.WithFields(log.Fields{
+		"event_type": msg.GetEventType(),
+		"origin":     msg.GetOrigin(),
+		"code":       evt.GetCode(),
+		"delta":      evt.GetSource(),
+	}).Info(evt.GetMessage())
+}
+
+func ContainerMetrics(msg *events.Envelope) {
+	contMetric := msg.GetContainerMetric()
+
+	log.WithFields(log.Fields{
+		"event_type":     msg.GetEventType(),
+		"origin":         msg.GetOrigin(),
+		"cf_app_id":      contMetric.GetApplicationId(),
+		"cpu_percentage": contMetric.GetCpuPercentage(),
+		"disk_bytes":     contMetric.GetDiskBytes(),
+		"instance_index": contMetric.GetInstanceIndex(),
+		"memory_bytes":   contMetric.GetMemoryBytes(),
+	}).Info("")
+}
+
+func main() {
+	kingpin.Version("0.0.2 - ba541ca")
+	kingpin.Parse()
+
+	setupLogging(*syslogServer, *debug)
+
+	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
+
+	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
+
+	if *allEvents {
+		fmt.Println("===== Logging All Events ")
+		for msg := range firehose {
+			LogMessages(msg)
+		}
 	}
+
+	fmt.Println("===== Logging Firehose Events")
+	FilterEvents(firehose)
 }
 
 func setupLogging(syslogServer string, debug bool) {
@@ -132,55 +242,4 @@ func setupLogging(syslogServer string, debug bool) {
 			log.AddHook(hook)
 		}
 	}
-}
-
-func CounterEvents(in chan *events.Envelope) {
-	for msg := range in {
-		evt := msg.GetCounterEvent()
-
-		log.WithFields(log.Fields{
-			"name":       evt.GetName(),
-			"delta":      evt.GetDelta(),
-			"total":      evt.GetTotal(),
-			"event_type": "CounterEvent",
-		}).Info("")
-	}
-}
-
-func ErrorEvents(in chan *events.Envelope) {
-	for msg := range in {
-		evt := msg.GetError()
-
-		log.WithFields(log.Fields{
-			"code":       evt.GetCode(),
-			"delta":      evt.GetSource(),
-			"event_type": "ErrorEvent",
-		}).Info(evt.GetMessage())
-	}
-}
-
-func main() {
-	kingpin.Version("0.0.2 - ba541ca")
-	kingpin.Parse()
-
-	setupLogging(*syslogServer, *debug)
-
-	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
-
-	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
-
-	if *allEvents {
-		go Heartbeats(FilterEvent(firehose, "Heartbeat"))
-		// httpstart := FilterEvent(firehose, "HttpStart")
-		// httpstop := FilterEvent(firehose, "HttpStop")
-		// httpstartstop := FilterEvent(firehose, "HttpStartStop")
-		go LogMessages(FilterEvent(firehose, "LogMessage"))
-		go ValueMetrics(FilterEvent(firehose, "ValueMetric"))
-		go CounterEvents(FilterEvent(firehose, "CounterEvent"))
-		go ErrorEvents(FilterEvent(firehose, "Error"))
-		ContainerMetrics(FilterEvent(firehose, "ContainerMetric"))
-	} else {
-		LogMessages(FilterEvent(firehose, "LogMessage"))
-	}
-
 }
