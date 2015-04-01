@@ -68,142 +68,154 @@ func FilterEvents(in chan *events.Envelope) {
 }
 
 func Heartbeats(msg *events.Envelope) {
-	metric := msg.GetHeartbeat()
+	heartbeat := msg.GetHeartbeat()
 
 	log.WithFields(log.Fields{
-		"ctl_msg_id":     metric.GetControlMessageIdentifier(),
-		"error_count":    metric.GetErrorCount(),
+		"ctl_msg_id":     heartbeat.GetControlMessageIdentifier(),
+		"error_count":    heartbeat.GetErrorCount(),
 		"event_type":     msg.GetEventType(),
 		"origin":         msg.GetOrigin(),
-		"received_count": metric.GetReceivedCount(),
-		"sent_count":     metric.GetSentCount(),
+		"received_count": heartbeat.GetReceivedCount(),
+		"sent_count":     heartbeat.GetSentCount(),
 	}).Info("")
 }
 
 func HttpStarts(msg *events.Envelope) {
-	metric := msg.GetHttpStart()
+	httpStart := msg.GetHttpStart()
 
 	log.WithFields(log.Fields{
 		"event_type":        msg.GetEventType(),
 		"origin":            msg.GetOrigin(),
-		"cf_app_id":         metric.GetApplicationId(),
-		"instance_id":       metric.GetInstanceId(),
-		"instance_index":    metric.GetInstanceIndex(),
-		"method":            metric.GetMethod(),
-		"parent_request_id": metric.GetParentRequestId(),
-		"peer_type":         metric.GetPeerType(),
-		"request_id":        metric.GetRequestId(),
-		"remote_addr":       metric.GetRemoteAddress(),
-		"timestamp":         metric.GetTimestamp(),
-		"uri":               metric.GetUri(),
-		"user_agent":        metric.GetUserAgent(),
+		"cf_app_id":         httpStart.GetApplicationId(),
+		"instance_id":       httpStart.GetInstanceId(),
+		"instance_index":    httpStart.GetInstanceIndex(),
+		"method":            httpStart.GetMethod(),
+		"parent_request_id": httpStart.GetParentRequestId(),
+		"peer_type":         httpStart.GetPeerType(),
+		"request_id":        httpStart.GetRequestId(),
+		"remote_addr":       httpStart.GetRemoteAddress(),
+		"timestamp":         httpStart.GetTimestamp(),
+		"uri":               httpStart.GetUri(),
+		"user_agent":        httpStart.GetUserAgent(),
 	}).Info("")
 }
 
 func HttpStops(msg *events.Envelope) {
-	metric := msg.GetHttpStop()
+	httpStop := msg.GetHttpStop()
 
 	log.WithFields(log.Fields{
 		"event_type":     msg.GetEventType(),
 		"origin":         msg.GetOrigin(),
-		"cf_app_id":      metric.GetApplicationId(),
-		"content_length": metric.GetContentLength(),
-		"peer_type":      metric.GetPeerType(),
-		"request_id":     metric.GetRequestId(),
-		"status_code":    metric.GetStatusCode(),
-		"timestamp":      metric.GetTimestamp(),
-		"uri":            metric.GetUri(),
+		"cf_app_id":      httpStop.GetApplicationId(),
+		"content_length": httpStop.GetContentLength(),
+		"peer_type":      httpStop.GetPeerType(),
+		"request_id":     httpStop.GetRequestId(),
+		"status_code":    httpStop.GetStatusCode(),
+		"timestamp":      httpStop.GetTimestamp(),
+		"uri":            httpStop.GetUri(),
 	}).Info("")
 }
 
 func HttpStartStops(msg *events.Envelope) {
-	metric := msg.GetHttpStartStop()
+	httpStartStop := msg.GetHttpStartStop()
 
 	log.WithFields(log.Fields{
 		"event_type":        msg.GetEventType(),
 		"origin":            msg.GetOrigin(),
-		"cf_app_id":         metric.GetApplicationId(),
-		"content_length":    metric.GetContentLength(),
-		"instance_id":       metric.GetInstanceId(),
-		"instance_index":    metric.GetInstanceIndex(),
-		"method":            metric.GetMethod(),
-		"parent_request_id": metric.GetParentRequestId(),
-		"peer_type":         metric.GetPeerType(),
-		"remote_addr":       metric.GetRemoteAddress(),
-		"request_id":        metric.GetRequestId(),
-		"start_timestamp":   metric.GetStartTimestamp(),
-		"status_code":       metric.GetStatusCode(),
-		"stop_timestamp":    metric.GetStopTimestamp(),
-		"uri":               metric.GetUri(),
-		"user_agent":        metric.GetUserAgent(),
+		"cf_app_id":         httpStartStop.GetApplicationId(),
+		"content_length":    httpStartStop.GetContentLength(),
+		"instance_id":       httpStartStop.GetInstanceId(),
+		"instance_index":    httpStartStop.GetInstanceIndex(),
+		"method":            httpStartStop.GetMethod(),
+		"parent_request_id": httpStartStop.GetParentRequestId(),
+		"peer_type":         httpStartStop.GetPeerType(),
+		"remote_addr":       httpStartStop.GetRemoteAddress(),
+		"request_id":        httpStartStop.GetRequestId(),
+		"start_timestamp":   httpStartStop.GetStartTimestamp(),
+		"status_code":       httpStartStop.GetStatusCode(),
+		"stop_timestamp":    httpStartStop.GetStopTimestamp(),
+		"uri":               httpStartStop.GetUri(),
+		"user_agent":        httpStartStop.GetUserAgent(),
 	}).Info("")
 }
 
 func LogMessages(msg *events.Envelope) {
-	logmsg := msg.GetLogMessage()
-	app_id := logmsg.GetAppId()
+	logMessage := msg.GetLogMessage()
 
 	log.WithFields(log.Fields{
 		"event_type":      msg.GetEventType(),
 		"origin":          msg.GetOrigin(),
-		"cf_app_id":       app_id,
-		"timestamp":       logmsg.GetTimestamp(),
-		"source_type":     logmsg.GetSourceType(),
-		"message_type":    logmsg.GetMessageType().String(),
-		"source_instance": logmsg.GetSourceInstance(),
-	}).Info(string(logmsg.GetMessage()))
+		"cf_app_id":       logMessage.GetAppId(),
+		"timestamp":       logMessage.GetTimestamp(),
+		"source_type":     logMessage.GetSourceType(),
+		"message_type":    logMessage.GetMessageType().String(),
+		"source_instance": logMessage.GetSourceInstance(),
+	}).Info(string(logMessage.GetMessage()))
 }
 
 func ValueMetrics(msg *events.Envelope) {
 	valMetric := msg.GetValueMetric()
-	valueName := valMetric.GetName()
-	valueUnit := valMetric.GetUnit()
-	value := valMetric.GetValue()
 
 	log.WithFields(log.Fields{
 		"event_type": msg.GetEventType(),
 		"origin":     msg.GetOrigin(),
-		"name":       valueName,
-		"unit":       valueUnit,
-		"value":      value,
+		"name":       valMetric.GetName(),
+		"unit":       valMetric.GetUnit(),
+		"value":      valMetric.GetValue(),
 	}).Info("")
 }
 
 func CounterEvents(msg *events.Envelope) {
-	evt := msg.GetCounterEvent()
+	counterEvent := msg.GetCounterEvent()
 
 	log.WithFields(log.Fields{
 		"event_type": msg.GetEventType(),
 		"origin":     msg.GetOrigin(),
-		"name":       evt.GetName(),
-		"delta":      evt.GetDelta(),
-		"total":      evt.GetTotal(),
+		"name":       counterEvent.GetName(),
+		"delta":      counterEvent.GetDelta(),
+		"total":      counterEvent.GetTotal(),
 	}).Info("")
 }
 
 func ErrorEvents(msg *events.Envelope) {
-	evt := msg.GetError()
+	errorEvent := msg.GetError()
 
 	log.WithFields(log.Fields{
 		"event_type": msg.GetEventType(),
 		"origin":     msg.GetOrigin(),
-		"code":       evt.GetCode(),
-		"delta":      evt.GetSource(),
-	}).Info(evt.GetMessage())
+		"code":       errorEvent.GetCode(),
+		"delta":      errorEvent.GetSource(),
+	}).Info(errorEvent.GetMessage())
 }
 
 func ContainerMetrics(msg *events.Envelope) {
-	contMetric := msg.GetContainerMetric()
+	containerMetric := msg.GetContainerMetric()
 
 	log.WithFields(log.Fields{
 		"event_type":     msg.GetEventType(),
 		"origin":         msg.GetOrigin(),
-		"cf_app_id":      contMetric.GetApplicationId(),
-		"cpu_percentage": contMetric.GetCpuPercentage(),
-		"disk_bytes":     contMetric.GetDiskBytes(),
-		"instance_index": contMetric.GetInstanceIndex(),
-		"memory_bytes":   contMetric.GetMemoryBytes(),
+		"cf_app_id":      containerMetric.GetApplicationId(),
+		"cpu_percentage": containerMetric.GetCpuPercentage(),
+		"disk_bytes":     containerMetric.GetDiskBytes(),
+		"instance_index": containerMetric.GetInstanceIndex(),
+		"memory_bytes":   containerMetric.GetMemoryBytes(),
 	}).Info("")
+}
+
+func setupLogging(syslogServer string, debug bool) {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	if !debug {
+		log.SetOutput(ioutil.Discard)
+	}
+	if syslogServer != "" {
+		hook, err := logrus_syslog.NewSyslogHook("tcp", syslogServer, syslog.LOG_INFO, "doppler")
+		if err != nil {
+			log.Error("Unable to connect to syslog server.")
+		} else {
+			log.AddHook(hook)
+		}
+	}
 }
 
 func main() {
@@ -217,20 +229,4 @@ func main() {
 	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 
 	FilterEvents(firehose)
-}
-
-func setupLogging(syslogServer string, debug bool) {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stderr)
-	if !debug {
-		log.SetOutput(ioutil.Discard)
-	}
-	if syslogServer != "" {
-		hook, err := logrus_syslog.NewSyslogHook("tcp", syslogServer, syslog.LOG_INFO, "doppler")
-		if err != nil {
-			log.Error("Unable to connect to syslog server.")
-		} else {
-			log.AddHook(hook)
-		}
-	}
 }
