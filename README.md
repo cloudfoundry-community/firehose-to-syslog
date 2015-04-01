@@ -21,7 +21,6 @@ Then you should be able to do this and get some nice logs.
 		--doppler-endpoint=wss://doppler.domain.com \
 		--firehose-user=firehoseuser \
 		--firehose-password=firehosepassword \
-		--all-events \
 		--debug
 
 	{"cf_app_id":"d6d2ad15-39e9-427f-bdde-e047f7989304","level":"info","message_type":"OUT","msg":"16:27:05 INFO  c.s.i.e.QueuedEmailService :: Starting queued mail processing","source_instance":"0","source_type":"App","time":"2014-12-16T17:27:05+01:00"}
@@ -44,7 +43,7 @@ Then you should be able to do this and get some nice logs.
 
 # Run with Docker
 
-	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize --doppler-endpoint=wss://doppler.10.244.0.34.xip.io:443 --firehose-user=admin --firehose-password=admin --subscription-id=firehose-a --debug --skip-ssl-validation --all-events
+	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize --doppler-endpoint=wss://doppler.10.244.0.34.xip.io:443 --firehose-user=admin --firehose-password=admin --subscription-id=firehose-a --debug --skip-ssl-validation
 
 # Run agains a bosh-lite CF deployment
 
@@ -55,7 +54,6 @@ Then you should be able to do this and get some nice logs.
     --firehose-password=admin \
     --subscription-id=firehose-a \
     --debug \
-    --all-events \
     --skip-ssl-validation
 
 # Parsing the logs with Logstash
