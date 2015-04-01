@@ -221,7 +221,7 @@ func main() {
 
 func setupLogging(syslogServer string, debug bool) {
 	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
 	if !debug {
 		log.SetOutput(ioutil.Discard)
 	}
