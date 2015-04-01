@@ -202,19 +202,6 @@ func ContainerMetrics(msg *events.Envelope) {
 	}).Info("")
 }
 
-func main() {
-	kingpin.Version("0.0.2 - ba541ca")
-	kingpin.Parse()
-
-	setupLogging(*syslogServer, *debug)
-
-	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
-
-	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
-
-	FilterEvents(firehose)
-}
-
 func setupLogging(syslogServer string, debug bool) {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
@@ -229,4 +216,17 @@ func setupLogging(syslogServer string, debug bool) {
 			log.AddHook(hook)
 		}
 	}
+}
+
+func main() {
+	kingpin.Version("0.0.2 - ba541ca")
+	kingpin.Parse()
+
+	setupLogging(*syslogServer, *debug)
+
+	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
+
+	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
+
+	FilterEvents(firehose)
 }
