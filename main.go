@@ -27,7 +27,7 @@ var (
 )
 
 
-func FilterEvents(in chan *events.Envelope) {
+func RouteEvents(in chan *events.Envelope) {
 	for msg := range in {
 		switch msg.GetEventType() {
 		case events.Envelope_Heartbeat:
@@ -210,6 +210,6 @@ func main() {
 	setupLogging(*syslogServer, *debug)
 
 	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
-	FilterEvents(firehose)
 	firehose := firehose.CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
+	RouteEvents(firehose)
 }
