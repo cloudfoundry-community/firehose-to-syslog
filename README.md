@@ -38,6 +38,10 @@ Then you should be able to do this and get some nice logs.
     # Build binary
     godep go build
 
+# Deploy with Bosh
+
+[logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
+
 # Run with Docker
 
 	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize --doppler-endpoint=wss://doppler.10.244.0.34.xip.io:443 --firehose-user=admin --firehose-password=admin --subscription-id=firehose-a --debug --skip-ssl-validation --all-events
@@ -58,7 +62,7 @@ Then you should be able to do this and get some nice logs.
 
 There is a grok-pattern folder with a couple of filters for app
 and and routing logs. But I would strongy encourage to use
-[Logsearch](https://github.com/logsearch/logsearch-for-cloudfoundry)
+[logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
 that provides >= functionality but in a nicer package.
 
 # Devel
