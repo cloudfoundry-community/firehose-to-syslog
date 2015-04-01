@@ -31,7 +31,7 @@ func Heartbeats(msg *events.Envelope) {
 	log.WithFields(log.Fields{
 		"ctl_msg_id":     heartbeat.GetControlMessageIdentifier(),
 		"error_count":    heartbeat.GetErrorCount(),
-		"event_type":     msg.GetEventType(),
+		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"received_count": heartbeat.GetReceivedCount(),
 		"sent_count":     heartbeat.GetSentCount(),
@@ -42,7 +42,7 @@ func HttpStarts(msg *events.Envelope) {
 	httpStart := msg.GetHttpStart()
 
 	log.WithFields(log.Fields{
-		"event_type":        msg.GetEventType(),
+		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStart.GetApplicationId(),
 		"instance_id":       httpStart.GetInstanceId(),
@@ -62,7 +62,7 @@ func HttpStops(msg *events.Envelope) {
 	httpStop := msg.GetHttpStop()
 
 	log.WithFields(log.Fields{
-		"event_type":     msg.GetEventType(),
+		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      httpStop.GetApplicationId(),
 		"content_length": httpStop.GetContentLength(),
@@ -78,7 +78,7 @@ func HttpStartStops(msg *events.Envelope) {
 	httpStartStop := msg.GetHttpStartStop()
 
 	log.WithFields(log.Fields{
-		"event_type":        msg.GetEventType(),
+		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStartStop.GetApplicationId(),
 		"content_length":    httpStartStop.GetContentLength(),
@@ -101,7 +101,7 @@ func LogMessages(msg *events.Envelope) {
 	logMessage := msg.GetLogMessage()
 
 	log.WithFields(log.Fields{
-		"event_type":      msg.GetEventType(),
+		"event_type":      msg.GetEventType().String(),
 		"origin":          msg.GetOrigin(),
 		"cf_app_id":       logMessage.GetAppId(),
 		"timestamp":       logMessage.GetTimestamp(),
@@ -115,7 +115,7 @@ func ValueMetrics(msg *events.Envelope) {
 	valMetric := msg.GetValueMetric()
 
 	log.WithFields(log.Fields{
-		"event_type": msg.GetEventType(),
+		"event_type": msg.GetEventType().String(),
 		"origin":     msg.GetOrigin(),
 		"name":       valMetric.GetName(),
 		"unit":       valMetric.GetUnit(),
@@ -127,7 +127,7 @@ func CounterEvents(msg *events.Envelope) {
 	counterEvent := msg.GetCounterEvent()
 
 	log.WithFields(log.Fields{
-		"event_type": msg.GetEventType(),
+		"event_type": msg.GetEventType().String(),
 		"origin":     msg.GetOrigin(),
 		"name":       counterEvent.GetName(),
 		"delta":      counterEvent.GetDelta(),
@@ -139,7 +139,7 @@ func ErrorEvents(msg *events.Envelope) {
 	errorEvent := msg.GetError()
 
 	log.WithFields(log.Fields{
-		"event_type": msg.GetEventType(),
+		"event_type": msg.GetEventType().String(),
 		"origin":     msg.GetOrigin(),
 		"code":       errorEvent.GetCode(),
 		"delta":      errorEvent.GetSource(),
@@ -150,7 +150,7 @@ func ContainerMetrics(msg *events.Envelope) {
 	containerMetric := msg.GetContainerMetric()
 
 	log.WithFields(log.Fields{
-		"event_type":     msg.GetEventType(),
+		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      containerMetric.GetApplicationId(),
 		"cpu_percentage": containerMetric.GetCpuPercentage(),
