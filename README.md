@@ -55,6 +55,14 @@ Then you should be able to do this and get some nice logs.
     --skip-ssl-validation
 
 # Devel
+
 This is a
 [Git Flow](http://nvie.com/posts/a-successful-git-branching-model/)
 project. Please fork and branch your features from develop.
+
+# Contributors
+
+* [Ed King](https://github.com/teddyking) - Added support to skip ssl
+validation.
+* [Mark Alston](https://github.com/malston) - Added support for more
+  events and general code cleaup.
