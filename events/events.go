@@ -1,10 +1,13 @@
 package events
 
 import (
+	"fmt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/noaa/events"
 	"strings"
 )
+
+var authorizeEvents = strings.Split("Heartbeat,HttpStart,HttpStop,HttpStartStop,LogMessage,ValueMetric,CounterEvent,Error,ContainerMetric", ",")
 
 func RouteEvents(in chan *events.Envelope, selectedEvents map[string]bool) {
 	for msg := range in {
@@ -37,7 +40,24 @@ func RouteEvents(in chan *events.Envelope, selectedEvents map[string]bool) {
 func GetSelectedEvents(wantedEvents string) map[string]bool {
 	selectedEvents := make(map[string]bool)
 	for _, event := range strings.Split(wantedEvents, ",") {
-		selectedEvents[event] = true
+		if isAuthorizedEvent(event) {
+			selectedEvents[event] = true
+		} else {
+			fmt.Printf("Rejected Event Name %s", event)
+		}
+	}
+	// If any event is not authorize we fallback to the default one
+	if len(selectedEvents) < 1 {
+		selectedEvents["LogMessage"] = true
 	}
 	return selectedEvents
+}
+
+func isAuthorizedEvent(wantedEvent string) bool {
+	for _, authorizeEvent := range authorizeEvents {
+		if wantedEvent == authorizeEvent {
+			return true
+		}
+	}
+	return false
 }
