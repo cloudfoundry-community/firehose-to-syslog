@@ -40,10 +40,6 @@ Then you should be able to do this and get some nice logs.
 
 [logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
 
-# Run with Docker
-
-	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa.10.244.0.34.xip.io/oauth/authorize --doppler-endpoint=wss://doppler.10.244.0.34.xip.io:443 --firehose-user=admin --firehose-password=admin --subscription-id=firehose-a --debug --skip-ssl-validation
-
 # Run agains a bosh-lite CF deployment
 
     godep go run main.go \
