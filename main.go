@@ -11,7 +11,7 @@ import (
 
 var (
 	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Bool()
-	domain            = kingpin.Flag("domain", "Domain of your CF installation.").Required().String()
+	domain            = kingpin.Flag("domain", "Domain of your CF installation.").Default("10.244.0.34.xip.io").String()
 	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").String()
 	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
 	user              = kingpin.Flag("user", "Admin user.").Default("admin").String()
