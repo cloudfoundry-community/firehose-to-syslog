@@ -5,7 +5,6 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	"github.com/cloudfoundry-community/firehose-to-syslog/token"
 	"gopkg.in/alecthomas/kingpin.v1"
 )
 
