@@ -1,7 +1,7 @@
 This nifty util aggregates all the events from the firehose feature in
 CloudFoundry.
 
-To make it work you will need the following in your CF manifest
+To make it work unless you want to run with the admin user, you will need the following in your CF manifest.
 
 ```
 	uaa:
@@ -17,10 +17,9 @@ To make it work you will need the following in your CF manifest
 Then you should be able to do this and get some nice logs.
 
 	./firehose-to-logstash \
-		--uaa-endpoint=https://uaa.domain.com/oauth/authorize \
-		--doppler-endpoint=wss://doppler.domain.com \
-		--firehose-user=firehoseuser \
-		--firehose-password=firehosepassword \
+		--domain=cf.installation.domain.com \
+		--user=username \
+		--password=password \
 		--debug
 
 	{"cf_app_id":"d6d2ad15-39e9-427f-bdde-e047f7989304","level":"info","message_type":"OUT","msg":"16:27:05 INFO  c.s.i.e.QueuedEmailService :: Starting queued mail processing","source_instance":"0","source_type":"App","time":"2014-12-16T17:27:05+01:00"}
