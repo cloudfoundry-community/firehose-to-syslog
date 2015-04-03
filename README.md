@@ -75,3 +75,5 @@ project. Please fork and branch your features from develop.
 validation.
 * [Mark Alston](https://github.com/malston) - Added support for more
   events and general code cleaup.
+* [Etourneau Gwenn](https://github.com/shinji62) - Added validation of
+  selected events and general code cleanup.
