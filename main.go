@@ -5,6 +5,7 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"gopkg.in/alecthomas/kingpin.v1"
 )
 
@@ -23,9 +24,24 @@ func main() {
 	kingpin.Version("0.0.2 - ba541ca")
 	kingpin.Parse()
 
+	apiEndpoint := fmt.Sprintf("https://api.%s", *domain)
+	uaaEndpoint := fmt.Sprintf("https://uaa.%s", *domain)
+	dopplerEndpoint := fmt.Sprintf("wss://doppler.%s", *domain)
+
+	c := cfclient.Config{
+		ApiAddress:   apiEndpoint,
+		LoginAddress: uaaEndpoint,
+		Username:     *user,
+		Password:     *password,
+	}
+	cfClient := cfclient.NewClient(&c)
+
 	selectedEvents := events.GetSelectedEvents(*wantedEvents)
+
 	logging.SetupLogging(*syslogServer, *debug)
-	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
-	firehose := firehose.CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
+
+	token := cfClient.GetToken()
+	firehose := firehose.CreateFirehoseChan(dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
+
 	events.RouteEvents(firehose, selectedEvents)
 }
