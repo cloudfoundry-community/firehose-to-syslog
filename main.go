@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
@@ -17,7 +18,7 @@ var (
 	firehoseUser      = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
 	firehosePassword  = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
-	wantedEvents      = kingpin.Flag("events", "Comma seperated list of events you would like. Valid options are Heartbeat, HttpStart, HttpStop, HttpStartStop, LogMessage, ValueMetric, CounterEvent, Error, ContainerMetric").Default("LogMessage").String()
+	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
 )
 
 func main() {
