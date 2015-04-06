@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.4",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -10,6 +10,10 @@
 		{
 			"ImportPath": "github.com/alecthomas/units",
 			"Rev": "6b4e7dc5e3143b85ea77909c72caf89416fc2915"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
+			"Rev": "e5cf198a6ef2a837b2d1196743b21ee74ec84fe2"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -22,15 +26,6 @@
 		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
-		},
-		{
-			"ImportPath": "github.com/parnurzeal/gorequest",
-			"Comment": "v0.2.2-15-g1fbcea9",
-			"Rev": "1fbcea99088e51e74de0569c3446af6899b6fee2"
-		},
-		{
-			"ImportPath": "golang.org/x/net/publicsuffix",
-			"Rev": "7dbad50ab5b31073856416cdcfeb2796d682f844"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v1",
