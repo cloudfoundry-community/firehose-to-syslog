@@ -51,6 +51,7 @@ func (c *Client) ListApps() []App {
 	var appResp AppResponse
 	r := c.newRequest("GET", "/v2/apps")
 	resp, err := c.doRequest(r)
+
 	if err != nil {
 		log.Printf("Error requesting apps %v", err)
 	}

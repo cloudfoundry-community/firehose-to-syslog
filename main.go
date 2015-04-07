@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/boltdb/bolt"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"gopkg.in/alecthomas/kingpin.v1"
+	"os"
+	"time"
 )
 
 var (
@@ -24,6 +28,15 @@ func main() {
 	kingpin.Version("0.0.2 - ba541ca")
 	kingpin.Parse()
 
+	//Use bolt for in-memory  - file caching
+	db, err := bolt.Open("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening bolt db", err)
+		os.Exit(1)
+
+	}
+	defer db.Close()
+
 	apiEndpoint := fmt.Sprintf("https://api.%s", *domain)
 	uaaEndpoint := fmt.Sprintf("https://uaa.%s", *domain)
 	dopplerEndpoint := fmt.Sprintf("wss://doppler.%s", *domain)
@@ -38,9 +51,14 @@ func main() {
 
 	selectedEvents := events.GetSelectedEvents(*wantedEvents)
 
-	logging.SetupLogging(*syslogServer, *debug)
+	logging.SetupLogging(*syslogServer, *debug, db)
+
+	//Let's Update the database the first time
+
+	caching.FillDatabase(db, cfClient)
 
 	token := cfClient.GetToken()
+
 	firehose := firehose.CreateFirehoseChan(dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 
 	events.RouteEvents(firehose, selectedEvents)

@@ -1,15 +1,21 @@
 package logging
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/boltdb/bolt"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry/noaa/events"
 	"io/ioutil"
 	"log/syslog"
 	"os"
 )
 
-func SetupLogging(syslogServer string, debug bool) {
+var appdb *bolt.DB
+
+func SetupLogging(syslogServer string, debug bool, db *bolt.DB) {
+	appdb = db
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
 	if !debug {
@@ -23,6 +29,10 @@ func SetupLogging(syslogServer string, debug bool) {
 			log.AddHook(hook)
 		}
 	}
+}
+
+func getAppName(appGuid string) string {
+	return caching.GetAppName(appGuid, appdb)
 }
 
 func Heartbeats(msg *events.Envelope) {
@@ -45,6 +55,7 @@ func HttpStarts(msg *events.Envelope) {
 		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStart.GetApplicationId(),
+		"cf_app_name":       getAppName(fmt.Sprintf("%s", httpStart.GetApplicationId())),
 		"instance_id":       httpStart.GetInstanceId(),
 		"instance_index":    httpStart.GetInstanceIndex(),
 		"method":            httpStart.GetMethod(),
@@ -65,6 +76,7 @@ func HttpStops(msg *events.Envelope) {
 		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      httpStop.GetApplicationId(),
+		"cf_app_name":    getAppName(fmt.Sprintf("%s", httpStop.GetApplicationId())),
 		"content_length": httpStop.GetContentLength(),
 		"peer_type":      httpStop.GetPeerType(),
 		"request_id":     httpStop.GetRequestId(),
@@ -81,6 +93,7 @@ func HttpStartStops(msg *events.Envelope) {
 		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStartStop.GetApplicationId(),
+		"cf_app_name":       getAppName(fmt.Sprintf("%s", httpStartStop.GetApplicationId())),
 		"content_length":    httpStartStop.GetContentLength(),
 		"instance_id":       httpStartStop.GetInstanceId(),
 		"instance_index":    httpStartStop.GetInstanceIndex(),
@@ -104,6 +117,7 @@ func LogMessages(msg *events.Envelope) {
 		"event_type":      msg.GetEventType().String(),
 		"origin":          msg.GetOrigin(),
 		"cf_app_id":       logMessage.GetAppId(),
+		"cf_app_name":     getAppName(logMessage.GetAppId()),
 		"timestamp":       logMessage.GetTimestamp(),
 		"source_type":     logMessage.GetSourceType(),
 		"message_type":    logMessage.GetMessageType().String(),
@@ -153,6 +167,7 @@ func ContainerMetrics(msg *events.Envelope) {
 		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      containerMetric.GetApplicationId(),
+		"cf_app_name":    getAppName(fmt.Sprintf("%s", containerMetric.GetApplicationId())),
 		"cpu_percentage": containerMetric.GetCpuPercentage(),
 		"disk_bytes":     containerMetric.GetDiskBytes(),
 		"instance_index": containerMetric.GetInstanceIndex(),
