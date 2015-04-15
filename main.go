@@ -22,20 +22,13 @@ var (
 	password          = kingpin.Flag("password", "Admin password.").Default("admin").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
+	boldDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
+	tickerTime        = kingpin.Flag("cc-pool-time", "CloudController Pooling time in sec").Default("5s").Duration()
 )
 
 func main() {
 	kingpin.Version("0.0.2 - ba541ca")
 	kingpin.Parse()
-
-	//Use bolt for in-memory  - file caching
-	db, err := bolt.Open("my.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error opening bolt db", err)
-		os.Exit(1)
-
-	}
-	defer db.Close()
 
 	apiEndpoint := fmt.Sprintf("https://api.%s", *domain)
 	uaaEndpoint := fmt.Sprintf("https://uaa.%s", *domain)
@@ -48,6 +41,27 @@ func main() {
 		Password:     *password,
 	}
 	cfClient := cfclient.NewClient(&c)
+
+	//Use bolt for in-memory  - file caching
+	db, err := bolt.Open(*boldDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening bolt db", err)
+		os.Exit(1)
+
+	}
+	defer db.Close()
+
+	// Ticker Pooling the CC every X sec
+	ccPooling := time.NewTicker(*tickerTime)
+
+	go func() {
+		fmt.Println(ccPooling.C)
+		for t := range ccPooling.C {
+			caching.FillDatabase(db, cfClient)
+
+		}
+
+	}()
 
 	selectedEvents := events.GetSelectedEvents(*wantedEvents)
 
