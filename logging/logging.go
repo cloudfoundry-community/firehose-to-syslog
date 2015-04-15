@@ -4,7 +4,6 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/Sirupsen/logrus/hooks/syslog"
-	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry/noaa/events"
 	"io/ioutil"
@@ -12,10 +11,7 @@ import (
 	"os"
 )
 
-var appdb *bolt.DB
-
-func SetupLogging(syslogServer string, debug bool, db *bolt.DB) {
-	appdb = db
+func SetupLogging(syslogServer string, debug bool) {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
 	if !debug {
@@ -32,7 +28,12 @@ func SetupLogging(syslogServer string, debug bool, db *bolt.DB) {
 }
 
 func getAppName(appGuid string) string {
-	return caching.GetAppName(appGuid, appdb)
+	if appname := caching.GetAppName(appGuid); appname != "" {
+		return appname
+	} else {
+		caching.GetAppByGuid(appGuid)
+	}
+	return caching.GetAppName(appGuid)
 }
 
 func Heartbeats(msg *events.Envelope) {

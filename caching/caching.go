@@ -11,10 +11,13 @@ type App struct {
 	Guid string
 }
 
-func FillDatabase(db *bolt.DB, cfClient *cfClient.Client) {
+var gcfClient *cfClient.Client
+var appdb *bolt.DB
 
-	for _, app := range cfClient.ListApps() {
-		db.Update(func(tx *bolt.Tx) error {
+func FillDatabase(listApps []App) {
+
+	for _, app := range listApps {
+		appdb.Update(func(tx *bolt.Tx) error {
 			b, err := tx.CreateBucketIfNotExists([]byte("AppBucket"))
 			if err != nil {
 				return fmt.Errorf("create bucket: %s", err)
@@ -32,12 +35,40 @@ func FillDatabase(db *bolt.DB, cfClient *cfClient.Client) {
 
 }
 
-func GetAppName(appGuid string, db *bolt.DB) string {
+func GetAppByGuid(appGuid string) []App {
+	var apps []App
+	app := gcfClient.AppByGuid(appGuid)
+	apps = append(apps, App{app.Name, app.Guid})
+	fmt.Println("Looking for ", appGuid)
+	FillDatabase(apps)
+	return apps
+
+}
+
+func GetAllApp() []App {
+	var apps []App
+	for _, app := range gcfClient.ListApps() {
+		apps = append(apps, App{app.Name, app.Guid})
+	}
+	FillDatabase(apps)
+	return apps
+}
+
+func GetAppName(appGuid string) string {
 	var d []byte
-	db.View(func(tx *bolt.Tx) error {
+	appdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("AppBucket"))
 		d = b.Get([]byte(appGuid))
 		return nil
 	})
 	return string(d[:])
+}
+
+func SetCfClient(cfClient *cfClient.Client) {
+	gcfClient = cfClient
+
+}
+
+func SetAppDb(db *bolt.DB) {
+	appdb = db
 }

@@ -23,7 +23,7 @@ var (
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
 	boldDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
-	tickerTime        = kingpin.Flag("cc-pool-time", "CloudController Pooling time in sec").Default("5s").Duration()
+	tickerTime        = kingpin.Flag("cc-pool-time", "CloudController Pooling time in sec").Default("60s").Duration()
 )
 
 func main() {
@@ -50,14 +50,16 @@ func main() {
 
 	}
 	defer db.Close()
+	caching.SetCfClient(cfClient)
+	caching.SetAppDb(db)
 
 	// Ticker Pooling the CC every X sec
 	ccPooling := time.NewTicker(*tickerTime)
 
 	go func() {
 		fmt.Println(ccPooling.C)
-		for t := range ccPooling.C {
-			caching.FillDatabase(db, cfClient)
+		for range ccPooling.C {
+			caching.GetAllApp()
 
 		}
 
@@ -65,11 +67,11 @@ func main() {
 
 	selectedEvents := events.GetSelectedEvents(*wantedEvents)
 
-	logging.SetupLogging(*syslogServer, *debug, db)
+	logging.SetupLogging(*syslogServer, *debug)
 
 	//Let's Update the database the first time
 
-	caching.FillDatabase(db, cfClient)
+	caching.GetAllApp()
 
 	token := cfClient.GetToken()
 
