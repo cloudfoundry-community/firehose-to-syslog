@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
 	"GoVersion": "go1.4",
+	"Packages": [
+		"./...."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -12,12 +15,17 @@
 			"Rev": "6b4e7dc5e3143b85ea77909c72caf89416fc2915"
 		},
 		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "v1.0-47-g4d30731",
+			"Rev": "4d30731e9122988d2012a9574c43f80f054a0d3b"
+		},
+		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
-			"Rev": "e5cf198a6ef2a837b2d1196743b21ee74ec84fe2"
+			"Rev": "ca267e8265046eb2538533755322df90367edfc8"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "92d89517244c5da5c279f889af344538a86891d1"
+			"Rev": "9e379db26bbd042ec0202d9679ed8d753b64e0df"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",

@@ -27,13 +27,13 @@ func SetupLogging(syslogServer string, debug bool) {
 	}
 }
 
-func getAppName(appGuid string) string {
-	if appname := caching.GetAppName(appGuid); appname != "" {
-		return appname
+func getAppInfo(appGuid string) caching.App {
+	if app := caching.GetAppInfo(appGuid); app.Name != "" {
+		return app
 	} else {
 		caching.GetAppByGuid(appGuid)
 	}
-	return caching.GetAppName(appGuid)
+	return caching.GetAppInfo(appGuid)
 }
 
 func Heartbeats(msg *events.Envelope) {
@@ -51,12 +51,17 @@ func Heartbeats(msg *events.Envelope) {
 
 func HttpStarts(msg *events.Envelope) {
 	httpStart := msg.GetHttpStart()
+	appInfo := getAppInfo(fmt.Sprintf("%s", httpStart.GetApplicationId()))
 
 	log.WithFields(log.Fields{
 		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStart.GetApplicationId(),
-		"cf_app_name":       getAppName(fmt.Sprintf("%s", httpStart.GetApplicationId())),
+		"cf_app_name":       appInfo.Name,
+		"cf_space_id":       appInfo.SpaceGuid,
+		"cf_space_name":     appInfo.SpaceName,
+		"cf_org_id":         appInfo.OrgGuid,
+		"cf_org_name":       appInfo.OrgName,
 		"instance_id":       httpStart.GetInstanceId(),
 		"instance_index":    httpStart.GetInstanceIndex(),
 		"method":            httpStart.GetMethod(),
@@ -72,12 +77,17 @@ func HttpStarts(msg *events.Envelope) {
 
 func HttpStops(msg *events.Envelope) {
 	httpStop := msg.GetHttpStop()
+	appInfo := getAppInfo(fmt.Sprintf("%s", httpStop.GetApplicationId()))
 
 	log.WithFields(log.Fields{
 		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      httpStop.GetApplicationId(),
-		"cf_app_name":    getAppName(fmt.Sprintf("%s", httpStop.GetApplicationId())),
+		"cf_app_name":    appInfo.Name,
+		"cf_space_id":    appInfo.SpaceGuid,
+		"cf_space_name":  appInfo.SpaceName,
+		"cf_org_id":      appInfo.OrgGuid,
+		"cf_org_name":    appInfo.OrgName,
 		"content_length": httpStop.GetContentLength(),
 		"peer_type":      httpStop.GetPeerType(),
 		"request_id":     httpStop.GetRequestId(),
@@ -89,12 +99,17 @@ func HttpStops(msg *events.Envelope) {
 
 func HttpStartStops(msg *events.Envelope) {
 	httpStartStop := msg.GetHttpStartStop()
+	appInfo := getAppInfo(fmt.Sprintf("%s", httpStartStop.GetApplicationId()))
 
 	log.WithFields(log.Fields{
 		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStartStop.GetApplicationId(),
-		"cf_app_name":       getAppName(fmt.Sprintf("%s", httpStartStop.GetApplicationId())),
+		"cf_app_name":       appInfo.Name,
+		"cf_space_id":       appInfo.SpaceGuid,
+		"cf_space_name":     appInfo.SpaceName,
+		"cf_org_id":         appInfo.OrgGuid,
+		"cf_org_name":       appInfo.OrgName,
 		"content_length":    httpStartStop.GetContentLength(),
 		"instance_id":       httpStartStop.GetInstanceId(),
 		"instance_index":    httpStartStop.GetInstanceIndex(),
@@ -113,12 +128,17 @@ func HttpStartStops(msg *events.Envelope) {
 
 func LogMessages(msg *events.Envelope) {
 	logMessage := msg.GetLogMessage()
+	appInfo := getAppInfo(fmt.Sprintf("%s", logMessage.GetAppId()))
 
 	log.WithFields(log.Fields{
 		"event_type":      msg.GetEventType().String(),
 		"origin":          msg.GetOrigin(),
 		"cf_app_id":       logMessage.GetAppId(),
-		"cf_app_name":     getAppName(logMessage.GetAppId()),
+		"cf_app_name":     appInfo.Name,
+		"cf_space_id":     appInfo.SpaceGuid,
+		"cf_space_name":   appInfo.SpaceName,
+		"cf_org_id":       appInfo.OrgGuid,
+		"cf_org_name":     appInfo.OrgName,
 		"timestamp":       logMessage.GetTimestamp(),
 		"source_type":     logMessage.GetSourceType(),
 		"message_type":    logMessage.GetMessageType().String(),
@@ -163,12 +183,16 @@ func ErrorEvents(msg *events.Envelope) {
 
 func ContainerMetrics(msg *events.Envelope) {
 	containerMetric := msg.GetContainerMetric()
-
+	appInfo := getAppInfo(fmt.Sprintf("%s", containerMetric.GetApplicationId()))
 	log.WithFields(log.Fields{
 		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      containerMetric.GetApplicationId(),
-		"cf_app_name":    getAppName(fmt.Sprintf("%s", containerMetric.GetApplicationId())),
+		"cf_app_name":    appInfo.Name,
+		"cf_space_id":    appInfo.SpaceGuid,
+		"cf_space_name":  appInfo.SpaceName,
+		"cf_org_id":      appInfo.OrgGuid,
+		"cf_org_name":    appInfo.OrgName,
 		"cpu_percentage": containerMetric.GetCpuPercentage(),
 		"disk_bytes":     containerMetric.GetDiskBytes(),
 		"instance_index": containerMetric.GetInstanceIndex(),

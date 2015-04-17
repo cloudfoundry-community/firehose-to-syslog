@@ -155,7 +155,6 @@ func (c *Client) GetToken() string {
 	if c.config.Token == "" {
 		c.config.Token = c.getToken()
 	}
-
 	return c.config.Token
 }
 

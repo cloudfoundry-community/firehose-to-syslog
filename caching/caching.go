@@ -1,14 +1,19 @@
 package caching
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/boltdb/bolt"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
 )
 
 type App struct {
-	Name string
-	Guid string
+	Name      string
+	Guid      string
+	SpaceName string
+	SpaceGuid string
+	OrgName   string
+	OrgGuid   string
 }
 
 var gcfClient *cfClient.Client
@@ -23,7 +28,12 @@ func FillDatabase(listApps []App) {
 				return fmt.Errorf("create bucket: %s", err)
 			}
 
-			err = b.Put([]byte(app.Guid), []byte(app.Name))
+			serialize, err := json.Marshal(app)
+
+			if err != nil {
+				return fmt.Errorf("Error Marshaling data: %s", err)
+			}
+			err = b.Put([]byte(app.Guid), serialize)
 
 			if err != nil {
 				return fmt.Errorf("Error inserting data: %s", err)
@@ -38,7 +48,7 @@ func FillDatabase(listApps []App) {
 func GetAppByGuid(appGuid string) []App {
 	var apps []App
 	app := gcfClient.AppByGuid(appGuid)
-	apps = append(apps, App{app.Name, app.Guid})
+	apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
 	fmt.Println("Looking for ", appGuid)
 	FillDatabase(apps)
 	return apps
@@ -48,20 +58,25 @@ func GetAppByGuid(appGuid string) []App {
 func GetAllApp() []App {
 	var apps []App
 	for _, app := range gcfClient.ListApps() {
-		apps = append(apps, App{app.Name, app.Guid})
+		apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
 	}
 	FillDatabase(apps)
 	return apps
 }
 
-func GetAppName(appGuid string) string {
+func GetAppInfo(appGuid string) App {
 	var d []byte
+	var app App
 	appdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("AppBucket"))
 		d = b.Get([]byte(appGuid))
 		return nil
 	})
-	return string(d[:])
+	err := json.Unmarshal([]byte(d), &app)
+	if err != nil {
+		return App{}
+	}
+	return app
 }
 
 func SetCfClient(cfClient *cfClient.Client) {
