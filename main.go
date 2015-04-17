@@ -57,7 +57,6 @@ func main() {
 	ccPooling := time.NewTicker(*tickerTime)
 
 	go func() {
-		fmt.Println(ccPooling.C)
 		for range ccPooling.C {
 			caching.GetAllApp()
 

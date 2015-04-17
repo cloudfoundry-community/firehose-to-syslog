@@ -49,7 +49,6 @@ func GetAppByGuid(appGuid string) []App {
 	var apps []App
 	app := gcfClient.AppByGuid(appGuid)
 	apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
-	fmt.Println("Looking for ", appGuid)
 	FillDatabase(apps)
 	return apps
 
