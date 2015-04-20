@@ -34,8 +34,6 @@ func main() {
 	uaaEndpoint := fmt.Sprintf("https://uaa.%s", *domain)
 	dopplerEndpoint := fmt.Sprintf("wss://doppler.%s", *domain)
 
-	fmt.Println(apiEndpoint)
-
 	c := cfclient.Config{
 		ApiAddress:        apiEndpoint,
 		LoginAddress:      uaaEndpoint,
