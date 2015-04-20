@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/boltdb/bolt"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"gopkg.in/alecthomas/kingpin.v1"
+	"os"
+	"time"
 )
 
 var (
@@ -18,6 +22,8 @@ var (
 	password          = kingpin.Flag("password", "Admin password.").Default("admin").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
+	boldDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
+	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
 )
 
 func main() {
@@ -36,11 +42,38 @@ func main() {
 	}
 	cfClient := cfclient.NewClient(&c)
 
+	//Use bolt for in-memory  - file caching
+	db, err := bolt.Open(*boldDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening bolt db", err)
+		os.Exit(1)
+
+	}
+	defer db.Close()
+	caching.SetCfClient(cfClient)
+	caching.SetAppDb(db)
+
+	// Ticker Pooling the CC every X sec
+	ccPooling := time.NewTicker(*tickerTime)
+
+	go func() {
+		for range ccPooling.C {
+			caching.GetAllApp()
+
+		}
+
+	}()
+
 	selectedEvents := events.GetSelectedEvents(*wantedEvents)
 
 	logging.SetupLogging(*syslogServer, *debug)
 
+	//Let's Update the database the first time
+
+	caching.GetAllApp()
+
 	token := cfClient.GetToken()
+
 	firehose := firehose.CreateFirehoseChan(dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 
 	events.RouteEvents(firehose, selectedEvents)
