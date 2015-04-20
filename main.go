@@ -23,7 +23,7 @@ var (
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
 	boldDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
-	tickerTime        = kingpin.Flag("cc-pool-time", "CloudController Pooling time in sec").Default("60s").Duration()
+	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
 )
 
 func main() {
