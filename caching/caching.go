@@ -19,6 +19,18 @@ type App struct {
 var gcfClient *cfClient.Client
 var appdb *bolt.DB
 
+func CreateBucket() {
+	appdb.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("AppBucket"))
+		if err != nil {
+			return fmt.Errorf("create bucket: %s", err)
+		}
+		return nil
+
+	})
+
+}
+
 func FillDatabase(listApps []App) {
 
 	for _, app := range listApps {

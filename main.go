@@ -53,6 +53,7 @@ func main() {
 	defer db.Close()
 	caching.SetCfClient(cfClient)
 	caching.SetAppDb(db)
+	caching.CreateBucket()
 
 	// Ticker Pooling the CC every X sec
 	ccPooling := time.NewTicker(*tickerTime)
