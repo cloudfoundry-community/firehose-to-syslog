@@ -39,21 +39,22 @@ Flags:
   --user=admin      Admin user.
   --password=admin  Admin password.
   --skip-ssl-validation Please don\'t
-  --events=LogMessage Comma seperated list of events you would like.                 Valid options are HttpStart, HttpStop, Heartbeat,
-                        HttpStartStop, LogMessage, ValueMetric, CounterEvent, Error, ContainerMetric
+  --events=LogMessage Comma seperated list of events you would like. Valid options are HttpStart, HttpStop, Heartbeat, HttpStartStop, LogMessage, ValueMetric, CounterEvent, Error, ContainerMetric
   --boltdb-path='my.db' Bolt Database path
   --cc-pull-time=60s  CloudController Pooling time in sec
   --version           Show application version.
 ```
+# Event documentation
 
+See the [dropsonde protocol documentation](https://github.com/cloudfoundry/dropsonde-protocol/tree/master/events) for details on what data is sent as part of each event.
 
 # Caching 
 We use [boltdb](https://github.com/boltdb/bolt) for caching application name, org and space name.
 
-We have 2 caching strategy :
-*Pull all application data on start
-*Pull by application id if not cached yet
-*Pull every "cc-pull-time" all applications data
+We have 2 caching strategies:
+* Pull all application data on start
+* Pull by application id if not cached yet
+* Pull every "cc-pull-time" all applications data
 
 # To build
 
