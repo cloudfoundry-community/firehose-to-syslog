@@ -48,7 +48,7 @@ Flags:
 
 See the [dropsonde protocol documentation](https://github.com/cloudfoundry/dropsonde-protocol/tree/master/events) for details on what data is sent as part of each event.
 
-# Caching 
+# Caching
 We use [boltdb](https://github.com/boltdb/bolt) for caching application name, org and space name.
 
 We have 2 caching strategies:
@@ -78,10 +78,7 @@ We have 2 caching strategies:
 
 # Parsing the logs with Logstash
 
-There is a grok-pattern folder with a couple of filters for app
-and and routing logs. But I would strongy encourage to use
 [logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
-that provides >= functionality but in a nicer package.
 
 # Devel
 
