@@ -9,6 +9,7 @@ import (
 type AppResponse struct {
 	Count     int           `json:"total_results"`
 	Pages     int           `json:"total_pages"`
+	NextUrl   string        `json:"next_url"`
 	Resources []AppResource `json:"resources"`
 }
 
@@ -18,11 +19,11 @@ type AppResource struct {
 }
 
 type App struct {
-	Guid        string            `json:"guid"`
-	Name        string            `json:"name"`
-	Environment map[string]string `json:"environment_json"`
-	SpaceURL    string            `json:"space_url"`
-	SpaceData   SpaceResource     `json:"space"`
+	Guid        string                 `json:"guid"`
+	Name        string                 `json:"name"`
+	Environment map[string]interface{} `json:"environment_json"`
+	SpaceURL    string                 `json:"space_url"`
+	SpaceData   SpaceResource          `json:"space"`
 	c           *Client
 }
 
@@ -49,28 +50,38 @@ func (a *App) Space() Space {
 
 func (c *Client) ListApps() []App {
 	var apps []App
-	var appResp AppResponse
-	r := c.newRequest("GET", "/v2/apps?inline-relations-depth=2")
-	resp, err := c.doRequest(r)
 
-	if err != nil {
-		log.Printf("Error requesting apps %v", err)
-	}
-	resBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Error reading app request %v", resBody)
-	}
+	requestUrl := "/v2/apps?inline-relations-depth=2"
+	for {
+		var appResp AppResponse
+		r := c.newRequest("GET", requestUrl)
+		resp, err := c.doRequest(r)
 
-	err = json.Unmarshal(resBody, &appResp)
-	if err != nil {
-		log.Printf("Error unmarshaling app %v", err)
-	}
-	for _, app := range appResp.Resources {
-		app.Entity.Guid = app.Meta.Guid
-		app.Entity.SpaceData.Entity.Guid = app.Entity.SpaceData.Meta.Guid
-		app.Entity.SpaceData.Entity.OrgData.Entity.Guid = app.Entity.SpaceData.Entity.OrgData.Meta.Guid
-		app.Entity.c = c
-		apps = append(apps, app.Entity)
+		if err != nil {
+			log.Printf("Error requesting apps %v", err)
+		}
+		resBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Error reading app request %v", resBody)
+		}
+
+		err = json.Unmarshal(resBody, &appResp)
+		if err != nil {
+			log.Printf("Error unmarshaling app %v", err)
+		}
+
+		for _, app := range appResp.Resources {
+			app.Entity.Guid = app.Meta.Guid
+			app.Entity.SpaceData.Entity.Guid = app.Entity.SpaceData.Meta.Guid
+			app.Entity.SpaceData.Entity.OrgData.Entity.Guid = app.Entity.SpaceData.Entity.OrgData.Meta.Guid
+			app.Entity.c = c
+			apps = append(apps, app.Entity)
+		}
+
+		requestUrl = appResp.NextUrl
+		if requestUrl == "" {
+			break
+		}
 	}
 	return apps
 }
