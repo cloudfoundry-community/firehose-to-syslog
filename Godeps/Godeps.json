@@ -1,9 +1,9 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./...."
 	],
-	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -21,7 +21,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
-			"Rev": "e520742fddc795a4de088514593dd2d8f3749100"
+			"Rev": "b2e431669f61a5f16b27624daa1bba36fd994d6f"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
