@@ -1,25 +1,10 @@
 This nifty util aggregates all the events from the firehose feature in
 CloudFoundry.
 
-To make it work unless you want to run with the admin user, you will need the following in your CF manifest.
-
-```
-	uaa:
-		clients:
-			cf:
-				scope: '....,doppler.firehose'
-	scim:
-		users:
-			- firehoseuser|firehosepassword|doppler.firehose
-
-```
-
-Then you should be able to do this and get some nice logs.
-
 	./firehose-to-logstash \
 		--domain=cf.installation.domain.com \
-		--user=username \
-		--password=password \
+		--user=admin-username \
+		--password=admin-password \
 		--debug
 
 	{"cf_app_id":"e626413b-f1f8-436d-8963-c46f7cb345eb","cf_app_name":"php-diego-one","cf_org_id":"ebd95a83-5b6a-43ff-af67-a234ece3fb78","cf_org_name":"GWENN","cf_space_id":"a2e4c75b-fe02-4078-abfb-87539352aeac","cf_space_name":"GWENN-SPACE","cpu_percentage":1.4523587130944957,"disk_bytes":0,"event_type":"ContainerMetric","instance_index":0,"level":"info","memory_bytes":14110720,"msg":"","origin":"executor","time":"2015-04-17T13:59:52-07:00"}
@@ -51,17 +36,20 @@ See the [dropsonde protocol documentation](https://github.com/cloudfoundry/drops
 # Caching
 We use [boltdb](https://github.com/boltdb/bolt) for caching application name, org and space name.
 
-We have 2 caching strategies:
-* Pull all application data on start
-* Pull by application id if not cached yet
-* Pull every "cc-pull-time" all applications data
+We have 3 caching strategies:
+* Pull all application data on start.
+* Pull application data if not cached yet.
+* Pull all application data every "cc-pull-time".
 
-# To build
+# To test and build
 
 
     # Setup repo
     go get github.com/cloudfoundry-community/firehose-to-syslog
     cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
+
+    # Test
+	ginkgo -r .
 
     # Build binary
     godep go build
