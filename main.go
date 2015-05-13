@@ -75,8 +75,7 @@ func main() {
 	token := cfClient.GetToken()
 	firehose := firehose.CreateFirehoseChan(dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 
-	logging.SetupLogging(*syslogServer, *debug)
-
 	selectedEvents := events.GetSelectedEvents(*wantedEvents)
+	logging.SetupLogging(*syslogServer, *debug)
 	events.RouteEvents(firehose, selectedEvents)
 }
