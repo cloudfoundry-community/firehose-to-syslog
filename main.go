@@ -67,19 +67,16 @@ func main() {
 
 	}()
 
-	selectedEvents := events.GetSelectedEvents(*wantedEvents)
-
-	logging.SetupLogging(*syslogServer, *debug)
-
 	//Let's Update the database the first time
-
 	log.Println("Staring filling app/space/org cache.")
 	caching.GetAllApp()
 	log.Println("Done filling cache, I will now start processing events!")
 
 	token := cfClient.GetToken()
-
 	firehose := firehose.CreateFirehoseChan(dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
 
+	logging.SetupLogging(*syslogServer, *debug)
+
+	selectedEvents := events.GetSelectedEvents(*wantedEvents)
 	events.RouteEvents(firehose, selectedEvents)
 }
