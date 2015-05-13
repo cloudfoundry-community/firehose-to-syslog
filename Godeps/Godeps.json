@@ -1,41 +1,52 @@
 {
-	"ImportPath": "github.com/SpringerPE/firehose-to-syslog",
+	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./...."
+	],
 	"Deps": [
 		{
-			"ImportPath": "code.google.com/p/gogoprotobuf/proto",
-			"Rev": "5c5c9e5ec21508be656c201ec53c68cd882d36fb"
-		},
-		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.6.2-5-g7096056",
-			"Rev": "7096056d3cab4d7d11436441f5fc2935cb1cf58c"
+			"Comment": "v0.7.2-4-gcdd90c3",
+			"Rev": "cdd90c38c6e3718c731b555b9c3ed1becebec3ba"
 		},
 		{
 			"ImportPath": "github.com/alecthomas/units",
-			"Rev": "eaf541876f0d9e17c669524a99f6f585ba362fbd"
+			"Rev": "6b4e7dc5e3143b85ea77909c72caf89416fc2915"
+		},
+		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "v1.0-47-g4d30731",
+			"Rev": "4d30731e9122988d2012a9574c43f80f054a0d3b"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
+			"Rev": "b2e431669f61a5f16b27624daa1bba36fd994d6f"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "da595891ae163425fd8f7d23b2caa3c69c0edf2e"
+			"Rev": "9e379db26bbd042ec0202d9679ed8d753b64e0df"
+		},
+		{
+			"ImportPath": "github.com/gogo/protobuf/proto",
+			"Rev": "bc946d07d1016848dfd2507f90f0859c9471681e"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
-			"Rev": "9007e29a7c93fc3dcebbdbf742ce0efaf19e6510"
+			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
 		},
 		{
-			"ImportPath": "github.com/parnurzeal/gorequest",
-			"Comment": "v0.2.2-15-g1fbcea9",
-			"Rev": "1fbcea99088e51e74de0569c3446af6899b6fee2"
-		},
-		{
-			"ImportPath": "golang.org/x/net/publicsuffix",
+			"ImportPath": "golang.org/x/net/context",
 			"Rev": "7dbad50ab5b31073856416cdcfeb2796d682f844"
 		},
 		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "ec6d5d770f531108a6464462b2201b74fcd09314"
+		},
+		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v1",
-			"Comment": "v1.3.2",
-			"Rev": "261e7fbc88a2987695fb2240a6d8ec3ee15739c8"
+			"Comment": "v1.3.6",
+			"Rev": "55a69a226d28a43b913720f5d765706d49c8fa9e"
 		}
 	]
 }

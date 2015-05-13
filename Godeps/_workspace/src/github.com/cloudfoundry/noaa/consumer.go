@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"code.google.com/p/gogoprotobuf/proto"
 	noaa_errors "github.com/cloudfoundry/noaa/errors"
 	"github.com/cloudfoundry/noaa/events"
+	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
 )
 
@@ -73,7 +73,8 @@ func (cnsmr *Consumer) TailingLogsWithoutReconnect(appGuid string, authToken str
 	streamPath := fmt.Sprintf("/apps/%s/stream", appGuid)
 	errChan := make(chan error)
 	go func() {
-		errChan <- cnsmr.stream(streamPath, authToken, allEvents)
+		err := cnsmr.stream(streamPath, authToken, allEvents)
+		errChan <- err
 		close(errChan)
 	}()
 
@@ -167,55 +168,23 @@ func makeError(err error, code int32) *events.Envelope {
 //
 // The SortRecent method is provided to sort the data returned by this method.
 func (cnsmr *Consumer) RecentLogs(appGuid string, authToken string) ([]*events.LogMessage, error) {
-	trafficControllerUrl, err := url.ParseRequestURI(cnsmr.trafficControllerUrl)
+	resp, err := cnsmr.makeHttpRequestToTrafficController(appGuid, authToken, "recentlogs")
+
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error dialing traffic controller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (traffic controller endpoint is %s).", err.Error(), cnsmr.trafficControllerUrl))
+	}
+
+	defer resp.Body.Close()
+
+	err = checkForErrors(resp)
 	if err != nil {
 		return nil, err
 	}
 
-	scheme := "https"
-
-	if trafficControllerUrl.Scheme == "ws" {
-		scheme = "http"
-	}
-
-	recentPath := fmt.Sprintf("%s://%s/apps/%s/recentlogs", scheme, trafficControllerUrl.Host, appGuid)
-	transport := &http.Transport{Proxy: cnsmr.proxy, TLSClientConfig: cnsmr.tlsConfig}
-	client := &http.Client{Transport: transport}
-
-	req, _ := http.NewRequest("GET", recentPath, nil)
-	req.Header.Set("Authorization", authToken)
-
-	resp, err := client.Do(req)
+	reader, err := checkContentsAndFindBoundaries(resp)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error dialing traffic controller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (traffic controller endpoint is %s).", err.Error(), cnsmr.trafficControllerUrl))
+		return nil, err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusUnauthorized {
-		data, _ := ioutil.ReadAll(resp.Body)
-		return nil, noaa_errors.NewUnauthorizedError(string(data))
-	}
-
-	if resp.StatusCode == http.StatusBadRequest {
-		return nil, ErrBadRequest
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, ErrNotFound
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-
-	if len(strings.TrimSpace(contentType)) == 0 {
-		return nil, ErrBadResponse
-	}
-
-	matches := boundaryRegexp.FindStringSubmatch(contentType)
-
-	if len(matches) != 2 || len(strings.TrimSpace(matches[1])) == 0 {
-		return nil, ErrBadResponse
-	}
-
-	reader := multipart.NewReader(resp.Body, matches[1])
 
 	var buffer bytes.Buffer
 	messages := make([]*events.LogMessage, 0, 200)
@@ -235,6 +204,106 @@ func (cnsmr *Consumer) RecentLogs(appGuid string, authToken string) ([]*events.L
 	return messages, err
 }
 
+// ContainerMetrics connects to traffic controller via its 'containermetrics' http(s) endpoint and returns the most recent messages for an app.
+// The returned metrics will be sorted by InstanceIndex.
+func (cnsmr *Consumer) ContainerMetrics(appGuid string, authToken string) ([]*events.ContainerMetric, error) {
+	resp, err := cnsmr.makeHttpRequestToTrafficController(appGuid, authToken, "containermetrics")
+
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error dialing traffic controller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (traffic controller endpoint is %s).", err.Error(), cnsmr.trafficControllerUrl))
+	}
+
+	defer resp.Body.Close()
+
+	err = checkForErrors(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := checkContentsAndFindBoundaries(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var buffer bytes.Buffer
+	messages := make([]*events.ContainerMetric, 0, 200)
+
+	for part, loopErr := reader.NextPart(); loopErr == nil; part, loopErr = reader.NextPart() {
+		buffer.Reset()
+
+		msg := new(events.Envelope)
+		_, err := buffer.ReadFrom(part)
+		if err != nil {
+			break
+		}
+		proto.Unmarshal(buffer.Bytes(), msg)
+
+		if msg.GetEventType() == events.Envelope_LogMessage {
+			return []*events.ContainerMetric{}, errors.New(fmt.Sprintf("Upstream error: %s", msg.GetLogMessage().GetMessage()))
+		}
+
+		messages = append(messages, msg.GetContainerMetric())
+	}
+
+	SortContainerMetrics(messages)
+
+	return messages, err
+}
+
+func (cnsmr *Consumer) makeHttpRequestToTrafficController(appGuid string, authToken string, endpoint string) (*http.Response, error) {
+	trafficControllerUrl, err := url.ParseRequestURI(cnsmr.trafficControllerUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	scheme := "https"
+
+	if trafficControllerUrl.Scheme == "ws" {
+		scheme = "http"
+	}
+
+	recentPath := fmt.Sprintf("%s://%s/apps/%s/%s", scheme, trafficControllerUrl.Host, appGuid, endpoint)
+	transport := &http.Transport{Proxy: cnsmr.proxy, TLSClientConfig: cnsmr.tlsConfig}
+	client := &http.Client{Transport: transport}
+
+	req, _ := http.NewRequest("GET", recentPath, nil)
+	req.Header.Set("Authorization", authToken)
+
+	return client.Do(req)
+}
+
+func checkForErrors(resp *http.Response) error {
+	if resp.StatusCode == http.StatusUnauthorized {
+		data, _ := ioutil.ReadAll(resp.Body)
+		return noaa_errors.NewUnauthorizedError(string(data))
+	}
+
+	if resp.StatusCode == http.StatusBadRequest {
+		return ErrBadRequest
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func checkContentsAndFindBoundaries(resp *http.Response) (*multipart.Reader, error) {
+	contentType := resp.Header.Get("Content-Type")
+
+	if len(strings.TrimSpace(contentType)) == 0 {
+		return nil, ErrBadResponse
+	}
+
+	matches := boundaryRegexp.FindStringSubmatch(contentType)
+
+	if len(matches) != 2 || len(strings.TrimSpace(matches[1])) == 0 {
+		return nil, ErrBadResponse
+	}
+	reader := multipart.NewReader(resp.Body, matches[1])
+	return reader, nil
+}
+
 // Close terminates the websocket connection to traffic controller.
 func (cnsmr *Consumer) Close() error {
 	cnsmr.Lock()
@@ -243,6 +312,7 @@ func (cnsmr *Consumer) Close() error {
 		return errors.New("connection does not exist")
 	}
 
+	cnsmr.ws.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Time{})
 	return cnsmr.ws.Close()
 }
 
@@ -315,6 +385,7 @@ func (cnsmr *Consumer) establishWebsocketConnection(path string, authToken strin
 	}
 
 	if err != nil {
+
 		return nil, errors.New(fmt.Sprintf("Error dialing traffic controller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (traffic controller is %s).", err.Error(), cnsmr.trafficControllerUrl))
 	}
 

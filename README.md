@@ -1,55 +1,84 @@
-This nifty util aggregates all the routing logs and stdout/stderr from the applications via a the firehose and forwards it to syslog
-
-This is full of hacks and naughty stuff. To make it work you will need the following
-
-In your CF manifest
-
-```
-	uaa:
-		clients:
-			cf:
-				scope: '....,doppler.firehose'
-	scim:
-		users:
-			- firehoseuser|firehosepassword|doppler.firehose
-
-```
-
-Then you should be able to do this and get some nice logs.
+This nifty util aggregates all the events from the firehose feature in
+CloudFoundry.
 
 	./firehose-to-logstash \
-		--uaa-endpoint=https://uaa.domain.com/oauth/authorize \
-		--doppler-endpoint=wss://doppler.domain.com \
-		--syslog-server=syslogserver:syslogport \
-		--firehose-user=firehoseuser \
-		--firehose-password=firehosepassword \
+		--domain=cf.installation.domain.com \
+		--user=admin-username \
+		--password=admin-password \
 		--debug
 
-	{"cf_app_id":"d6d2ad15-39e9-427f-bdde-e047f7989304","level":"info","message_type":"OUT","msg":"16:27:05 INFO  c.s.i.e.QueuedEmailService :: Starting queued mail processing","source_instance":"0","source_type":"App","time":"2014-12-16T17:27:05+01:00"}
-	{"cf_app_id":"9f196e7c-133d-48a9-b905-4b3619e9126d","level":"info","message_type":"OUT","msg":"16:27:05 INFO  c.s.i.e.QueuedEmailService :: Starting queued mail processing","source_instance":"0","source_type":"App","time":"2014-12-16T17:27:05+01:00"}
-	{"cf_app_id":"9f196e7c-133d-48a9-b905-4b3619e9126d","level":"info","message_type":"OUT","msg":"16:27:05 WARN  c.s.i.e.QueuedEmailService :: Cannot process mail as there is a lock in place","source_instance":"1","source_type":"App","time":"2014-12-16T17:27:05+01:00"}
-	{"cf_app_id":"cf72f41b-f0e3-40dc-8c10-1b45262bd1f8","level":"info","message_type":"OUT","msg":"wakawakwaka.domain.com - [16/12/2014:16:27:05 +0000] \"GET /internal/status HTTP/1.1\" 200 6 \"-\" \"-\" xx.yy.zz.yy:36146 x_forwarded_for:\"xx.yy.zz.qq\" vcap_request_id:547ce74f-226a-44cc-4f69-9d41e75fe77a response_time:0.004542139 app_id:cf72f41b-f0e3-40dc-8c10-1b45262bd1f8\n","source_instance":"0","source_type":"RTR","time":"2014-12-16T17:27:05+01:00"}
+	{"cf_app_id":"e626413b-f1f8-436d-8963-c46f7cb345eb","cf_app_name":"php-diego-one","cf_org_id":"ebd95a83-5b6a-43ff-af67-a234ece3fb78","cf_org_name":"GWENN","cf_space_id":"a2e4c75b-fe02-4078-abfb-87539352aeac","cf_space_name":"GWENN-SPACE","cpu_percentage":1.4523587130944957,"disk_bytes":0,"event_type":"ContainerMetric","instance_index":0,"level":"info","memory_bytes":14110720,"msg":"","origin":"executor","time":"2015-04-17T13:59:52-07:00"}
 
-# To build
+# Options
+
+```
+usage: firehose-to-syslog [<flags>]
+
+Flags:
+  --help              Show help.
+  --debug             Enable debug mode. This disables forwarding to syslog
+  --domain="10.244.0.34.xip.io" Domain of your CF installation.
+  --syslog-server=SYSLOG-SERVER
+                      Syslog server.
+  --subscription-id=firehose  Id for the subscription.
+  --user=admin      Admin user.
+  --password=admin  Admin password.
+  --skip-ssl-validation Please don\'t
+  --events=LogMessage Comma seperated list of events you would like. Valid options are HttpStart, HttpStop, Heartbeat, HttpStartStop, LogMessage, ValueMetric, CounterEvent, Error, ContainerMetric
+  --boltdb-path='my.db' Bolt Database path
+  --cc-pull-time=60s  CloudController Pooling time in sec
+  --version           Show application version.
+```
+# Event documentation
+
+See the [dropsonde protocol documentation](https://github.com/cloudfoundry/dropsonde-protocol/tree/master/events) for details on what data is sent as part of each event.
+
+# Caching
+We use [boltdb](https://github.com/boltdb/bolt) for caching application name, org and space name.
+
+We have 3 caching strategies:
+* Pull all application data on start.
+* Pull application data if not cached yet.
+* Pull all application data every "cc-pull-time".
+
+# To test and build
+
 
     # Setup repo
-    go get github.com/SpringerPE/firehose-to-syslog
-    cd $GOPATH/src/github.com/SpringerPE/firehose-to-syslog
+    go get github.com/cloudfoundry-community/firehose-to-syslog
+    cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
+
+    # Test
+	ginkgo -r .
 
     # Build binary
     godep go build
 
-# Run with Docker
+# Deploy with Bosh
 
-	sudo docker run --restart=always -d springerplatformengineering/firehose-to-logstash --uaa-endpoint=https://uaa..... --doppler-endpoint=wss://doppler.... --syslog-server=syslog-blablabla:port
+[logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
+
+# Run agains a bosh-lite CF deployment
+
+    godep go run main.go \
+		--debug \
+		--skip-ssl-validation
+
+# Parsing the logs with Logstash
+
+[logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
 
 # Devel
-1. Code away, not on master plz, use feature branches.
-2. When merging into master
-   * Make sure repo is clean
-   * Node down the current commit
-   * update the version following semantic versioning in format
-   ```
-   x.y.z - git-commit-from-above
-   ```
-   * Build, commit and tag with version number.
+
+This is a
+[Git Flow](http://nvie.com/posts/a-successful-git-branching-model/)
+project. Please fork and branch your features from develop.
+
+# Contributors
+
+* [Ed King](https://github.com/teddyking) - Added support to skip ssl
+validation.
+* [Mark Alston](https://github.com/malston) - Added support for more
+  events and general code cleaup.
+* [Etourneau Gwenn](https://github.com/shinji62) - Added validation of
+  selected events and general code cleanup, caching system..

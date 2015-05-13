@@ -1,98 +1,82 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/Sirupsen/logrus/hooks/syslog"
-	"github.com/SpringerPE/firehose-to-syslog/token"
-	"github.com/cloudfoundry/noaa"
-	"github.com/cloudfoundry/noaa/events"
+	"github.com/boltdb/bolt"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
+	"github.com/cloudfoundry-community/firehose-to-syslog/events"
+	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
+	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"gopkg.in/alecthomas/kingpin.v1"
-	"io/ioutil"
-	"log/syslog"
+	"log"
 	"os"
+	"time"
 )
 
 var (
 	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Bool()
-	uaaEndpoint       = kingpin.Flag("uaa-endpoint", "UAA endpoint.").Required().String()
-	dopplerEndpoint   = kingpin.Flag("doppler-endpoint", "UAA endpoint.").Required().String()
+	domain            = kingpin.Flag("domain", "Domain of your CF installation.").Default("10.244.0.34.xip.io").String()
 	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").String()
 	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
-	firehoseUser      = kingpin.Flag("firehose-user", "User with firehose permissions.").Default("doppler").String()
-	firehosePassword  = kingpin.Flag("firehose-password", "Password for firehose user.").Default("doppler").String()
+	user              = kingpin.Flag("user", "Admin user.").Default("admin").String()
+	password          = kingpin.Flag("password", "Admin password.").Default("admin").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
+	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
+	boldDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
+	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
 )
 
-func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
-	connection := noaa.NewConsumer(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
-	msgChan := make(chan *events.Envelope)
-	go func() {
-		errorChan := make(chan error)
-		defer close(msgChan)
-		defer close(errorChan)
-
-		go connection.Firehose(subId, Token, msgChan, errorChan, nil)
-
-		for err := range errorChan {
-			fmt.Fprintf(os.Stderr, "%v\n", err.Error())
-		}
-	}()
-	return msgChan
-}
-
-func FilterEvents(in chan *events.Envelope) chan *events.Envelope {
-	out := make(chan *events.Envelope)
-	go func() {
-		defer close(out)
-		for msg := range in {
-			switch msg.GetEventType().String() {
-			case "LogMessage":
-				out <- msg
-			}
-		}
-	}()
-	return out
-}
-
-func Logger(in chan *events.Envelope) {
-	for msg := range in {
-		logmsg := msg.GetLogMessage()
-		app_id := logmsg.GetAppId()
-
-		log.WithFields(log.Fields{
-			"cf_app_id":       app_id,
-			"source_type":     logmsg.GetSourceType(),
-			"message_type":    logmsg.GetMessageType().String(),
-			"source_instance": logmsg.GetSourceInstance(),
-		}).Info(string(logmsg.GetMessage()))
-	}
-}
-
-func setupLogging(syslogServer string, debug bool) {
-	log.SetFormatter(&log.JSONFormatter{})
-	if !debug {
-		log.SetOutput(ioutil.Discard)
-	}
-	if syslogServer != "" {
-		hook, err := logrus_syslog.NewSyslogHook("tcp", syslogServer, syslog.LOG_INFO, "doppler")
-		if err != nil {
-			log.Error("Unable to connect to syslog server.")
-		} else {
-			log.AddHook(hook)
-		}
-	}
-}
-
 func main() {
-	kingpin.Version("0.0.2 - ba541ca")
+	kingpin.Version("0.1.0 - f3d31bd")
 	kingpin.Parse()
 
-	setupLogging(*syslogServer, *debug)
-	token := token.GetToken(*uaaEndpoint, *firehoseUser, *firehosePassword, *skipSSLValidation)
+	apiEndpoint := fmt.Sprintf("https://api.%s", *domain)
+	uaaEndpoint := fmt.Sprintf("https://uaa.%s", *domain)
+	dopplerEndpoint := fmt.Sprintf("wss://doppler.%s", *domain)
 
-	firehose := CreateFirehoseChan(*dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
-	logs := FilterEvents(firehose)
-	Logger(logs)
+	c := cfclient.Config{
+		ApiAddress:        apiEndpoint,
+		LoginAddress:      uaaEndpoint,
+		Username:          *user,
+		Password:          *password,
+		SkipSslValidation: *skipSSLValidation,
+	}
+	cfClient := cfclient.NewClient(&c)
+
+	//Use bolt for in-memory  - file caching
+	db, err := bolt.Open(*boldDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		log.Fatal("Error opening bolt db: ", err)
+		os.Exit(1)
+
+	}
+	defer db.Close()
+	caching.SetCfClient(cfClient)
+	caching.SetAppDb(db)
+	caching.CreateBucket()
+
+	// Ticker Pooling the CC every X sec
+	ccPooling := time.NewTicker(*tickerTime)
+
+	go func() {
+		for range ccPooling.C {
+			caching.GetAllApp()
+
+		}
+
+	}()
+
+	//Let's Update the database the first time
+	log.Println("Staring filling app/space/org cache.")
+	caching.GetAllApp()
+	log.Println("Done filling cache, I will now start processing events!")
+
+	token := cfClient.GetToken()
+	firehose := firehose.CreateFirehoseChan(dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
+
+	logging.SetupLogging(*syslogServer, *debug)
+
+	selectedEvents := events.GetSelectedEvents(*wantedEvents)
+	events.RouteEvents(firehose, selectedEvents)
 }
