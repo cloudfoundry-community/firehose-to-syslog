@@ -1,5 +1,4 @@
-firehose-to-syslog
+firehose-to-syslog-*
 .#*
 \#*
 my.db
-start-firehose.sh
