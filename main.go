@@ -28,7 +28,7 @@ var (
 )
 
 func main() {
-	kingpin.Version("0.0.2 - ba541ca")
+	kingpin.Version("0.1.0 - f3d31bd")
 	kingpin.Parse()
 
 	apiEndpoint := fmt.Sprintf("https://api.%s", *domain)
