@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"gopkg.in/alecthomas/kingpin.v1"
+	"log"
 	"os"
 	"time"
 )
@@ -46,7 +47,7 @@ func main() {
 	//Use bolt for in-memory  - file caching
 	db, err := bolt.Open(*boldDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error opening bolt db", err)
+		log.Fatal("Error opening bolt db: ", err)
 		os.Exit(1)
 
 	}
@@ -72,7 +73,9 @@ func main() {
 
 	//Let's Update the database the first time
 
+	log.Println("Staring filling app/space/org cache.")
 	caching.GetAllApp()
+	log.Println("Done filling cache, I will now start processing events!")
 
 	token := cfClient.GetToken()
 
