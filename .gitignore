@@ -1,4 +1,7 @@
 firehose-to-syslog*
+events/events.test
+.project
+*.swp
 .#*
 \#*
 my.db

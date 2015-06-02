@@ -1,65 +1,74 @@
 package events
 
 import (
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
+	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry/noaa/events"
-	"os"
 	"strings"
 )
 
 type Event struct {
 	Fields logrus.Fields
 	Msg    string
+	Type   string
 }
 
-func RouteEvents(in chan *events.Envelope, selectedEvents map[string]bool) {
-	for msg := range in {
-		eventType := msg.GetEventType()
-		if selectedEvents[eventType.String()] {
-			var event Event
-			switch eventType {
-			case events.Envelope_Heartbeat:
-				event = Heartbeat(msg)
-			case events.Envelope_HttpStart:
-				event = HttpStart(msg)
-			case events.Envelope_HttpStop:
-				event = HttpStop(msg)
-			case events.Envelope_HttpStartStop:
-				event = HttpStartStop(msg)
-			case events.Envelope_LogMessage:
-				event = LogMessage(msg)
-			case events.Envelope_ValueMetric:
-				event = ValueMetric(msg)
-			case events.Envelope_CounterEvent:
-				event = CounterEvent(msg)
-			case events.Envelope_Error:
-				event = ErrorEvent(msg)
-			case events.Envelope_ContainerMetric:
-				event = ContainerMetric(msg)
-			}
+var selectedEvents map[string]bool
 
-			event.AnnotateWithAppData()
-			event.Log()
-		}
+func RouteEvents(in chan *events.Envelope) {
+	for msg := range in {
+		routeEvent(msg)
 	}
 }
 
-func GetSelectedEvents(wantedEvents string) map[string]bool {
-	selectedEvents := make(map[string]bool)
+func routeEvent(msg *events.Envelope) {
+
+	eventType := msg.GetEventType()
+
+	if selectedEvents[eventType.String()] {
+		var event Event
+		switch eventType {
+		case events.Envelope_Heartbeat:
+			event = Heartbeat(msg)
+		case events.Envelope_HttpStart:
+			event = HttpStart(msg)
+		case events.Envelope_HttpStop:
+			event = HttpStop(msg)
+		case events.Envelope_HttpStartStop:
+			event = HttpStartStop(msg)
+		case events.Envelope_LogMessage:
+			event = LogMessage(msg)
+		case events.Envelope_ValueMetric:
+			event = ValueMetric(msg)
+		case events.Envelope_CounterEvent:
+			event = CounterEvent(msg)
+		case events.Envelope_Error:
+			event = ErrorEvent(msg)
+		case events.Envelope_ContainerMetric:
+			event = ContainerMetric(msg)
+		}
+
+		event.AnnotateWithAppData()
+		event.ShipEvent()
+	}
+}
+
+func SetupEventRouting(wantedEvents string) {
+	selectedEvents = make(map[string]bool)
 	for _, event := range strings.Split(wantedEvents, ",") {
 		if isAuthorizedEvent(event) {
 			selectedEvents[event] = true
+			log.LogStd(fmt.Sprintf("Event Type [%s] is included in the fireshose!", event), false)
 		} else {
-			fmt.Fprintf(os.Stderr, "Rejected Event Name %s\n", event)
+			log.LogError(fmt.Sprintf("Rejected Event Name [%s] - See wanted/selected events arg. Check Your Command Line Arguments!", event), "")
 		}
 	}
 	// If any event is not authorize we fallback to the default one
 	if len(selectedEvents) < 1 {
 		selectedEvents["LogMessage"] = true
 	}
-	return selectedEvents
 }
 
 func isAuthorizedEvent(wantedEvent string) bool {
@@ -92,18 +101,25 @@ func getAppInfo(appGuid string) caching.App {
 func Heartbeat(msg *events.Envelope) Event {
 	heartbeat := msg.GetHeartbeat()
 
+	var avail uint64
+
+	if heartbeat.GetSentCount() > 0 {
+		avail = heartbeat.GetReceivedCount() / heartbeat.GetSentCount()
+	}
+
 	fields := logrus.Fields{
 		"ctl_msg_id":     heartbeat.GetControlMessageIdentifier(),
 		"error_count":    heartbeat.GetErrorCount(),
-		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"received_count": heartbeat.GetReceivedCount(),
 		"sent_count":     heartbeat.GetSentCount(),
+		"availability":   avail,
 	}
 
 	return Event{
 		Fields: fields,
 		Msg:    "",
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -111,7 +127,6 @@ func HttpStart(msg *events.Envelope) Event {
 	httpStart := msg.GetHttpStart()
 
 	fields := logrus.Fields{
-		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStart.GetApplicationId(),
 		"instance_id":       httpStart.GetInstanceId(),
@@ -129,6 +144,7 @@ func HttpStart(msg *events.Envelope) Event {
 	return Event{
 		Fields: fields,
 		Msg:    "",
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -136,7 +152,6 @@ func HttpStop(msg *events.Envelope) Event {
 	httpStop := msg.GetHttpStop()
 
 	fields := logrus.Fields{
-		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      httpStop.GetApplicationId(),
 		"content_length": httpStop.GetContentLength(),
@@ -150,6 +165,7 @@ func HttpStop(msg *events.Envelope) Event {
 	return Event{
 		Fields: fields,
 		Msg:    "",
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -157,7 +173,6 @@ func HttpStartStop(msg *events.Envelope) Event {
 	httpStartStop := msg.GetHttpStartStop()
 
 	fields := logrus.Fields{
-		"event_type":        msg.GetEventType().String(),
 		"origin":            msg.GetOrigin(),
 		"cf_app_id":         httpStartStop.GetApplicationId(),
 		"content_length":    httpStartStop.GetContentLength(),
@@ -173,11 +188,13 @@ func HttpStartStop(msg *events.Envelope) Event {
 		"stop_timestamp":    httpStartStop.GetStopTimestamp(),
 		"uri":               httpStartStop.GetUri(),
 		"user_agent":        httpStartStop.GetUserAgent(),
+		"duration_ms":       (((httpStartStop.GetStopTimestamp() - httpStartStop.GetStartTimestamp()) / 1000) / 1000),
 	}
 
 	return Event{
 		Fields: fields,
 		Msg:    "",
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -185,7 +202,6 @@ func LogMessage(msg *events.Envelope) Event {
 	logMessage := msg.GetLogMessage()
 
 	fields := logrus.Fields{
-		"event_type":      msg.GetEventType().String(),
 		"origin":          msg.GetOrigin(),
 		"cf_app_id":       logMessage.GetAppId(),
 		"timestamp":       logMessage.GetTimestamp(),
@@ -197,6 +213,7 @@ func LogMessage(msg *events.Envelope) Event {
 	return Event{
 		Fields: fields,
 		Msg:    string(logMessage.GetMessage()),
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -204,16 +221,16 @@ func ValueMetric(msg *events.Envelope) Event {
 	valMetric := msg.GetValueMetric()
 
 	fields := logrus.Fields{
-		"event_type": msg.GetEventType().String(),
-		"origin":     msg.GetOrigin(),
-		"name":       valMetric.GetName(),
-		"unit":       valMetric.GetUnit(),
-		"value":      valMetric.GetValue(),
+		"origin": msg.GetOrigin(),
+		"name":   valMetric.GetName(),
+		"unit":   valMetric.GetUnit(),
+		"value":  valMetric.GetValue(),
 	}
 
 	return Event{
 		Fields: fields,
 		Msg:    "",
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -221,16 +238,16 @@ func CounterEvent(msg *events.Envelope) Event {
 	counterEvent := msg.GetCounterEvent()
 
 	fields := logrus.Fields{
-		"event_type": msg.GetEventType().String(),
-		"origin":     msg.GetOrigin(),
-		"name":       counterEvent.GetName(),
-		"delta":      counterEvent.GetDelta(),
-		"total":      counterEvent.GetTotal(),
+		"origin": msg.GetOrigin(),
+		"name":   counterEvent.GetName(),
+		"delta":  counterEvent.GetDelta(),
+		"total":  counterEvent.GetTotal(),
 	}
 
 	return Event{
 		Fields: fields,
 		Msg:    "",
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -238,15 +255,15 @@ func ErrorEvent(msg *events.Envelope) Event {
 	errorEvent := msg.GetError()
 
 	fields := logrus.Fields{
-		"event_type": msg.GetEventType().String(),
-		"origin":     msg.GetOrigin(),
-		"code":       errorEvent.GetCode(),
-		"delta":      errorEvent.GetSource(),
+		"origin": msg.GetOrigin(),
+		"code":   errorEvent.GetCode(),
+		"delta":  errorEvent.GetSource(),
 	}
 
 	return Event{
 		Fields: fields,
 		Msg:    errorEvent.GetMessage(),
+		Type:   msg.GetEventType().String(),
 	}
 }
 
@@ -254,7 +271,6 @@ func ContainerMetric(msg *events.Envelope) Event {
 	containerMetric := msg.GetContainerMetric()
 
 	fields := logrus.Fields{
-		"event_type":     msg.GetEventType().String(),
 		"origin":         msg.GetOrigin(),
 		"cf_app_id":      containerMetric.GetApplicationId(),
 		"cpu_percentage": containerMetric.GetCpuPercentage(),
@@ -266,13 +282,23 @@ func ContainerMetric(msg *events.Envelope) Event {
 	return Event{
 		Fields: fields,
 		Msg:    "",
+		Type:   msg.GetEventType().String(),
 	}
 }
 
 func (e *Event) AnnotateWithAppData() {
+
 	cf_app_id := e.Fields["cf_app_id"]
-	if cf_app_id != nil && cf_app_id != "" {
-		appInfo := getAppInfo(fmt.Sprintf("%s", cf_app_id))
+	appGuid := ""
+	if cf_app_id != nil {
+		appGuid = fmt.Sprintf("%s", cf_app_id)
+	}
+
+	e.Fields["cf_origin"] = "firehose"
+	e.Fields["event_type"] = e.Type
+
+	if cf_app_id != nil && appGuid != "<nil>" {
+		appInfo := getAppInfo(appGuid)
 		cf_app_name := appInfo.Name
 		cf_space_id := appInfo.SpaceGuid
 		cf_space_name := appInfo.SpaceName
@@ -301,6 +327,13 @@ func (e *Event) AnnotateWithAppData() {
 	}
 }
 
-func (e Event) Log() {
+func (e Event) ShipEvent() {
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.LogError("Recovered in event.Log()", r)
+		}
+	}()
+
 	logrus.WithFields(e.Fields).Info(e.Msg)
 }

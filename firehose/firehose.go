@@ -2,25 +2,39 @@ package firehose
 
 import (
 	"crypto/tls"
-	"fmt"
+	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/noaa"
 	"github.com/cloudfoundry/noaa/events"
-	"os"
 )
 
 func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
 	connection := noaa.NewConsumer(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
+
+	connection.SetDebugPrinter(ConsoleDebugPrinter{})
+
 	msgChan := make(chan *events.Envelope)
 	go func() {
 		errorChan := make(chan error)
 		defer close(msgChan)
-		defer close(errorChan)
+
+		defer func() {
+			if r := recover(); r != nil {
+				log.LogError("Recovered in CreateFirehoseChan Thread!", r)
+			}
+		}()
 
 		go connection.Firehose(subId, Token, msgChan, errorChan, nil)
 
 		for err := range errorChan {
-			fmt.Fprintf(os.Stderr, "%v\n", err.Error())
+			log.LogError("Firehose Error!", err.Error())
 		}
 	}()
 	return msgChan
+}
+
+type ConsoleDebugPrinter struct{}
+
+func (c ConsoleDebugPrinter) Print(title, dump string) {
+	log.LogStd(title, false)
+	log.LogStd(dump, false)
 }
