@@ -23,7 +23,7 @@ var (
 	password          = kingpin.Flag("password", "Admin password.").Default("admin").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Bool()
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
-	boldDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
+	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
 )
 
@@ -35,6 +35,8 @@ func main() {
 	uaaEndpoint := fmt.Sprintf("https://uaa.%s", *domain)
 	dopplerEndpoint := fmt.Sprintf("wss://doppler.%s", *domain)
 
+	logging.SetupLogging(*syslogServer, *debug)
+
 	c := cfclient.Config{
 		ApiAddress:        apiEndpoint,
 		LoginAddress:      uaaEndpoint,
@@ -45,37 +47,49 @@ func main() {
 	cfClient := cfclient.NewClient(&c)
 
 	//Use bolt for in-memory  - file caching
-	db, err := bolt.Open(*boldDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	db, err := bolt.Open(*boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		log.Fatal("Error opening bolt db: ", err)
 		os.Exit(1)
 
 	}
 	defer db.Close()
+
 	caching.SetCfClient(cfClient)
 	caching.SetAppDb(db)
 	caching.CreateBucket()
+
+	//Let's Update the database the first time
+	logging.LogStd("Start filling app/space/org cache.", true)
+	apps := caching.GetAllApp()
+	logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
+
+	logging.LogStd("Setting up event routing!", true)
+	events.SetupEventRouting(*wantedEvents)
 
 	// Ticker Pooling the CC every X sec
 	ccPooling := time.NewTicker(*tickerTime)
 
 	go func() {
 		for range ccPooling.C {
-			caching.GetAllApp()
-
+			apps = caching.GetAllApp()
 		}
-
 	}()
 
-	//Let's Update the database the first time
-	log.Println("Staring filling app/space/org cache.")
-	caching.GetAllApp()
-	log.Println("Done filling cache, I will now start processing events!")
+	if logging.Connect() {
 
-	token := cfClient.GetToken()
-	firehose := firehose.CreateFirehoseChan(dopplerEndpoint, token, *subscriptionId, *skipSSLValidation)
+		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
 
-	selectedEvents := events.GetSelectedEvents(*wantedEvents)
-	logging.SetupLogging(*syslogServer, *debug)
-	events.RouteEvents(firehose, selectedEvents)
+		firehose := firehose.CreateFirehoseChan(dopplerEndpoint, cfClient.GetToken(), *subscriptionId, *skipSSLValidation)
+		if firehose != nil {
+			logging.LogStd("Firehose Subscription Succesfull! Routing events...", true)
+			events.RouteEvents(firehose)
+		} else {
+			logging.LogError("Failed connecting to Firehose...Please check settings and try again!", "")
+		}
+
+	} else {
+		logging.LogError("Failed connecting to the Syslog Server...Please check settings and try again!", "")
+	}
+
 }
