@@ -76,7 +76,7 @@ func main() {
 		}
 	}()
 
-	if logging.Connect() {
+	if logging.Connect() || *debug {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
 

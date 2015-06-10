@@ -2,9 +2,9 @@ package caching
 
 import (
 	"encoding/json"
-	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"fmt"
 	"github.com/boltdb/bolt"
+	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
 )
 
@@ -79,7 +79,7 @@ func GetAllApp() []App {
 	}()
 
 	for _, app := range gcfClient.ListApps() {
-		log.LogStd(fmt.Sprintf("App [%s] Found...\n", app.Name), false)
+		log.LogStd(fmt.Sprintf("App [%s] Found...", app.Name), false)
 		apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
 	}
 
