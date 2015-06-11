@@ -18,6 +18,7 @@ Flags:
   --help              Show help.
   --debug             Enable debug mode. This disables forwarding to syslog
   --domain="10.244.0.34.xip.io" Domain of your CF installation.
+  --doppler-port=443  Port used by doppler/loggregator in your CF installation.
   --syslog-server=SYSLOG-SERVER
                       Syslog server.
   --subscription-id=firehose  Id for the subscription.
