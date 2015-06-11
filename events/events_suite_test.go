@@ -19,14 +19,16 @@ var _ = Describe("Events", func() {
 		Context("called with a empty list", func() {
 			It("should return a hash of only the default event", func() {
 				expected := map[string]bool{"LogMessage": true}
-				Expect(events.GetSelectedEvents("")).To(Equal(expected))
+				events.SetupEventRouting("")
+				Expect(events.GetSelectedEvents()).To(Equal(expected))
 			})
 		})
 
 		Context("called with a list of bogus event names", func() {
 			It("should return a hash of only the default event", func() {
 				expected := map[string]bool{"LogMessage": true}
-				Expect(events.GetSelectedEvents("bogus,bogus1")).To(Equal(expected))
+				events.SetupEventRouting("bogus,bogus1")
+				Expect(events.GetSelectedEvents()).To(Equal(expected))
 			})
 		})
 
@@ -36,7 +38,8 @@ var _ = Describe("Events", func() {
 					"HttpStartStop": true,
 					"CounterEvent":  true,
 				}
-				Expect(events.GetSelectedEvents("bogus,HttpStartStop,bogus1,CounterEvent")).To(Equal(expected))
+				events.SetupEventRouting("bogus,HttpStartStop,bogus1,CounterEvent")
+				Expect(events.GetSelectedEvents()).To(Equal(expected))
 			})
 		})
 	})
@@ -69,7 +72,6 @@ var _ = Describe("Events", func() {
 		Context("given a envelope", func() {
 			It("should give us what we want", func() {
 				event := events.LogMessage(envelope)
-				Expect(event.Fields["event_type"]).To(Equal("LogMessage"))
 				Expect(event.Fields["origin"]).To(Equal(origin))
 				Expect(event.Fields["cf_app_id"]).To(Equal(appID))
 				Expect(event.Fields["timestamp"]).To(Equal(posixStart))
@@ -93,8 +95,8 @@ var _ = Describe("Events", func() {
 
 		Context("called with Fields set to logrus.Fields", func() {
 			It("should do nothing", func() {
-				event := events.Event{logrus.Fields{}, ""}
-				wanted := events.Event{logrus.Fields{}, ""}
+				event := events.Event{logrus.Fields{}, "", "log"}
+				wanted := events.Event{logrus.Fields{}, "", "log"}
 				event.AnnotateWithAppData()
 				Expect(event).To(Equal(wanted))
 			})
@@ -102,8 +104,8 @@ var _ = Describe("Events", func() {
 
 		Context("called with empty cf_app_id", func() {
 			It("should do nothing", func() {
-				event := events.Event{logrus.Fields{"cf_app_id": ""}, ""}
-				wanted := events.Event{logrus.Fields{"cf_app_id": ""}, ""}
+				event := events.Event{logrus.Fields{"cf_app_id": ""}, "", "log"}
+				wanted := events.Event{logrus.Fields{"cf_app_id": ""}, "", "log"}
 				event.AnnotateWithAppData()
 				Expect(event).To(Equal(wanted))
 			})

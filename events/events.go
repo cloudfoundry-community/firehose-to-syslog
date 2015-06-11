@@ -1,10 +1,10 @@
 package events
 
 import (
-	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
-	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
+	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/noaa/events"
 	"strings"
 )
@@ -21,6 +21,10 @@ func RouteEvents(in chan *events.Envelope) {
 	for msg := range in {
 		routeEvent(msg)
 	}
+}
+
+func GetSelectedEvents() map[string]bool {
+	return selectedEvents
 }
 
 func routeEvent(msg *events.Envelope) {
@@ -294,10 +298,7 @@ func (e *Event) AnnotateWithAppData() {
 		appGuid = fmt.Sprintf("%s", cf_app_id)
 	}
 
-	e.Fields["cf_origin"] = "firehose"
-	e.Fields["event_type"] = e.Type
-
-	if cf_app_id != nil && appGuid != "<nil>" {
+	if cf_app_id != nil && appGuid != "<nil>" && cf_app_id != "" {
 		appInfo := getAppInfo(appGuid)
 		cf_app_name := appInfo.Name
 		cf_space_id := appInfo.SpaceGuid
@@ -324,6 +325,8 @@ func (e *Event) AnnotateWithAppData() {
 		if cf_org_name != "" {
 			e.Fields["cf_org_name"] = cf_org_name
 		}
+		e.Fields["cf_origin"] = "firehose"
+		e.Fields["event_type"] = e.Type
 	}
 }
 
