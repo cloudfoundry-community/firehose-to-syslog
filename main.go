@@ -16,7 +16,8 @@ import (
 
 var (
 	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Default("false").Bool()
-	domain            = kingpin.Flag("domain", "Domain of your CF installation.").Default("10.244.0.34.xip.io").String()
+	apiEndpoint       = kingpin.Flag("api-address", "Api endpoint address.").Default("https://api.10.244.0.34.xip.io").String()
+	dopplerAddress    = kingpin.Flag("doppler-address", "Overwrite default doppler endpoint return by /v2/info").String()
 	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").String()
 	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
 	user              = kingpin.Flag("user", "Admin user.").Default("admin").String()
@@ -27,24 +28,30 @@ var (
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
 )
 
-func main() {
-	kingpin.Version("0.1.0 - f3d31bd")
-	kingpin.Parse()
+const (
+	version = "0.1.0 - f3d31bd"
+)
 
-	apiEndpoint := fmt.Sprintf("https://api.%s", *domain)
-	uaaEndpoint := fmt.Sprintf("https://uaa.%s", *domain)
-	dopplerEndpoint := fmt.Sprintf("wss://doppler.%s", *domain)
+func main() {
+	kingpin.Version(version)
+	kingpin.Parse()
+	logging.LogStd(fmt.Sprintf("Starting firehose-to-syslog %s ", version), true)
 
 	logging.SetupLogging(*syslogServer, *debug)
 
 	c := cfclient.Config{
-		ApiAddress:        apiEndpoint,
-		LoginAddress:      uaaEndpoint,
+		ApiAddress:        *apiEndpoint,
 		Username:          *user,
 		Password:          *password,
 		SkipSslValidation: *skipSSLValidation,
 	}
 	cfClient := cfclient.NewClient(&c)
+
+	dopplerEndpoint := cfClient.Endpoint.DopplerAddress
+	if len(*dopplerAddress) > 0 {
+		dopplerEndpoint = *dopplerAddress
+	}
+	logging.LogStd(fmt.Sprintf("Using %s as doppler endpoint", dopplerEndpoint), true)
 
 	//Use bolt for in-memory  - file caching
 	db, err := bolt.Open(*boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
