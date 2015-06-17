@@ -11,10 +11,11 @@ import (
 )
 
 var (
-	debugFlag bool
-	syslogServer string	
+	debugFlag    bool
+	syslogServer string
 )
 
+// Connect setups logging
 func Connect() bool {
 
 	success := false
@@ -29,33 +30,36 @@ func Connect() bool {
 	if syslogServer != "" {
 		hook, err := logrus_syslog.NewSyslogHook("tcp", syslogServer, syslog.LOG_INFO, "doppler")
 		if err != nil {
-			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", syslogServer),err.Error())
+			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", syslogServer), err.Error())
 		} else {
 			LogStd(fmt.Sprintf("Received hook to syslog server [%s]!\n", syslogServer), false)
 			logrus.AddHook(hook)
-			
-			success = true;
+
+			success = true
 		}
-	}	
-	
+	}
+
 	return success
 }
 
-
+// SetupLogging sets private vars.
 func SetupLogging(syslogSvr string, debug bool) {
 	debugFlag = debug
 	syslogServer = syslogSvr
 }
 
+// LogStd logs to stdout
 func LogStd(message string, force bool) {
 	Log(message, force, false, nil)
 }
 
+// LogError logs to stderr
 func LogError(message string, errMsg interface{}) {
 
 	Log(message, false, true, errMsg)
 }
 
+// Log logs to either to stdout or stderr
 func Log(message string, force bool, isError bool, err interface{}) {
 
 	if debugFlag || force || isError {
