@@ -62,14 +62,12 @@ func main() {
 	}
 	defer db.Close()
 
-	caching.SetCfClient(cfClient)
-	caching.SetAppDb(db)
-	caching.CreateBucket()
+	caching.Setup(cfClient, db)
 
 	//Let's Update the database the first time
 	logging.LogStd("Start filling app/space/org cache.", true)
-	apps := caching.GetAllApp()
-	logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
+	caching.Fill()
+	logging.LogStd("Done filling cache!", true)
 
 	logging.LogStd("Setting up event routing!", true)
 	events.SetupEventRouting(*wantedEvents)
@@ -79,7 +77,7 @@ func main() {
 
 	go func() {
 		for range ccPooling.C {
-			apps = caching.GetAllApp()
+			caching.Fill()
 		}
 	}()
 
