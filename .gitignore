@@ -6,3 +6,4 @@ events/events.test
 \#*
 my.db
 start-firehose.sh
+dist
