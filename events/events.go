@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+//Event struct holds data about a event.
 type Event struct {
 	Fields logrus.Fields
 	Msg    string
@@ -17,48 +18,45 @@ type Event struct {
 
 var selectedEvents map[string]bool
 
-func RouteEvents(in chan *events.Envelope) {
+// LogEvents takes a channel of events and logs it.
+func LogEvents(in chan *events.Envelope) {
 	for msg := range in {
-		routeEvent(msg)
+		eventType := msg.GetEventType()
+		if selectedEvents[eventType.String()] {
+			var event Event
+			switch eventType {
+			case events.Envelope_Heartbeat:
+				event = Heartbeat(msg)
+			case events.Envelope_HttpStart:
+				event = HTTPStart(msg)
+			case events.Envelope_HttpStop:
+				event = HTTPStop(msg)
+			case events.Envelope_HttpStartStop:
+				event = HTTPStartStop(msg)
+			case events.Envelope_LogMessage:
+				event = LogMessage(msg)
+			case events.Envelope_ValueMetric:
+				event = ValueMetric(msg)
+			case events.Envelope_CounterEvent:
+				event = CounterEvent(msg)
+			case events.Envelope_Error:
+				event = ErrorEvent(msg)
+			case events.Envelope_ContainerMetric:
+				event = ContainerMetric(msg)
+			}
+
+			event.AnnotateWithAppData()
+			event.shipEvent()
+		}
 	}
 }
 
+// GetSelectedEvents returns a map of event-names and a bool value that determines if we want the event or not.
 func GetSelectedEvents() map[string]bool {
 	return selectedEvents
 }
 
-func routeEvent(msg *events.Envelope) {
-
-	eventType := msg.GetEventType()
-
-	if selectedEvents[eventType.String()] {
-		var event Event
-		switch eventType {
-		case events.Envelope_Heartbeat:
-			event = Heartbeat(msg)
-		case events.Envelope_HttpStart:
-			event = HTTPStart(msg)
-		case events.Envelope_HttpStop:
-			event = HTTPStop(msg)
-		case events.Envelope_HttpStartStop:
-			event = HTTPStartStop(msg)
-		case events.Envelope_LogMessage:
-			event = LogMessage(msg)
-		case events.Envelope_ValueMetric:
-			event = ValueMetric(msg)
-		case events.Envelope_CounterEvent:
-			event = CounterEvent(msg)
-		case events.Envelope_Error:
-			event = ErrorEvent(msg)
-		case events.Envelope_ContainerMetric:
-			event = ContainerMetric(msg)
-		}
-
-		event.AnnotateWithAppData()
-		event.ShipEvent()
-	}
-}
-
+// SetupEventRouting takes a comma seperated list of events we want
 func SetupEventRouting(wantedEvents string) {
 	selectedEvents = make(map[string]bool)
 	for _, event := range strings.Split(wantedEvents, ",") {
@@ -84,6 +82,7 @@ func isAuthorizedEvent(wantedEvent string) bool {
 	return false
 }
 
+// GetListAuthorizedEventEvents returns a list of all valid event types.
 func GetListAuthorizedEventEvents() (authorizedEvents string) {
 	arrEvents := []string{}
 	for _, listEvent := range events.Envelope_EventType_name {
@@ -101,6 +100,7 @@ func getAppInfo(appGUID string) caching.App {
 	return caching.GetAppInfo(appGUID)
 }
 
+// Heartbeat returns a Heartbeat event
 func Heartbeat(msg *events.Envelope) Event {
 	heartbeat := msg.GetHeartbeat()
 
@@ -126,6 +126,7 @@ func Heartbeat(msg *events.Envelope) Event {
 	}
 }
 
+// HTTPStart returns a HTTPStart event
 func HTTPStart(msg *events.Envelope) Event {
 	httpStart := msg.GetHttpStart()
 
@@ -151,6 +152,7 @@ func HTTPStart(msg *events.Envelope) Event {
 	}
 }
 
+// HTTPStop returns a HTTPStop event
 func HTTPStop(msg *events.Envelope) Event {
 	httpStop := msg.GetHttpStop()
 
@@ -172,6 +174,7 @@ func HTTPStop(msg *events.Envelope) Event {
 	}
 }
 
+// HTTPStartStop returns a HTTPStartStop event
 func HTTPStartStop(msg *events.Envelope) Event {
 	httpStartStop := msg.GetHttpStartStop()
 
@@ -201,6 +204,7 @@ func HTTPStartStop(msg *events.Envelope) Event {
 	}
 }
 
+// LogMessage returns a LogMessage event
 func LogMessage(msg *events.Envelope) Event {
 	logMessage := msg.GetLogMessage()
 
@@ -220,6 +224,7 @@ func LogMessage(msg *events.Envelope) Event {
 	}
 }
 
+// ValueMetric returns a ValueMetric event
 func ValueMetric(msg *events.Envelope) Event {
 	valMetric := msg.GetValueMetric()
 
@@ -237,6 +242,7 @@ func ValueMetric(msg *events.Envelope) Event {
 	}
 }
 
+// CounterEvent returns a CounterEvent event
 func CounterEvent(msg *events.Envelope) Event {
 	counterEvent := msg.GetCounterEvent()
 
@@ -254,6 +260,7 @@ func CounterEvent(msg *events.Envelope) Event {
 	}
 }
 
+// ErrorEvent returns a ErrorEvent event
 func ErrorEvent(msg *events.Envelope) Event {
 	errorEvent := msg.GetError()
 
@@ -270,6 +277,7 @@ func ErrorEvent(msg *events.Envelope) Event {
 	}
 }
 
+// ContainerMetric returns a ContainerMetric event
 func ContainerMetric(msg *events.Envelope) Event {
 	containerMetric := msg.GetContainerMetric()
 
@@ -289,6 +297,7 @@ func ContainerMetric(msg *events.Envelope) Event {
 	}
 }
 
+// AnnotateWithAppData annotates a event with app metadata
 func (e *Event) AnnotateWithAppData() {
 
 	cfAppID := e.Fields["cf_app_id"]
@@ -329,7 +338,7 @@ func (e *Event) AnnotateWithAppData() {
 	}
 }
 
-func (e Event) ShipEvent() {
+func (e Event) shipEvent() {
 
 	defer func() {
 		if r := recover(); r != nil {
