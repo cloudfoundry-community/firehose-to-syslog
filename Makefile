@@ -1,5 +1,14 @@
-all: test linux32 linux64 darwin64
+all: lint vet test linux32 linux64 darwin64
 
+lint:
+	fgt golint .
+	fgt golint caching
+	fgt golint events
+	fgt golint firehose
+	fgt golint logging
+
+vet:
+	find . -type f -not -path "./Godeps/*" -name "*.go"  | xargs go tool vet
 test:
 	ginkgo -r .
 
