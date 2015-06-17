@@ -4,7 +4,7 @@ lint:
 	for SRC_FILE in `find . -type f -not -path "./Godeps/*" -name "*.go"`; do golint $$SRC_FILE; done
 
 vet:
-	find . -type f -not -path "./Godeps/*" -name "*.go"  | xargs go tool vet
+	find . -type f -not -path "./Godeps/*" -name "*.go"  | xargs go tool vet -v
 test:
 	ginkgo -r .
 
