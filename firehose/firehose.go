@@ -7,7 +7,7 @@ import (
 	"github.com/cloudfoundry/noaa/events"
 )
 
-func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
+func CreateFirehoseChan(DopplerEndpoint string, Token string, subID string, skipSSLValidation bool) chan *events.Envelope {
 	connection := noaa.NewConsumer(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
 
 	connection.SetDebugPrinter(ConsoleDebugPrinter{})
@@ -23,7 +23,7 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 			}
 		}()
 
-		go connection.Firehose(subId, Token, msgChan, errorChan, nil)
+		go connection.Firehose(subID, Token, msgChan, errorChan, nil)
 
 		for err := range errorChan {
 			log.LogError("Firehose Error!", err.Error())

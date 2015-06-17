@@ -10,11 +10,11 @@ import (
 
 type App struct {
 	Name      string
-	Guid      string
+	GUID      string
 	SpaceName string
-	SpaceGuid string
+	SpaceGUID string
 	OrgName   string
-	OrgGuid   string
+	OrgGUID   string
 }
 
 var gcfClient *cfClient.Client
@@ -46,7 +46,7 @@ func FillDatabase(listApps []App) {
 			if err != nil {
 				return fmt.Errorf("Error Marshaling data: %s", err)
 			}
-			err = b.Put([]byte(app.Guid), serialize)
+			err = b.Put([]byte(app.GUID), serialize)
 
 			if err != nil {
 				return fmt.Errorf("Error inserting data: %s", err)
@@ -58,9 +58,9 @@ func FillDatabase(listApps []App) {
 
 }
 
-func GetAppByGuid(appGuid string) []App {
+func GetAppByGUID(appGUID string) []App {
 	var apps []App
-	app := gcfClient.AppByGuid(appGuid)
+	app := gcfClient.AppByGuid(appGUID)
 	apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
 	FillDatabase(apps)
 	return apps
@@ -90,20 +90,20 @@ func GetAllApp() []App {
 	return apps
 }
 
-func GetAppInfo(appGuid string) App {
+func GetAppInfo(appGUID string) App {
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.LogError(fmt.Sprintf("Recovered from panic retrieving App Info for App Guid: %s", appGuid), r)
+			log.LogError(fmt.Sprintf("Recovered from panic retrieving App Info for App Guid: %s", appGUID), r)
 		}
 	}()
 
 	var d []byte
 	var app App
 	appdb.View(func(tx *bolt.Tx) error {
-		log.LogStd(fmt.Sprintf("Looking for App %s in Cache!\n", appGuid), false)
+		log.LogStd(fmt.Sprintf("Looking for App %s in Cache!\n", appGUID), false)
 		b := tx.Bucket([]byte("AppBucket"))
-		d = b.Get([]byte(appGuid))
+		d = b.Get([]byte(appGUID))
 		return nil
 	})
 	err := json.Unmarshal([]byte(d), &app)

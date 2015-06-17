@@ -37,11 +37,11 @@ func routeEvent(msg *events.Envelope) {
 		case events.Envelope_Heartbeat:
 			event = Heartbeat(msg)
 		case events.Envelope_HttpStart:
-			event = HttpStart(msg)
+			event = HTTPStart(msg)
 		case events.Envelope_HttpStop:
-			event = HttpStop(msg)
+			event = HTTPStop(msg)
 		case events.Envelope_HttpStartStop:
-			event = HttpStartStop(msg)
+			event = HTTPStartStop(msg)
 		case events.Envelope_LogMessage:
 			event = LogMessage(msg)
 		case events.Envelope_ValueMetric:
@@ -93,13 +93,12 @@ func GetListAuthorizedEventEvents() (authorizedEvents string) {
 
 }
 
-func getAppInfo(appGuid string) caching.App {
-	if app := caching.GetAppInfo(appGuid); app.Name != "" {
+func getAppInfo(appGUID string) caching.App {
+	if app := caching.GetAppInfo(appGUID); app.Name != "" {
 		return app
-	} else {
-		caching.GetAppByGuid(appGuid)
 	}
-	return caching.GetAppInfo(appGuid)
+	caching.GetAppByGUID(appGUID)
+	return caching.GetAppInfo(appGUID)
 }
 
 func Heartbeat(msg *events.Envelope) Event {
@@ -127,7 +126,7 @@ func Heartbeat(msg *events.Envelope) Event {
 	}
 }
 
-func HttpStart(msg *events.Envelope) Event {
+func HTTPStart(msg *events.Envelope) Event {
 	httpStart := msg.GetHttpStart()
 
 	fields := logrus.Fields{
@@ -152,7 +151,7 @@ func HttpStart(msg *events.Envelope) Event {
 	}
 }
 
-func HttpStop(msg *events.Envelope) Event {
+func HTTPStop(msg *events.Envelope) Event {
 	httpStop := msg.GetHttpStop()
 
 	fields := logrus.Fields{
@@ -173,7 +172,7 @@ func HttpStop(msg *events.Envelope) Event {
 	}
 }
 
-func HttpStartStop(msg *events.Envelope) Event {
+func HTTPStartStop(msg *events.Envelope) Event {
 	httpStartStop := msg.GetHttpStartStop()
 
 	fields := logrus.Fields{
@@ -292,38 +291,38 @@ func ContainerMetric(msg *events.Envelope) Event {
 
 func (e *Event) AnnotateWithAppData() {
 
-	cf_app_id := e.Fields["cf_app_id"]
-	appGuid := ""
-	if cf_app_id != nil {
-		appGuid = fmt.Sprintf("%s", cf_app_id)
+	cfAppID := e.Fields["cf_app_id"]
+	appGUID := ""
+	if cfAppID != nil {
+		appGUID = fmt.Sprintf("%s", cfAppID)
 	}
 
-	if cf_app_id != nil && appGuid != "<nil>" && cf_app_id != "" {
-		appInfo := getAppInfo(appGuid)
-		cf_app_name := appInfo.Name
-		cf_space_id := appInfo.SpaceGuid
-		cf_space_name := appInfo.SpaceName
-		cf_org_id := appInfo.OrgGuid
-		cf_org_name := appInfo.OrgName
+	if cfAppID != nil && appGUID != "<nil>" && cfAppID != "" {
+		appInfo := getAppInfo(appGUID)
+		cfAppName := appInfo.Name
+		cfSpaceID := appInfo.SpaceGUID
+		cfSpaceName := appInfo.SpaceName
+		cfOrgID := appInfo.OrgGUID
+		cfOrgName := appInfo.OrgName
 
-		if cf_app_name != "" {
-			e.Fields["cf_app_name"] = cf_app_name
+		if cfAppName != "" {
+			e.Fields["cf_app_name"] = cfAppName
 		}
 
-		if cf_space_id != "" {
-			e.Fields["cf_space_id"] = cf_space_id
+		if cfSpaceID != "" {
+			e.Fields["cf_space_id"] = cfSpaceID
 		}
 
-		if cf_space_name != "" {
-			e.Fields["cf_space_name"] = cf_space_name
+		if cfSpaceName != "" {
+			e.Fields["cf_space_name"] = cfSpaceName
 		}
 
-		if cf_org_id != "" {
-			e.Fields["cf_org_id"] = cf_org_id
+		if cfOrgID != "" {
+			e.Fields["cf_org_id"] = cfOrgID
 		}
 
-		if cf_org_name != "" {
-			e.Fields["cf_org_name"] = cf_org_name
+		if cfOrgName != "" {
+			e.Fields["cf_org_name"] = cfOrgName
 		}
 		e.Fields["cf_origin"] = "firehose"
 		e.Fields["event_type"] = e.Type
