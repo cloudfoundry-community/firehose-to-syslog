@@ -95,8 +95,8 @@ var _ = Describe("Events", func() {
 
 		Context("called with Fields set to logrus.Fields", func() {
 			It("should do nothing", func() {
-				event := events.Event{logrus.Fields{}, "", "log"}
-				wanted := events.Event{logrus.Fields{}, "", "log"}
+				event := events.Event{Fields: logrus.Fields{}, Msg: "", Type: "log"}
+				wanted := events.Event{Fields: logrus.Fields{}, Msg: "", Type: "log"}
 				event.AnnotateWithAppData()
 				Expect(event).To(Equal(wanted))
 			})
@@ -104,8 +104,8 @@ var _ = Describe("Events", func() {
 
 		Context("called with empty cf_app_id", func() {
 			It("should do nothing", func() {
-				event := events.Event{logrus.Fields{"cf_app_id": ""}, "", "log"}
-				wanted := events.Event{logrus.Fields{"cf_app_id": ""}, "", "log"}
+				event := events.Event{Fields: logrus.Fields{"cf_app_id": ""}, Msg: "", Type: "log"}
+				wanted := events.Event{Fields: logrus.Fields{"cf_app_id": ""}, Msg: "", Type: "log"}
 				event.AnnotateWithAppData()
 				Expect(event).To(Equal(wanted))
 			})

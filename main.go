@@ -19,7 +19,7 @@ var (
 	apiEndpoint       = kingpin.Flag("api-address", "Api endpoint address.").Default("https://api.10.244.0.34.xip.io").String()
 	dopplerAddress    = kingpin.Flag("doppler-address", "Overwrite default doppler endpoint return by /v2/info").String()
 	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").String()
-	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
+	subscriptionID    = kingpin.Flag("subscription-id", "ID for the subscription.").Default("firehose").String()
 	user              = kingpin.Flag("user", "Admin user.").Default("admin").String()
 	password          = kingpin.Flag("password", "Admin password.").Default("admin").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Default("false").Bool()
@@ -62,14 +62,12 @@ func main() {
 	}
 	defer db.Close()
 
-	caching.SetCfClient(cfClient)
-	caching.SetAppDb(db)
-	caching.CreateBucket()
+	caching.Setup(cfClient, db)
 
 	//Let's Update the database the first time
 	logging.LogStd("Start filling app/space/org cache.", true)
-	apps := caching.GetAllApp()
-	logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
+	caching.Fill()
+	logging.LogStd("Done filling cache!", true)
 
 	logging.LogStd("Setting up event routing!", true)
 	events.SetupEventRouting(*wantedEvents)
@@ -79,7 +77,7 @@ func main() {
 
 	go func() {
 		for range ccPooling.C {
-			apps = caching.GetAllApp()
+			caching.Fill()
 		}
 	}()
 
@@ -87,10 +85,10 @@ func main() {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
 
-		firehose := firehose.CreateFirehoseChan(dopplerEndpoint, cfClient.GetToken(), *subscriptionId, *skipSSLValidation)
+		firehose := firehose.CreateFirehoseChan(dopplerEndpoint, cfClient.GetToken(), *subscriptionID, *skipSSLValidation)
 		if firehose != nil {
 			logging.LogStd("Firehose Subscription Succesfull! Routing events...", true)
-			events.RouteEvents(firehose)
+			events.LogEvents(firehose)
 		} else {
 			logging.LogError("Failed connecting to Firehose...Please check settings and try again!", "")
 		}

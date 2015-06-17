@@ -7,10 +7,11 @@ import (
 	"github.com/cloudfoundry/noaa/events"
 )
 
-func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
+// CreateFirehoseChan creates a firehose channel that we consume events from.
+func CreateFirehoseChan(DopplerEndpoint string, Token string, subID string, skipSSLValidation bool) chan *events.Envelope {
 	connection := noaa.NewConsumer(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
 
-	connection.SetDebugPrinter(ConsoleDebugPrinter{})
+	connection.SetDebugPrinter(consoleDebugPrinter{})
 
 	msgChan := make(chan *events.Envelope)
 	go func() {
@@ -23,7 +24,7 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 			}
 		}()
 
-		go connection.Firehose(subId, Token, msgChan, errorChan, nil)
+		go connection.Firehose(subID, Token, msgChan, errorChan, nil)
 
 		for err := range errorChan {
 			log.LogError("Firehose Error!", err.Error())
@@ -32,9 +33,10 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 	return msgChan
 }
 
-type ConsoleDebugPrinter struct{}
+type consoleDebugPrinter struct{}
 
-func (c ConsoleDebugPrinter) Print(title, dump string) {
+// Print is a function for a noaa connection
+func (c consoleDebugPrinter) Print(title, dump string) {
 	log.LogStd(title, false)
 	log.LogStd(dump, false)
 }
