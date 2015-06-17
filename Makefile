@@ -1,11 +1,7 @@
 all: lint vet test linux32 linux64 darwin64
 
 lint:
-	fgt golint .
-	fgt golint caching
-	fgt golint events
-	fgt golint firehose
-	fgt golint logging
+	for SRC_FILE in `find . -type f -not -path "./Godeps/*" -name "*.go"`; do golint $$SRC_FILE; done
 
 vet:
 	find . -type f -not -path "./Godeps/*" -name "*.go"  | xargs go tool vet
