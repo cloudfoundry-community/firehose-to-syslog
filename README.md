@@ -13,14 +13,14 @@ CloudFoundry.
 # Options
 
 ```
-usage: firehose-to-syslog [<flags>]
+usage: firehose-to-syslog --api-address=API-ADDRESS [<flags>]
 
 Flags:
   --help              Show help (also see --help-long and --help-man).
   --debug             Enable debug mode. This disables forwarding to syslog
-  --api-address="https://api.10.244.0.34.xip.io"
-                      Api endpoint address.
-  --doppler-address=DOPPLER-ADDRESS
+  --api-address=API-ADDRESS
+                      Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io
+  --doppler-endpoint=DOPPLER-ENDPOINT
                       Overwrite default doppler endpoint return by /v2/info
   --syslog-server=SYSLOG-SERVER
                       Syslog server.
@@ -31,8 +31,8 @@ Flags:
   --skip-ssl-validation
                       Please don't
   --events="LogMessage"
-                      Comma seperated list of events you would like. Valid options are Heartbeat, HttpStop, LogMessage, Error, HttpStart,
-                      HttpStartStop, ValueMetric, CounterEvent, ContainerMetric
+                      Comma seperated list of events you would like. Valid options are HttpStop, CounterEvent, Error, Heartbeat, HttpStart, HttpStartStop, LogMessage,
+                      ValueMetric, ContainerMetric
   --boltdb-path="my.db"
                       Bolt Database path
   --cc-pull-time=60s  CloudController Pooling time in sec
