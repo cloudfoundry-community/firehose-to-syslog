@@ -16,7 +16,7 @@ import (
 
 var (
 	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Default("false").Bool()
-	apiEndpoint       = kingpin.Flag("api-address", "Api endpoint address.").Default("https://api.10.244.0.34.xip.io").String()
+	apiEndpoint       = kingpin.Flag("api-address", "Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io").Required().String()
 	dopplerAddress    = kingpin.Flag("doppler-address", "Overwrite default doppler endpoint return by /v2/info").String()
 	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").String()
 	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
