@@ -55,6 +55,7 @@ func routeEvent(msg *events.Envelope) {
 		}
 
 		event.AnnotateWithAppData()
+		event.AnnotateWithMetaData()
 		event.ShipEvent()
 	}
 }
@@ -325,9 +326,12 @@ func (e *Event) AnnotateWithAppData() {
 		if cf_org_name != "" {
 			e.Fields["cf_org_name"] = cf_org_name
 		}
-		e.Fields["cf_origin"] = "firehose"
-		e.Fields["event_type"] = e.Type
 	}
+}
+
+func (e *Event) AnnotateWithMetaData() {
+	e.Fields["cf_origin"] = "firehose"
+	e.Fields["event_type"] = e.Type
 }
 
 func (e Event) ShipEvent() {
