@@ -4,11 +4,10 @@ This nifty util aggregates all the events from the firehose feature in
 CloudFoundry.
 
 	./firehose-to-syslog \
-		--api-address="https://api.10.244.0.34.xip.io" \
-		--user=admin-username \
-		--password=admin-password \
-		--debug
-
+              --api-address="https://api.10.244.0.34.xip.io" \
+              --skip-ssl-validation
+	....
+	....
 	{"cf_app_id":"c5cb762b-b7bb-44b6-97d1-2b612d4baba9","cf_app_name":"lattice","cf_org_id":"fb5777e6-e234-4832-8844-773114b505b0","cf_org_name":"GWENN","cf_origin":"firehose","cf_space_id":"3c910823-22e7-41ff-98de-094759594398","cf_space_name":"GWENN-SPACE","event_type":"LogMessage","level":"info","message_type":"OUT","msg":"Lattice-app. Says Hello. on index: 0","origin":"rep","source_instance":"0","source_type":"APP","time":"2015-06-12T11:46:11+09:00","timestamp":1434077171244715915}
 
 # Options
@@ -79,7 +78,8 @@ We have 3 caching strategies:
 
     godep go run main.go \
 		--debug \
-		--skip-ssl-validation
+		--skip-ssl-validation \
+		--api-address="https://api.10.244.0.34.xip.io"
 
 # Parsing the logs with Logstash
 
