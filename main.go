@@ -29,7 +29,7 @@ var (
 )
 
 const (
-	version = "0.1.2-dev"
+	version = "1.0.0-rc1 - a97e585"
 )
 
 func main() {
