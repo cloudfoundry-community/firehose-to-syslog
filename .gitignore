@@ -1,5 +1,9 @@
-firehose-to-syslog
+firehose-to-syslog*
+events/events.test
+.project
+*.swp
 .#*
 \#*
 my.db
 start-firehose.sh
+dist

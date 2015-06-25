@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/boltdb/bolt"
+	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
 )
 
@@ -67,18 +68,40 @@ func GetAppByGuid(appGuid string) []App {
 }
 
 func GetAllApp() []App {
+
+	log.LogStd("Retrieving Apps for Cache...", false)
 	var apps []App
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.LogError("Recovered in caching.GetAllApp()", r)
+		}
+	}()
+
 	for _, app := range gcfClient.ListApps() {
+		log.LogStd(fmt.Sprintf("App [%s] Found...", app.Name), false)
 		apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
 	}
+
 	FillDatabase(apps)
+
+	log.LogStd(fmt.Sprintf("Found [%d] Apps!", len(apps)), false)
+
 	return apps
 }
 
 func GetAppInfo(appGuid string) App {
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.LogError(fmt.Sprintf("Recovered from panic retrieving App Info for App Guid: %s", appGuid), r)
+		}
+	}()
+
 	var d []byte
 	var app App
 	appdb.View(func(tx *bolt.Tx) error {
+		log.LogStd(fmt.Sprintf("Looking for App %s in Cache!\n", appGuid), false)
 		b := tx.Bucket([]byte("AppBucket"))
 		d = b.Get([]byte(appGuid))
 		return nil
