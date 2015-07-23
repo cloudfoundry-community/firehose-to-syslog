@@ -1,6 +1,9 @@
-FROM golang:1.4.0-onbuild
+FROM ubuntu:trusty
 MAINTAINER Simon Johansson <simon.johansson@springer.com>
 
+RUN apt-get update
+RUN apt-get install -y ca-certificates
+ADD dist/firehose-to-syslog-linux64 /
 
-ENTRYPOINT ["/go/bin/app"]
+ENTRYPOINT ["/firehose-to-syslog-linux64"]
 CMD ["--help"]
