@@ -48,9 +48,9 @@ func main() {
 	cfClient := cfclient.NewClient(&c)
 
 	if len(*dopplerEndpoint) > 0 {
-		cfClient.Endpoint.DopplerAddress = *dopplerEndpoint
+		cfClient.Endpoint.DopplerEndpoint = *dopplerEndpoint
 	}
-	logging.LogStd(fmt.Sprintf("Using %s as doppler endpoint", cfClient.Endpoint.DopplerAddress), true)
+	logging.LogStd(fmt.Sprintf("Using %s as doppler endpoint", cfClient.Endpoint.DopplerEndpoint), true)
 
 	//Use bolt for in-memory  - file caching
 	db, err := bolt.Open(*boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -86,7 +86,7 @@ func main() {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
 
-		firehose := firehose.CreateFirehoseChan(cfClient.Endpoint.DopplerAddress, cfClient.GetToken(), *subscriptionId, *skipSSLValidation)
+		firehose := firehose.CreateFirehoseChan(cfClient.Endpoint.DopplerEndpoint, cfClient.GetToken(), *subscriptionId, *skipSSLValidation)
 		if firehose != nil {
 			logging.LogStd("Firehose Subscription Succesfull! Routing events...", true)
 			events.RouteEvents(firehose)
