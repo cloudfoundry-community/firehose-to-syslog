@@ -3,7 +3,7 @@ package events_test
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
-	. "github.com/cloudfoundry/noaa/events"
+	. "github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"testing"
