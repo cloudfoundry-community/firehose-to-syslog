@@ -26,7 +26,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "9e379db26bbd042ec0202d9679ed8d753b64e0df"
+			"Rev": "280497e4cd656fbf56aac4de5f0ad25f2d68758d"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
@@ -34,7 +34,7 @@
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Rev": "bc946d07d1016848dfd2507f90f0859c9471681e"
+			"Rev": "8edb24c179ed858a38f18920d9005c2dde05ec17"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
