@@ -5,7 +5,8 @@ CloudFoundry.
 
 	./firehose-to-syslog \
               --api-address="https://api.10.244.0.34.xip.io" \
-              --skip-ssl-validation
+              --skip-ssl-validation \
+              --debug
 	....
 	....
 	{"cf_app_id":"c5cb762b-b7bb-44b6-97d1-2b612d4baba9","cf_app_name":"lattice","cf_org_id":"fb5777e6-e234-4832-8844-773114b505b0","cf_org_name":"GWENN","cf_origin":"firehose","cf_space_id":"3c910823-22e7-41ff-98de-094759594398","cf_space_name":"GWENN-SPACE","event_type":"LogMessage","level":"info","message_type":"OUT","msg":"Lattice-app. Says Hello. on index: 0","origin":"rep","source_instance":"0","source_type":"APP","time":"2015-06-12T11:46:11+09:00","timestamp":1434077171244715915}
@@ -13,27 +14,27 @@ CloudFoundry.
 # Options
 
 ```
-usage: firehose-to-syslog --api-address=API-ADDRESS [<flags>]
+usage: firehose-to-syslog --api-endpoint=API-ENDPOINT [<flags>]
 
 Flags:
   --help              Show help (also see --help-long and --help-man).
   --debug             Enable debug mode. This disables forwarding to syslog
-  --api-address=API-ADDRESS
+  --api-endpoint=API-ENDPOINT  
                       Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io
-  --doppler-endpoint=DOPPLER-ENDPOINT
+  --doppler-endpoint=DOPPLER-ENDPOINT  
                       Overwrite default doppler endpoint return by /v2/info
-  --syslog-server=SYSLOG-SERVER
+  --syslog-server=SYSLOG-SERVER  
                       Syslog server.
-  --subscription-id="firehose"
+  --subscription-id="firehose"  
                       Id for the subscription.
   --user="admin"      Admin user.
   --password="admin"  Admin password.
-  --skip-ssl-validation
+  --skip-ssl-validation  
                       Please don't
-  --events="LogMessage"
-                      Comma seperated list of events you would like. Valid options are HttpStop, CounterEvent, Error, Heartbeat, HttpStart, HttpStartStop, LogMessage,
-                      ValueMetric, ContainerMetric
-  --boltdb-path="my.db"
+  --events="LogMessage"  
+                      Comma seperated list of events you would like. Valid options are LogMessage, ValueMetric, CounterEvent, Error, ContainerMetric, Heartbeat, HttpStart,
+                      HttpStop, HttpStartStop
+  --boltdb-path="my.db"  
                       Bolt Database path
   --cc-pull-time=60s  CloudController Pooling time in sec
   --version           Show application version.
