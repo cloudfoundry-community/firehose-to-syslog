@@ -5,7 +5,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	"github.com/cloudfoundry/noaa"
 	"github.com/cloudfoundry/sonde-go/events"
 	"strings"
 )
