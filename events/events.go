@@ -5,7 +5,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	"github.com/cloudfoundry/noaa/events"
+	"github.com/cloudfoundry/sonde-go/events"
 	"strings"
 )
 
@@ -34,8 +34,6 @@ func routeEvent(msg *events.Envelope) {
 	if selectedEvents[eventType.String()] {
 		var event Event
 		switch eventType {
-		case events.Envelope_Heartbeat:
-			event = Heartbeat(msg)
 		case events.Envelope_HttpStart:
 			event = HttpStart(msg)
 		case events.Envelope_HttpStop:
@@ -101,31 +99,6 @@ func getAppInfo(appGuid string) caching.App {
 		caching.GetAppByGuid(appGuid)
 	}
 	return caching.GetAppInfo(appGuid)
-}
-
-func Heartbeat(msg *events.Envelope) Event {
-	heartbeat := msg.GetHeartbeat()
-
-	var avail uint64
-
-	if heartbeat.GetSentCount() > 0 {
-		avail = heartbeat.GetReceivedCount() / heartbeat.GetSentCount()
-	}
-
-	fields := logrus.Fields{
-		"ctl_msg_id":     heartbeat.GetControlMessageIdentifier(),
-		"error_count":    heartbeat.GetErrorCount(),
-		"origin":         msg.GetOrigin(),
-		"received_count": heartbeat.GetReceivedCount(),
-		"sent_count":     heartbeat.GetSentCount(),
-		"availability":   avail,
-	}
-
-	return Event{
-		Fields: fields,
-		Msg:    "",
-		Type:   msg.GetEventType().String(),
-	}
 }
 
 func HttpStart(msg *events.Envelope) Event {
