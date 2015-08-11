@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/noaa"
-	"github.com/cloudfoundry/noaa/events"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
@@ -23,7 +23,7 @@ func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skip
 			}
 		}()
 
-		go connection.Firehose(subId, Token, msgChan, errorChan, nil)
+		go connection.Firehose(subId, Token, msgChan, errorChan)
 
 		for err := range errorChan {
 			log.LogError("Firehose Error!", err.Error())
