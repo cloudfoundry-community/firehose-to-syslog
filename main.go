@@ -11,6 +11,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"os"
+	"runtime/pprof"
 	"time"
 )
 
@@ -26,6 +27,7 @@ var (
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
 	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
+	cpuProf           = kingpin.Flag("cpu-prof", "PAth to write the CPU Profiling file").Default("").String()
 )
 
 const (
@@ -60,6 +62,20 @@ func main() {
 
 	}
 	defer db.Close()
+
+	if *cpuProf != "" {
+		f, err := os.Create(*cpuProf)
+		if err != nil {
+			logging.LogStd(fmt.Sprintf("%s", err), true)
+		}
+
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			logging.LogStd(fmt.Sprintf("%s", err), true)
+		}
+		defer f.Close()
+		defer pprof.StopCPUProfile()
+	}
 
 	caching.SetCfClient(cfClient)
 	caching.SetAppDb(db)
