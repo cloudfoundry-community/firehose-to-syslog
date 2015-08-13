@@ -3,7 +3,6 @@ MAINTAINER Gwenn Etourneau <gwenn.etourneau@gmail.com>
 
 RUN go get github.com/tools/godep
 ADD firehose-to-syslog.tgz   $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
-RUN ls -lah $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
 RUN cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog \
     ; CGO_ENABLED=0 godep go build  -a --installsuffix cgo --ldflags="-s"
 RUN cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog 
