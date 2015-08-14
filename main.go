@@ -5,6 +5,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
+	"github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/go-cfclient"
@@ -26,6 +27,7 @@ var (
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
 	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
+	extraFields       = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").String()
 )
 
 const (
@@ -82,6 +84,13 @@ func main() {
 		}
 	}()
 
+	// Parse extra fields from cmd call
+	extraFields, err := extrafields.ParseExtraFields(*extraFields)
+	if err != nil {
+		log.Fatal("Error parsing extra fields: ", err)
+		os.Exit(1)
+	}
+
 	if logging.Connect() || *debug {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
@@ -89,7 +98,7 @@ func main() {
 		firehose := firehose.CreateFirehoseChan(cfClient.Endpoint.DopplerEndpoint, cfClient.GetToken(), *subscriptionId, *skipSSLValidation)
 		if firehose != nil {
 			logging.LogStd("Firehose Subscription Succesfull! Routing events...", true)
-			events.RouteEvents(firehose)
+			events.RouteEvents(firehose, extraFields)
 		} else {
 			logging.LogError("Failed connecting to Firehose...Please check settings and try again!", "")
 		}
