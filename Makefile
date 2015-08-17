@@ -13,10 +13,10 @@ darwin64:
 	GOARCH=amd64 GOOS=darwin godep go build -o dist/firehose-to-syslog-darwin64
 
 docker-dev:
-	$(SHELL) ./docker/build-dev.sh
+	$(SHELL) ./Docker/build-dev.sh
 
 docker-final:
-	$(SHELL) ./docker/build.sh     
+	$(SHELL) ./Docker/build.sh     
 
 clean:
 	$(RM) dist/*
