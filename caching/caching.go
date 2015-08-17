@@ -1,11 +1,11 @@
 package caching
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/boltdb/bolt"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
+	json "github.com/pquerna/ffjson/ffjson"
 )
 
 type App struct {
