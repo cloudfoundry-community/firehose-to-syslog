@@ -17,9 +17,9 @@ type Event struct {
 
 var selectedEvents map[string]bool
 
-func RouteEvents(in chan *events.Envelope) {
+func RouteEvents(in chan *events.Envelope, extraFields map[string]string) {
 	for msg := range in {
-		routeEvent(msg)
+		routeEvent(msg, extraFields)
 	}
 }
 
@@ -27,7 +27,7 @@ func GetSelectedEvents() map[string]bool {
 	return selectedEvents
 }
 
-func routeEvent(msg *events.Envelope) {
+func routeEvent(msg *events.Envelope, extraFields map[string]string) {
 
 	eventType := msg.GetEventType()
 
@@ -53,7 +53,7 @@ func routeEvent(msg *events.Envelope) {
 		}
 
 		event.AnnotateWithAppData()
-		event.AnnotateWithMetaData()
+		event.AnnotateWithMetaData(extraFields)
 		event.ShipEvent()
 	}
 }
@@ -302,9 +302,12 @@ func (e *Event) AnnotateWithAppData() {
 	}
 }
 
-func (e *Event) AnnotateWithMetaData() {
+func (e *Event) AnnotateWithMetaData(extraFields map[string]string) {
 	e.Fields["cf_origin"] = "firehose"
 	e.Fields["event_type"] = e.Type
+	for k, v := range extraFields {
+		e.Fields[k] = v
+	}
 }
 
 func (e Event) ShipEvent() {
