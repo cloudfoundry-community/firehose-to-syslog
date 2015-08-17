@@ -86,6 +86,31 @@ We have 3 caching strategies:
 
 [logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
 
+
+# Docker (tested with docker 1.7.1 / Kitematic)
+We use DockerInDocker to built the image
+Since is around 7MG
+
+* For Github Master branch Image
+```bash
+# Make the image
+make docker-final
+
+#Run the image
+docker run getourneau/firehose-to-syslog
+
+```
+
+* For development 
+```bash
+#Build the image
+make docker-dev
+
+#Run the image
+docker run getourneau/firehose-to-syslog-dev
+```
+
+
 # Devel
 
 This is a
