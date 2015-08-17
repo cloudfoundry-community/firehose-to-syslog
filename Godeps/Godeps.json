@@ -41,6 +41,18 @@
 			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
 		},
 		{
+			"ImportPath": "github.com/pkg/profile",
+			"Rev": "c795610ec6e479e5795f7852db65ea15073674a6"
+		},
+		{
+			"ImportPath": "github.com/pquerna/ffjson/ffjson",
+			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
+		},
+		{
+			"ImportPath": "github.com/pquerna/ffjson/fflib/v1",
+			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "7dbad50ab5b31073856416cdcfeb2796d682f844"
 		},

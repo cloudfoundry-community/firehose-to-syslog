@@ -8,6 +8,7 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"os"
@@ -26,6 +27,8 @@ var (
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
 	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
+	modeProf          = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").String()
+	pathProf          = kingpin.Flag("path-prof", "Set the Path to write Profiling file").Default("").String()
 )
 
 const (
@@ -60,6 +63,19 @@ func main() {
 
 	}
 	defer db.Close()
+
+	if *modeProf != "" {
+		switch *modeProf {
+		case "cpu":
+			defer profile.Start(profile.CPUProfile, profile.ProfilePath(*pathProf)).Stop()
+		case "mem":
+			defer profile.Start(profile.MemProfile, profile.ProfilePath(*pathProf)).Stop()
+		case "block":
+			defer profile.Start(profile.BlockProfile, profile.ProfilePath(*pathProf)).Stop()
+		default:
+			// do nothing
+		}
+	}
 
 	caching.SetCfClient(cfClient)
 	caching.SetAppDb(db)
