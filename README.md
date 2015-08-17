@@ -38,6 +38,8 @@ Flags:
                       Bolt Database path
   --cc-pull-time=60s  CloudController Pooling time in sec
   --version           Show application version.
+  --mode-prof         Enable profiling mode, one of [cpu, mem, block]
+  --path-prof         Set the Path to write Profiling file
 ```
 
 #Endpoint definition
@@ -91,6 +93,32 @@ We have 3 caching strategies:
 This is a
 [Git Flow](http://nvie.com/posts/a-successful-git-branching-model/)
 project. Please fork and branch your features from develop.
+
+# Profiling
+
+To enable CPU Profiling you just need to add the profiling path ex ``` --mode-prof=cpu```
+
+Run your program for some time and after that you can use the pprof tool
+```bash
+go tool pprof YOUR_EXECUTABLE cpu.pprof
+
+(pprof) top 10
+110ms of 110ms total (  100%)
+Showing top 10 nodes out of 44 (cum >= 20ms)
+      flat  flat%   sum%        cum   cum%
+      30ms 27.27% 27.27%       30ms 27.27%  syscall.Syscall
+      20ms 18.18% 45.45%       20ms 18.18%  ExternalCode
+      20ms 18.18% 63.64%       20ms 18.18%  runtime.futex
+      10ms  9.09% 72.73%       10ms  9.09%  adjustpointers
+      10ms  9.09% 81.82%       10ms  9.09%  bytes.func·001
+      10ms  9.09% 90.91%       20ms 18.18%  io/ioutil.readAll
+      10ms  9.09%   100%       10ms  9.09%  runtime.epollwait
+         0     0%   100%       60ms 54.55%  System
+         0     0%   100%       20ms 18.18%  bufio.(*Reader).Read
+         0     0%   100%       20ms 18.18%  bufio.(*Reader).fill
+```
+
+For Mac OSX golang profiling do not work.
 
 # Contributors
 
