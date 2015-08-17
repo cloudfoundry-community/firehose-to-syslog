@@ -34,7 +34,7 @@ var (
 )
 
 const (
-	version = "1.0.1 - 5749272"
+	version = "1.0.2 - ee1c108"
 )
 
 func main() {
