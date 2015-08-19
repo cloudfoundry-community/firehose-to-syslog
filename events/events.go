@@ -58,20 +58,22 @@ func routeEvent(msg *events.Envelope, extraFields map[string]string) {
 	}
 }
 
-func SetupEventRouting(wantedEvents string) {
+func SetupEventRouting(wantedEvents string) error {
 	selectedEvents = make(map[string]bool)
-	for _, event := range strings.Split(wantedEvents, ",") {
-		if isAuthorizedEvent(event) {
-			selectedEvents[event] = true
-			log.LogStd(fmt.Sprintf("Event Type [%s] is included in the fireshose!", event), false)
-		} else {
-			log.LogError(fmt.Sprintf("Rejected Event Name [%s] - See wanted/selected events arg. Check Your Command Line Arguments!", event), "")
+
+	if wantedEvents == "" {
+		selectedEvents["LogMessage"] = true
+	} else {
+		for _, event := range strings.Split(wantedEvents, ",") {
+			if isAuthorizedEvent(event) {
+				selectedEvents[event] = true
+				log.LogStd(fmt.Sprintf("Event Type [%s] is included in the fireshose!", event), false)
+			} else {
+				return fmt.Errorf("Rejected Event Name [%s] - Walid events: %s", event, GetListAuthorizedEventEvents())
+			}
 		}
 	}
-	// If any event is not authorize we fallback to the default one
-	if len(selectedEvents) < 1 {
-		selectedEvents["LogMessage"] = true
-	}
+	return nil
 }
 
 func isAuthorizedEvent(wantedEvent string) bool {
