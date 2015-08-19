@@ -69,7 +69,7 @@ func SetupEventRouting(wantedEvents string) error {
 				selectedEvents[event] = true
 				log.LogStd(fmt.Sprintf("Event Type [%s] is included in the fireshose!", event), false)
 			} else {
-				return fmt.Errorf("Rejected Event Name [%s] - Walid events: %s", event, GetListAuthorizedEventEvents())
+				return fmt.Errorf("Rejected Event Name [%s] - Valid events: %s", event, GetListAuthorizedEventEvents())
 			}
 		}
 	}
