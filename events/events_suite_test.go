@@ -25,20 +25,19 @@ var _ = Describe("Events", func() {
 		})
 
 		Context("called with a list of bogus event names", func() {
-			It("should return a hash of only the default event", func() {
-				expected := map[string]bool{"LogMessage": true}
-				events.SetupEventRouting("bogus,bogus1")
-				Expect(events.GetSelectedEvents()).To(Equal(expected))
+			It("should err out", func() {
+				err := events.SetupEventRouting("bogus,bogus1")
+				Expect(err).To(HaveOccurred())
 			})
 		})
 
-		Context("called with a list of both real and bogus event names", func() {
-			It("should return a hash of only the real events", func() {
+		Context("called with a list of real event names", func() {
+			It("should return a hash of events", func() {
 				expected := map[string]bool{
 					"HttpStartStop": true,
 					"CounterEvent":  true,
 				}
-				events.SetupEventRouting("bogus,HttpStartStop,bogus1,CounterEvent")
+				events.SetupEventRouting("HttpStartStop,CounterEvent")
 				Expect(events.GetSelectedEvents()).To(Equal(expected))
 			})
 		})

@@ -34,7 +34,7 @@ var (
 )
 
 const (
-	version = "1.0.2 - ee1c108"
+	version = "1.1.0 - c9af859"
 )
 
 func main() {
@@ -56,6 +56,14 @@ func main() {
 		cfClient.Endpoint.DopplerEndpoint = *dopplerEndpoint
 	}
 	logging.LogStd(fmt.Sprintf("Using %s as doppler endpoint", cfClient.Endpoint.DopplerEndpoint), true)
+
+	logging.LogStd("Setting up event routing!", true)
+	err := events.SetupEventRouting(*wantedEvents)
+	if err != nil {
+		log.Fatal("Error setting up event routing: ", err)
+		os.Exit(1)
+
+	}
 
 	//Use bolt for in-memory  - file caching
 	db, err := bolt.Open(*boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -87,9 +95,6 @@ func main() {
 	logging.LogStd("Start filling app/space/org cache.", true)
 	apps := caching.GetAllApp()
 	logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
-
-	logging.LogStd("Setting up event routing!", true)
-	events.SetupEventRouting(*wantedEvents)
 
 	// Ticker Pooling the CC every X sec
 	ccPooling := time.NewTicker(*tickerTime)
