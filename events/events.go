@@ -16,6 +16,7 @@ type Event struct {
 }
 
 var selectedEvents map[string]bool
+var selectedEventsCount map[string]uint64 = make(map[string]uint64)
 
 func RouteEvents(in chan *events.Envelope, extraFields map[string]string) {
 	for msg := range in {
@@ -55,6 +56,8 @@ func routeEvent(msg *events.Envelope, extraFields map[string]string) {
 		event.AnnotateWithAppData()
 		event.AnnotateWithMetaData(extraFields)
 		event.ShipEvent()
+
+		selectedEventsCount[eventType.String()]++
 	}
 }
 
@@ -92,6 +95,18 @@ func GetListAuthorizedEventEvents() (authorizedEvents string) {
 	}
 	return strings.Join(arrEvents, ", ")
 
+}
+
+func GetTotalCountOfSelectedEvents() uint64 {
+	var total = uint64(0)
+	for _, count := range GetSelectedEventsCount() {
+		total += count
+	}
+	return total
+}
+
+func GetSelectedEventsCount() map[string]uint64 {
+	return selectedEventsCount
 }
 
 func getAppInfo(appGuid string) caching.App {

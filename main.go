@@ -12,20 +12,22 @@ import (
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
+	"net/http"
 	"os"
 	"time"
 )
 
 var (
-	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Default("false").Bool()
-	apiEndpoint       = kingpin.Flag("api-endpoint", "Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io").Required().String()
-	dopplerEndpoint   = kingpin.Flag("doppler-endpoint", "Overwrite default doppler endpoint return by /v2/info").String()
-	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").String()
-	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").String()
-	user              = kingpin.Flag("user", "Admin user.").Default("admin").String()
-	password          = kingpin.Flag("password", "Admin password.").Default("admin").String()
-	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Default("false").Bool()
-	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
+	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Default("false").OverrideDefaultFromEnvar("DEBUG").Bool()
+	apiEndpoint       = kingpin.Flag("api-endpoint", "Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io").OverrideDefaultFromEnvar("API_ENDPOINT").Required().String()
+	dopplerEndpoint   = kingpin.Flag("doppler-endpoint", "Overwrite default doppler endpoint return by /v2/info").OverrideDefaultFromEnvar("DOPPLER_ENDPOINT").String()
+	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").OverrideDefaultFromEnvar("SYSLOG_ENDPOINT").String()
+	subscriptionId    = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").OverrideDefaultFromEnvar("FIREHOSE_SUBSCRIPTION_ID").String()
+	user              = kingpin.Flag("user", "Admin user.").Default("admin").OverrideDefaultFromEnvar("FIREHOSE_USER").String()
+	password          = kingpin.Flag("password", "Admin password.").Default("admin").OverrideDefaultFromEnvar("FIREHOSE_PASSWORD").String()
+	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Default("false").OverrideDefaultFromEnvar("SKIP_SSL_VALIDATION").Bool()
+	cfPush            = kingpin.Flag("cf-push", "Deploy to Cloud Foundry.").Default("false").OverrideDefaultFromEnvar("CF_PUSH").Bool()
+	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma separated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").OverrideDefaultFromEnvar("EVENTS").String()
 	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
 	extraFields       = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").String()
@@ -43,6 +45,10 @@ func main() {
 	logging.LogStd(fmt.Sprintf("Starting firehose-to-syslog %s ", version), true)
 
 	logging.SetupLogging(*syslogServer, *debug)
+
+	if *cfPush == true {
+		setupHTTP()
+	}
 
 	c := cfclient.Config{
 		ApiAddress:        *apiEndpoint,
@@ -128,4 +134,25 @@ func main() {
 		logging.LogError("Failed connecting to the Syslog Server...Please check settings and try again!", "")
 	}
 
+}
+
+func getInfo(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintln(w,
+		"Hello!\nWe have processed", events.GetTotalCountOfSelectedEvents(), "total events.",
+		"\nWe have tapped the firehose at", fmt.Sprintf("wss://doppler.%s", *dopplerEndpoint))
+	fmt.Fprintln(w, "\nOf those events, we have processed\n")
+	for event, count := range events.GetSelectedEventsCount() {
+		fmt.Fprintln(w, count, event, "events\n")
+	}
+}
+
+func setupHTTP() {
+	http.HandleFunc("/", getInfo)
+
+	go func() {
+		err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+		if err != nil {
+			log.Fatal("ListenAndServe:", err)
+		}
+	}()
 }

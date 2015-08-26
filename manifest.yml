@@ -1,0 +1,4 @@
+applications:
+- name: firehose-to-syslog
+  buildpack: https://github.com/cloudfoundry/go-buildpack.git
+
