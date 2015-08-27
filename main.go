@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
-	"net/http"
 	"os"
 	"time"
 )
@@ -26,7 +25,7 @@ var (
 	user              = kingpin.Flag("user", "Admin user.").Default("admin").OverrideDefaultFromEnvar("FIREHOSE_USER").String()
 	password          = kingpin.Flag("password", "Admin password.").Default("admin").OverrideDefaultFromEnvar("FIREHOSE_PASSWORD").String()
 	skipSSLValidation = kingpin.Flag("skip-ssl-validation", "Please don't").Default("false").OverrideDefaultFromEnvar("SKIP_SSL_VALIDATION").Bool()
-	cfPush            = kingpin.Flag("cf-push", "Deploy to Cloud Foundry.").Default("false").OverrideDefaultFromEnvar("CF_PUSH").Bool()
+	showEventTotals   = kingpin.Flag("log-event-totals", "Logs the counters for all selected events since nozzle was last started.").Default("false").OverrideDefaultFromEnvar("LOG_EVENT_TOTALS").Bool()
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma separated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").OverrideDefaultFromEnvar("EVENTS").String()
 	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
@@ -45,10 +44,6 @@ func main() {
 	logging.LogStd(fmt.Sprintf("Starting firehose-to-syslog %s ", version), true)
 
 	logging.SetupLogging(*syslogServer, *debug)
-
-	if *cfPush == true {
-		setupHTTP()
-	}
 
 	c := cfclient.Config{
 		ApiAddress:        *apiEndpoint,
@@ -118,6 +113,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *showEventTotals == true {
+		logEventTotals()
+	}
+
 	if logging.Connect() || *debug {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
@@ -133,26 +132,32 @@ func main() {
 	} else {
 		logging.LogError("Failed connecting to the Syslog Server...Please check settings and try again!", "")
 	}
-
 }
 
-func getInfo(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintln(w,
-		"Hello!\nWe have processed", events.GetTotalCountOfSelectedEvents(), "total events.",
-		"\nWe have tapped the firehose at", fmt.Sprintf("wss://doppler.%s", *dopplerEndpoint))
-	fmt.Fprintln(w, "\nOf those events, we have processed\n")
+func getEventTotals() string {
+	var s string
+	s = fmt.Sprintln(s,
+		"\nWe have processed", events.GetTotalCountOfSelectedEvents(), "total events from the firehose at",
+		*dopplerEndpoint)
+	fmt.Sprintln(s, "\nOf those events, we have processed\n")
 	for event, count := range events.GetSelectedEventsCount() {
-		fmt.Fprintln(w, count, event, "events\n")
+		fmt.Sprintln(s, count, event, "events\n")
 	}
+	return s
 }
 
-func setupHTTP() {
-	http.HandleFunc("/", getInfo)
+func logEventTotals() {
+	dur, err := time.ParseDuration("10s")
+	if err != nil {
+		log.Fatal("Error parsing duration for firehose status check: ", err)
+		os.Exit(1)
+	}
+
+	firehoseEventTotals := time.NewTicker(dur)
 
 	go func() {
-		err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
-		if err != nil {
-			log.Fatal("ListenAndServe:", err)
+		for range firehoseEventTotals.C {
+			logging.LogStd(getEventTotals(), true)
 		}
 	}()
 }
