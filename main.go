@@ -137,9 +137,9 @@ func main() {
 func getEventTotals() string {
 	var s string
 	s = fmt.Sprintln(s,
-		"\n(firehose-to-syslog-events) We have processed", events.GetTotalCountOfSelectedEvents(), "total events from the firehose at",
+		"\nWe have processed", events.GetTotalCountOfSelectedEvents(), "total events from the firehose at",
 		*dopplerEndpoint)
-	s = fmt.Sprintln(s, "\n(firehose-to-syslog-events) And of those events, we have processed\n")
+	s = fmt.Sprintln(s, "\nAnd of those events, we have processed\n")
 	for event, count := range events.GetSelectedEventsCount() {
 		s = fmt.Sprintln(s, "\n(firehose-to-syslog-events)", count, event)
 	}
