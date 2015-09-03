@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/boltdb/bolt"
-	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
-	"github.com/cloudfoundry-community/firehose-to-syslog/events"
-	"github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
-	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
-	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/eljuanchosf/firehose-to-syslog/caching"
+	"github.com/eljuanchosf/firehose-to-syslog/events"
+	"github.com/eljuanchosf/firehose-to-syslog/extrafields"
+	"github.com/eljuanchosf/firehose-to-syslog/firehose"
+	"github.com/eljuanchosf/firehose-to-syslog/logging"
+	"github.com/eljuanchosf/firehose-to-syslog/filters"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -28,9 +29,10 @@ var (
 	wantedEvents      = kingpin.Flag("events", fmt.Sprintf("Comma seperated list of events you would like. Valid options are %s", events.GetListAuthorizedEventEvents())).Default("LogMessage").String()
 	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Pooling time in sec").Default("60s").Duration()
-	extraFields       = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").String()
+	extraFields       = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: --extra-fields=env:dev,something:other ").Default("").String()
 	modeProf          = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").String()
 	pathProf          = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").String()
+	customFilters     = kingpin.Flag("filters", "Pipe seperated whitelist filtering for messages. Possible keys: org_name, org_id, space_name, space_id, app_name, app_id. Values are comma seperated. Example: --filters=\"org_name:org1,org2|space_id:asff-12ffa,1122-dbfa-aaaa|app_name:app1\"").Default("").String()
 )
 
 const (
@@ -112,6 +114,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Parse filters
+	filtersToApply, err := filters.ParseFilters(*customFilters);
+	if err != nil {
+	  log.Fatal("Error parsing filters: ", err)
+	  os.Exit(1)
+	}
+
 	if logging.Connect() || *debug {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
@@ -119,7 +128,7 @@ func main() {
 		firehose := firehose.CreateFirehoseChan(cfClient.Endpoint.DopplerEndpoint, cfClient.GetToken(), *subscriptionId, *skipSSLValidation)
 		if firehose != nil {
 			logging.LogStd("Firehose Subscription Succesfull! Routing events...", true)
-			events.RouteEvents(firehose, extraFields)
+			events.RouteEvents(firehose, extraFields, filtersToApply)
 		} else {
 			logging.LogError("Failed connecting to Firehose...Please check settings and try again!", "")
 		}
@@ -127,5 +136,4 @@ func main() {
 	} else {
 		logging.LogError("Failed connecting to the Syslog Server...Please check settings and try again!", "")
 	}
-
 }
