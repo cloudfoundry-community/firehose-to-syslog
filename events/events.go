@@ -3,8 +3,8 @@ package events
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
-	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/eljuanchosf/firehose-to-syslog/caching"
+	log "github.com/eljuanchosf/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/sonde-go/events"
 	"strings"
 )
@@ -17,9 +17,9 @@ type Event struct {
 
 var selectedEvents map[string]bool
 
-func RouteEvents(in chan *events.Envelope, extraFields map[string]string) {
+func RouteEvents(in chan *events.Envelope, extraFields map[string]string, filters map[string][]string) {
 	for msg := range in {
-		routeEvent(msg, extraFields)
+		routeEvent(msg, extraFields, filters)
 	}
 }
 
@@ -27,7 +27,7 @@ func GetSelectedEvents() map[string]bool {
 	return selectedEvents
 }
 
-func routeEvent(msg *events.Envelope, extraFields map[string]string) {
+func routeEvent(msg *events.Envelope, extraFields map[string]string, filters map[string][]string) {
 
 	eventType := msg.GetEventType()
 
@@ -54,8 +54,26 @@ func routeEvent(msg *events.Envelope, extraFields map[string]string) {
 
 		event.AnnotateWithAppData()
 		event.AnnotateWithMetaData(extraFields)
-		event.ShipEvent()
+
+		if event.ApplyFilters(filters) {
+			event.ShipEvent()
+		}
 	}
+}
+
+func (e *Event) ApplyFilters(filters map[string][]string) bool {
+	ship := true
+	if filters != nil {
+		ship = false
+		for fieldName, values := range filters {
+			for _, v := range values {
+				if e.Fields[fieldName] == v {
+					ship = true
+				}
+			}
+		}
+	}
+	return ship
 }
 
 func SetupEventRouting(wantedEvents string) error {
