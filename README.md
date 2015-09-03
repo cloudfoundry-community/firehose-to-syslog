@@ -40,6 +40,9 @@ Flags:
   --version           Show application version.
   --mode-prof         Enable profiling mode, one of [cpu, mem, block]
   --path-prof         Set the Path to write Profiling file
+	--filters=FILTERS   Pipe seperated filtering for messages. Possible keys: org_name, org_id, space_name, space_id, app_name, app_id. Values are comma seperated. If set, works as a
+										  whitelist filter. Example: --filters="org_name:org1,org2|space_id:asff-12ffa,1122-dbfa-aaaa|app_name:app1"
+
 ```
 
 #Endpoint definition
@@ -60,15 +63,20 @@ We have 3 caching strategies:
 * Pull application data if not cached yet.
 * Pull all application data every "cc-pull-time".
 
+# Filters
+
+It is possible to filter messages (works only for ``` LogMessage ```) by organization name or Id, space name or Id, application name or Id.
+The filter, if applied, works as a whitelist of desired orgs, spaces and apps that we want to get messages from.
+
 # To test and build
 
 
     # Setup repo
-    go get github.com/cloudfoundry-community/firehose-to-syslog
-    cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
+    go get github.com/eljuanchosf/firehose-to-syslog
+    cd $GOPATH/src/github.com/eljuanchosf/firehose-to-syslog
 
     # Test
-	ginkgo -r .
+	  ginkgo -r .
 
     # Build binary
     godep go build
