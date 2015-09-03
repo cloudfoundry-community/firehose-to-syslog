@@ -1,7 +1,7 @@
 package extrafields_test
 
 import (
-	. "github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
+	. "github.com/eljuanchosf/firehose-to-syslog/extrafields"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"testing"
