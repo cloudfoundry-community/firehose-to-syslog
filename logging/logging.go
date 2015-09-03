@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	debugFlag bool
-	syslogServer string	
+	debugFlag    bool
+	syslogServer string
 )
 
 func Connect() bool {
@@ -29,18 +29,17 @@ func Connect() bool {
 	if syslogServer != "" {
 		hook, err := logrus_syslog.NewSyslogHook("tcp", syslogServer, syslog.LOG_INFO, "doppler")
 		if err != nil {
-			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", syslogServer),err.Error())
+			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", syslogServer), err.Error())
 		} else {
 			LogStd(fmt.Sprintf("Received hook to syslog server [%s]!\n", syslogServer), false)
 			logrus.AddHook(hook)
-			
-			success = true;
+
+			success = true
 		}
-	}	
-	
+	}
+
 	return success
 }
-
 
 func SetupLogging(syslogSvr string, debug bool) {
 	debugFlag = debug
