@@ -7,6 +7,7 @@ import (
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/sonde-go/events"
 	"strings"
+	"time"
 )
 
 type Event struct {
@@ -94,7 +95,6 @@ func GetListAuthorizedEventEvents() (authorizedEvents string) {
 		arrEvents = append(arrEvents, listEvent)
 	}
 	return strings.Join(arrEvents, ", ")
-
 }
 
 func GetTotalCountOfSelectedEvents() uint64 {
@@ -336,4 +336,39 @@ func (e Event) ShipEvent() {
 	}()
 
 	logrus.WithFields(e.Fields).Info(e.Msg)
+}
+
+func LogEventTotals(logTotalsTime time.Duration, dopplerEndpoint string) {
+	firehoseEventTotals := time.NewTicker(logTotalsTime)
+	count := uint64(0)
+	startTime := time.Now()
+	totalTime := startTime
+
+	go func() {
+		for range firehoseEventTotals.C {
+			elapsedTime := time.Since(startTime).Seconds()
+			totalElapsedTime := time.Since(totalTime).Seconds()
+			startTime = time.Now()
+			output, lastCount := getEventTotals(totalElapsedTime, elapsedTime, count, dopplerEndpoint)
+			count = lastCount
+			log.LogStd(output, true)
+		}
+	}()
+}
+
+func getEventTotals(totalElapsedTime float64, elapsedTime float64, lastCount uint64, dopplerEndpoint string) (string, uint64) {
+	selectedEvents := GetSelectedEventsCount()
+	totalCount := GetTotalCountOfSelectedEvents()
+	sinceLastTime := float64(int(elapsedTime*10)) / 10
+	sinceStartTime := float64(int(totalElapsedTime*10)) / 10
+
+	var s string
+	s = fmt.Sprintln(s,
+		"\nWe have processed", totalCount-lastCount, "events from the firehose at",
+		dopplerEndpoint, "over the last", sinceLastTime, "seconds and", totalCount, "total events since startup")
+	s = fmt.Sprintln(s, "\nAnd of those events, we have processed\n")
+	for event, count := range selectedEvents {
+		s = fmt.Sprintln(s, "\n", count, event, "over the last", sinceStartTime, "seconds")
+	}
+	return s, totalCount
 }
