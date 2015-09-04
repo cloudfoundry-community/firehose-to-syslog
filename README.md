@@ -4,7 +4,7 @@ This nifty util aggregates all the events from the firehose feature in
 CloudFoundry.
 
 	./firehose-to-syslog \
-              --api-address="https://api.10.244.0.34.xip.io" \
+              --api-endpoint="https://api.10.244.0.34.xip.io" \
               --skip-ssl-validation \
               --debug
 	....
@@ -77,16 +77,41 @@ We have 3 caching strategies:
 
 [logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
 
-# Run agains a bosh-lite CF deployment
+# Run against a bosh-lite CF deployment
 
     godep go run main.go \
 		--debug \
 		--skip-ssl-validation \
-		--api-address="https://api.10.244.0.34.xip.io"
+		--api-endpoint="https://api.10.244.0.34.xip.io"
 
 # Parsing the logs with Logstash
 
 [logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
+
+
+# Docker (tested with docker 1.7.1 / Kitematic)
+We use DockerInDocker to built the image
+Since is around 7MG
+
+* For Github Master branch Image
+```bash
+# Make the image
+make docker-final
+
+#Run the image
+docker run getourneau/firehose-to-syslog
+
+```
+
+* For development 
+```bash
+#Build the image
+make docker-dev
+
+#Run the image
+docker run getourneau/firehose-to-syslog-dev
+```
+
 
 # Devel
 

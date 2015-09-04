@@ -6,6 +6,7 @@ import (
 	. "github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"io/ioutil"
 	"testing"
 )
 
@@ -39,6 +40,28 @@ var _ = Describe("Events", func() {
 				}
 				events.SetupEventRouting("HttpStartStop,CounterEvent")
 				Expect(events.GetSelectedEvents()).To(Equal(expected))
+			})
+		})
+	})
+
+	Describe("GetTotalCountOfSelectedEvents", func() {
+		Context("called after 10 events have been routed", func() {
+			var expected = uint64(10)
+			BeforeEach(func() {
+				msgChan := make(chan *Envelope)
+				go func() {
+					defer close(msgChan)
+					for i := 0; i < int(expected); i++ {
+						msg := &Envelope{EventType: Envelope_LogMessage.Enum()}
+						msgChan <- msg
+					}
+				}()
+				logrus.SetOutput(ioutil.Discard)
+				events.SetupEventRouting("")
+				events.RouteEvents(msgChan, map[string]string{})
+			})
+			It("should return a total of 10", func() {
+				Expect(events.GetTotalCountOfSelectedEvents()).To(Equal(expected))
 			})
 		})
 	})
