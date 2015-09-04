@@ -1,0 +1,1 @@
+web: firehose-to-syslog
