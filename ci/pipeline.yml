@@ -1,0 +1,45 @@
+---
+groups:
+- name: go-1.5
+  jobs:
+  - start-job
+  - job-test-app
+
+
+
+jobs:
+- name: start-job
+  public: true
+  serial: true
+  plan:
+    - { get: interval-trigger, trigger: true }
+    - { get: resource-todo-app }
+- name: job-unit-testing
+  public: true
+  serial: true
+  plan:
+  - get: firehose-to-syslog-source
+    passed: [start-job]
+  - task: firehose-to-syslog-test
+    config:
+      platform: linux
+      image: "docker://golang:1.5.1"
+      inputs:
+        - name: firehose-to-syslog-source
+      run:
+        path: firehose-to-syslog-source/ci/run_test.sh
+
+
+
+
+resources:
+- name: firehose-to-syslog-source
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry-community/firehose-to-syslog.git
+    branch: feature/adding_concourse_pipeline
+
+- name: interval-trigger
+  type: time
+  source:
+    interval: 2m # average build time for the integration tests
