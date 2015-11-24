@@ -3,7 +3,7 @@ groups:
 - name: go-1.5
   jobs:
   - start-job
-  - job-test-app
+  - job-unit-testing
 
 
 
@@ -13,7 +13,7 @@ jobs:
   serial: true
   plan:
     - { get: interval-trigger, trigger: true }
-    - { get: resource-todo-app }
+    - { get: firehose-to-syslog-source }
 - name: job-unit-testing
   public: true
   serial: true
@@ -23,7 +23,7 @@ jobs:
   - task: firehose-to-syslog-test
     config:
       platform: linux
-      image: "docker://golang:1.5.1"
+      image: "docker:///golang#1.5.1"
       inputs:
         - name: firehose-to-syslog-source
       run:
