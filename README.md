@@ -40,6 +40,7 @@ Flags:
   --version           Show application version.
   --mode-prof         Enable profiling mode, one of [cpu, mem, block]
   --path-prof         Set the Path to write Profiling file
+  --app-env-vars      Annotate app logs with specific User-Provided environment variables.
 ```
 
 #Endpoint definition

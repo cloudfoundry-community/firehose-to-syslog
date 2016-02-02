@@ -31,6 +31,7 @@ var (
 	boltDatabasePath   = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").OverrideDefaultFromEnvar("BOLTDB_PATH").String()
 	tickerTime         = kingpin.Flag("cc-pull-time", "CloudController Polling time in sec").Default("60s").OverrideDefaultFromEnvar("CF_PULL_TIME").Duration()
 	extraFields        = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").OverrideDefaultFromEnvar("EXTRA_FIELDS").String()
+	appEnvVars         = kingpin.Flag("app-env-vars", "Annotate app logs with specific User-Provided environment variables, example: '--app-env-vars=realm,team ").Default("").OverrideDefaultFromEnvar("APP_ENV_VARS").String()
 	modeProf           = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").OverrideDefaultFromEnvar("MODE_PROF").String()
 	pathProf           = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").OverrideDefaultFromEnvar("PATH_PROF").String()
 )
@@ -92,6 +93,7 @@ func main() {
 	caching.SetCfClient(cfClient)
 	caching.SetAppDb(db)
 	caching.CreateBucket()
+	caching.SetupAppEnvVars(*appEnvVars)
 
 	//Let's Update the database the first time
 	logging.LogStd("Start filling app/space/org cache.", true)
