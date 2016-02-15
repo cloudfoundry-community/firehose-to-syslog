@@ -25,7 +25,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
-			"Rev": "86f916674beeb109fa1a0842c128e61b5db41950"
+			"Rev": "113da20ed641ca3d56d09feec2ee37bda591f820"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -71,7 +71,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
-			"Rev": "ec6d5d770f531108a6464462b2201b74fcd09314"
+			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",

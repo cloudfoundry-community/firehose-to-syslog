@@ -5,8 +5,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/firehose-to-syslog/utils"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -18,6 +21,7 @@ type Event struct {
 
 var selectedEvents map[string]bool
 var selectedEventsCount map[string]uint64 = make(map[string]uint64)
+var mutex sync.Mutex
 
 func RouteEvents(in chan *events.Envelope, extraFields map[string]string) {
 	for msg := range in {
@@ -58,7 +62,9 @@ func routeEvent(msg *events.Envelope, extraFields map[string]string) {
 		event.AnnotateWithMetaData(extraFields)
 		event.ShipEvent()
 
+		mutex.Lock()
 		selectedEventsCount[eventType.String()]++
+		mutex.Unlock()
 	}
 }
 
@@ -69,8 +75,8 @@ func SetupEventRouting(wantedEvents string) error {
 		selectedEvents["LogMessage"] = true
 	} else {
 		for _, event := range strings.Split(wantedEvents, ",") {
-			if isAuthorizedEvent(event) {
-				selectedEvents[event] = true
+			if isAuthorizedEvent(strings.TrimSpace(event)) {
+				selectedEvents[strings.TrimSpace(event)] = true
 				log.LogStd(fmt.Sprintf("Event Type [%s] is included in the fireshose!", event), false)
 			} else {
 				return fmt.Errorf("Rejected Event Name [%s] - Valid events: %s", event, GetListAuthorizedEventEvents())
@@ -106,6 +112,8 @@ func GetTotalCountOfSelectedEvents() uint64 {
 }
 
 func GetSelectedEventsCount() map[string]uint64 {
+	mutex.Lock()
+	defer mutex.Unlock()
 	return selectedEventsCount
 }
 
@@ -123,13 +131,13 @@ func HttpStart(msg *events.Envelope) Event {
 
 	fields := logrus.Fields{
 		"origin":            msg.GetOrigin(),
-		"cf_app_id":         httpStart.GetApplicationId(),
+		"cf_app_id":         utils.FormatUUID(httpStart.GetApplicationId()),
 		"instance_id":       httpStart.GetInstanceId(),
 		"instance_index":    httpStart.GetInstanceIndex(),
 		"method":            httpStart.GetMethod(),
-		"parent_request_id": httpStart.GetParentRequestId(),
+		"parent_request_id": utils.FormatUUID(httpStart.GetParentRequestId()),
 		"peer_type":         httpStart.GetPeerType(),
-		"request_id":        httpStart.GetRequestId(),
+		"request_id":        utils.FormatUUID(httpStart.GetRequestId()),
 		"remote_addr":       httpStart.GetRemoteAddress(),
 		"timestamp":         httpStart.GetTimestamp(),
 		"uri":               httpStart.GetUri(),
@@ -148,10 +156,10 @@ func HttpStop(msg *events.Envelope) Event {
 
 	fields := logrus.Fields{
 		"origin":         msg.GetOrigin(),
-		"cf_app_id":      httpStop.GetApplicationId(),
+		"cf_app_id":      utils.FormatUUID(httpStop.GetApplicationId()),
 		"content_length": httpStop.GetContentLength(),
 		"peer_type":      httpStop.GetPeerType(),
-		"request_id":     httpStop.GetRequestId(),
+		"request_id":     utils.FormatUUID(httpStop.GetRequestId()),
 		"status_code":    httpStop.GetStatusCode(),
 		"timestamp":      httpStop.GetTimestamp(),
 		"uri":            httpStop.GetUri(),
@@ -169,15 +177,15 @@ func HttpStartStop(msg *events.Envelope) Event {
 
 	fields := logrus.Fields{
 		"origin":            msg.GetOrigin(),
-		"cf_app_id":         httpStartStop.GetApplicationId(),
+		"cf_app_id":         utils.FormatUUID(httpStartStop.GetApplicationId()),
 		"content_length":    httpStartStop.GetContentLength(),
 		"instance_id":       httpStartStop.GetInstanceId(),
 		"instance_index":    httpStartStop.GetInstanceIndex(),
 		"method":            httpStartStop.GetMethod(),
-		"parent_request_id": httpStartStop.GetParentRequestId(),
+		"parent_request_id": utils.FormatUUID(httpStartStop.GetParentRequestId()),
 		"peer_type":         httpStartStop.GetPeerType(),
 		"remote_addr":       httpStartStop.GetRemoteAddress(),
-		"request_id":        httpStartStop.GetRequestId(),
+		"request_id":        utils.FormatUUID(httpStartStop.GetRequestId()),
 		"start_timestamp":   httpStartStop.GetStartTimestamp(),
 		"status_code":       httpStartStop.GetStatusCode(),
 		"stop_timestamp":    httpStartStop.GetStopTimestamp(),
