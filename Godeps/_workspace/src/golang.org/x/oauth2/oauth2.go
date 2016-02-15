@@ -1,4 +1,4 @@
-// Copyright 2014 The oauth2 Authors. All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -22,6 +22,18 @@ import (
 // NoContext is the default context you should supply if not using
 // your own context.Context (see https://golang.org/x/net/context).
 var NoContext = context.TODO()
+
+// RegisterBrokenAuthHeaderProvider registers an OAuth2 server
+// identified by the tokenURL prefix as an OAuth2 implementation
+// which doesn't support the HTTP Basic authentication
+// scheme to authenticate with the authorization server.
+// Once a server is registered, credentials (client_id and client_secret)
+// will be passed as query parameters rather than being present
+// in the Authorization header.
+// See https://code.google.com/p/goauth2/issues/detail?id=31 for background.
+func RegisterBrokenAuthHeaderProvider(tokenURL string) {
+	internal.RegisterBrokenAuthHeaderProvider(tokenURL)
+}
 
 // Config describes a typical 3-legged OAuth2 flow, with both the
 // client application information and the server's endpoint URLs.
@@ -251,6 +263,22 @@ func (s *reuseTokenSource) Token() (*Token, error) {
 	}
 	s.t = t
 	return t, nil
+}
+
+// StaticTokenSource returns a TokenSource that always returns the same token.
+// Because the provided token t is never refreshed, StaticTokenSource is only
+// useful for tokens that never expire.
+func StaticTokenSource(t *Token) TokenSource {
+	return staticTokenSource{t}
+}
+
+// staticTokenSource is a TokenSource that always returns the same Token.
+type staticTokenSource struct {
+	t *Token
+}
+
+func (s staticTokenSource) Token() (*Token, error) {
+	return s.t, nil
 }
 
 // HTTPClient is the context key to use with golang.org/x/net/context's
