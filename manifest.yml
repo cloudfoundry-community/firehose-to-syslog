@@ -1,4 +1,14 @@
 applications:
 - name: firehose-to-syslog
-  buildpack: https://github.com/cloudfoundry/go-buildpack.git
-
+env:
+  API_ENDPOINT: https://api.bosh-lite.com
+  DEBUG: false
+  DOPPLER_ENDPOINT: wss://doppler.bosh-lite.com:443
+  EVENTS: LogMessage,ValueMetric,Error,ContainerMetric
+  FIREHOSE_PASSWORD: admin
+  FIREHOSE_SUBSCRIPTION_ID: firehose-a
+  FIREHOSE_USER: admin
+  LOG_EVENT_TOTALS: true
+  LOG_EVENT_TOTALS_TIME: 10s
+  SKIP_SSL_VALIDATION: true
+  SYSLOG_ENDPOINT: 10.0.0.218:5514
