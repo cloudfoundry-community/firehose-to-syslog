@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
-	"GoVersion": "go1.4.2",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.5.3",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -42,16 +39,6 @@
 		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
-		},
-		{
-			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.1.0-6-g527974d",
-			"Rev": "527974d5873391de9d8a25b761b5fc1382e9279e"
-		},
-		{
-			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0",
-			"Rev": "a78ae492d53aad5a7a232d0d0462c14c400e3ee7"
 		},
 		{
 			"ImportPath": "github.com/pkg/profile",
