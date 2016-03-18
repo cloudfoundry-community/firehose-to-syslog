@@ -103,7 +103,7 @@ docker run getourneau/firehose-to-syslog
 
 ```
 
-* For development 
+* For development
 ```bash
 #Build the image
 make docker-dev
@@ -144,6 +144,46 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
 ```
 
 For Mac OSX golang profiling do not work.
+
+# Push as an App to Cloud Foundry
+
+1. Create doppler.firehose enabled user
+
+		uaac target https://uaa.[your cf system domain] --skip-ssl-validation
+		uaac token client get admin -s [your admin-secret]
+		uaac client add  [your doppler.firehose enabled user] --scope 'openid,oauth.approvals,doppler.firehose,cloud_controller.admin' --authorized_grant_types 'authorization_code,client_credentials,refresh_token' --authorities 'oauth.login,doppler.firehose' --secret [your doppler.firehose enabled user passwd]
+
+1. Download the latest release of  firehose-to-syslog.
+
+		git clone https://github.com/cloudfoundry-community/firehose-to-syslog
+		cd firehose-to-syslog
+
+1. Utilize the CF cli to authenticate with your PCF instance.
+
+		cf login -a https://api.[your cf system domain] -u [your id] --skip-ssl-validation
+
+1. Push firehose-to-syslog.
+
+		cf push firehose-to-syslog --no-start
+
+1. Set environment variables with cf cli or in the [manifest.yml](./manifest.yml).
+
+		cf set-env firehose-to-syslog API_ENDPOINT https://api.[your cf system domain]
+		cf set-env firehose-to-syslog DOPPLER_ENDPOINT wss://doppler.[your cf system domain]:443
+		cf set-env firehose-to-syslog SYSLOG_ENDPOINT [Your Syslog IP]:514
+		cf set-env firehose-to-syslog LOG_EVENT_TOTALS true
+		cf set-env firehose-to-syslog LOG_EVENT_TOTALS_TIME "10s"
+		cf set-env firehose-to-syslog SKIP_SSL_VALIDATION true
+		cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
+		cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
+
+1. Turn off the health check if you're staging to Diego.
+
+		cf set-health-check firehose-to-syslog none
+
+1. Push the app.
+
+		cf push firehose-to-syslog --no-route
 
 # Contributors
 
