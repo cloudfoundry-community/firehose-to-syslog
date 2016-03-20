@@ -32,8 +32,7 @@ Flags:
   --skip-ssl-validation  
                       Please don't
   --events="LogMessage"  
-                      Comma seperated list of events you would like. Valid options are LogMessage, ValueMetric, CounterEvent, Error, ContainerMetric, Heartbeat, HttpStart,
-                      HttpStop, HttpStartStop
+                      Comma seperated list of events you would like. Valid options are **
   --boltdb-path="my.db"  
                       Bolt Database path
   --cc-pull-time=60s  CloudController Pooling time in sec
@@ -41,6 +40,9 @@ Flags:
   --mode-prof         Enable profiling mode, one of [cpu, mem, block]
   --path-prof         Set the Path to write Profiling file
 ```
+
+** !!! **--events** Please use --help to get last updated event.
+
 
 #Endpoint definition
 
