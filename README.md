@@ -153,7 +153,9 @@ For Mac OSX golang profiling do not work.
 
 		uaac target https://uaa.[your cf system domain] --skip-ssl-validation
 		uaac token client get admin -s [your admin-secret]
-		uaac client add  [your doppler.firehose enabled user] --scope 'openid,oauth.approvals,doppler.firehose,cloud_controller.admin' --authorized_grant_types 'authorization_code,client_credentials,refresh_token' --authorities 'oauth.login,doppler.firehose' --secret [your doppler.firehose enabled user passwd]
+		cf create-user [firehose user] [firehose password]
+		uaac member add cloud_controller.admin [your firehose user]
+		uaac member add doppler.firehose [your firehose user]
 
 1. Download the latest release of  firehose-to-syslog.
 
@@ -186,6 +188,8 @@ For Mac OSX golang profiling do not work.
 1. Push the app.
 
 		cf push firehose-to-syslog --no-route
+
+	If you are using the offline version of the go buildpack and your app fails to stage then open up the Godeps/Godeps.json file and change the `GoVersion` from `go1.5.3` to `go1.5` and repush.
 
 # Contributors
 
