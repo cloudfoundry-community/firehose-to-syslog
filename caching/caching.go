@@ -2,6 +2,7 @@ package caching
 
 import (
 	"fmt"
+	"strings"
 	"github.com/boltdb/bolt"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
@@ -15,10 +16,12 @@ type App struct {
 	SpaceGuid string
 	OrgName   string
 	OrgGuid   string
+	EnvVars   map[string]string
 }
 
 var gcfClient *cfClient.Client
 var appdb *bolt.DB
+var wantedAppEnvVars []string = []string{}
 
 func CreateBucket() {
 	appdb.Update(func(tx *bolt.Tx) error {
@@ -61,7 +64,7 @@ func FillDatabase(listApps []App) {
 func GetAppByGuid(appGuid string) []App {
 	var apps []App
 	app := gcfClient.AppByGuid(appGuid)
-	apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
+	apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid, GetAppEnvVars(app)})
 	FillDatabase(apps)
 	return apps
 
@@ -80,7 +83,7 @@ func GetAllApp() []App {
 
 	for _, app := range gcfClient.ListApps() {
 		log.LogStd(fmt.Sprintf("App [%s] Found...", app.Name), false)
-		apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
+		apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid, GetAppEnvVars(app)})
 	}
 
 	FillDatabase(apps)
@@ -120,4 +123,19 @@ func SetCfClient(cfClient *cfClient.Client) {
 
 func SetAppDb(db *bolt.DB) {
 	appdb = db
+}
+
+func SetupAppEnvVars(wantedAppEnvVarsStr string) {
+	wantedAppEnvVars = strings.Split(wantedAppEnvVarsStr, ",")
+}
+
+func GetAppEnvVars(app cfClient.App) map[string]string {
+	envVars := make(map[string]string)
+	for _, key := range wantedAppEnvVars {
+		envVal, ok := app.Environment[key].(string)
+		if ok {
+			envVars[key] = envVal
+		}
+	}
+	return envVars
 }

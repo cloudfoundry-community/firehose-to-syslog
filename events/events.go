@@ -304,6 +304,7 @@ func (e *Event) AnnotateWithAppData() {
 		cf_space_name := appInfo.SpaceName
 		cf_org_id := appInfo.OrgGuid
 		cf_org_name := appInfo.OrgName
+		cf_app_env_vars := appInfo.EnvVars
 
 		if cf_app_name != "" {
 			e.Fields["cf_app_name"] = cf_app_name
@@ -324,6 +325,8 @@ func (e *Event) AnnotateWithAppData() {
 		if cf_org_name != "" {
 			e.Fields["cf_org_name"] = cf_org_name
 		}
+
+		e.Fields["cf_app_env_vars"] = cf_app_env_vars
 	}
 }
 
