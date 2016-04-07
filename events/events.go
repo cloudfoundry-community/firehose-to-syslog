@@ -23,7 +23,7 @@ var selectedEvents map[string]bool
 var selectedEventsCount map[string]uint64 = make(map[string]uint64)
 var mutex sync.Mutex
 
-func RouteEvents(in chan *events.Envelope, extraFields map[string]string) {
+func RouteEvents(in <-chan *events.Envelope, extraFields map[string]string) {
 	for msg := range in {
 		routeEvent(msg, extraFields)
 	}

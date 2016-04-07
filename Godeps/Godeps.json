@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
-	"GoVersion": "go1.5.3",
+	"GoVersion": "go1.6",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -26,15 +26,26 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "280497e4cd656fbf56aac4de5f0ad25f2d68758d"
+			"Rev": "bb28530a73e4d31bc16a0df66f6100e0503b5bae"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
 			"Rev": "e9b4698e850553401d1d2dd998c756fdf29356ea"
 		},
 		{
+			"ImportPath": "github.com/gogo/protobuf/gogoproto",
+			"Comment": "v0.1-115-gc57e439",
+			"Rev": "c57e439bad574c2e0877ff18d514badcfced004d"
+		},
+		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Rev": "8edb24c179ed858a38f18920d9005c2dde05ec17"
+			"Comment": "v0.1-115-gc57e439",
+			"Rev": "c57e439bad574c2e0877ff18d514badcfced004d"
+		},
+		{
+			"ImportPath": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
+			"Comment": "v0.1-115-gc57e439",
+			"Rev": "c57e439bad574c2e0877ff18d514badcfced004d"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
@@ -59,6 +70,10 @@
 		{
 			"ImportPath": "golang.org/x/oauth2",
 			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "9d4e42a20653790449273b3c85e67d6d8bae6e2e"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",
