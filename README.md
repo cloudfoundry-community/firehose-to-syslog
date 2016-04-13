@@ -31,6 +31,7 @@ Flags:
   --password="admin"  Admin password.
   --skip-ssl-validation  
                       Please don't
+  --fh-keep-alive=25s Keep Alive duration for the firehose consumer
   --events="LogMessage"  
                       Comma seperated list of events you would like. Valid options are **
   --boltdb-path="my.db"  
