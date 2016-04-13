@@ -1,0 +1,17 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: getourneau/alpine-golang-bash
+
+
+inputs:
+  - name: firehose-to-syslog-ci
+
+outputs:
+  - name: firehose-to-syslog-ci-build 
+  
+run:
+  path: firehose-to-syslog-ci/ci/build-all/build-all
