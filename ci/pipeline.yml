@@ -99,7 +99,7 @@ jobs:
     file: firehose-to-syslog-ci/ci/merge-master-to-develop/merge-master-to-develop.yml
     params:
       GIT_USERNAME: {{github-username}}
-      GIT_EMAIL:  {{github-mail}}
+      GIT_EMAIL:  {{github-email}}
 
 
 
@@ -125,11 +125,6 @@ resources:
     uri: git@github.com:cloudfoundry-community/firehose-to-syslog.git
     branch: master
     private_key: {{private-key-github-concourse}}
-
-- name: slack-notification
-  type: slack
-  source: 
-    url: {{firehose-to-syslog-hook}}
 
 
 
