@@ -3,28 +3,17 @@ package firehose
 import (
 	"crypto/tls"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	"github.com/cloudfoundry/noaa"
+	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
+	"time"
 )
 
-func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool) chan *events.Envelope {
-	connection := noaa.NewConsumer(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
-
+func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool, keepAlive time.Duration) <-chan *events.Envelope {
+	consumer.KeepAlive = keepAlive
+	connection := consumer.New(DopplerEndpoint, &tls.Config{InsecureSkipVerify: skipSSLValidation}, nil)
 	connection.SetDebugPrinter(ConsoleDebugPrinter{})
-
-	msgChan := make(chan *events.Envelope)
+	msgChan, errorChan := connection.Firehose(subId, Token)
 	go func() {
-		errorChan := make(chan error)
-		defer close(msgChan)
-
-		defer func() {
-			if r := recover(); r != nil {
-				log.LogError("Recovered in CreateFirehoseChan Thread!", r)
-			}
-		}()
-
-		go connection.Firehose(subId, Token, msgChan, errorChan)
-
 		for err := range errorChan {
 			log.LogError("Firehose Error!", err.Error())
 		}
