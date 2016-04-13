@@ -1,0 +1,161 @@
+---
+groups:
+  - name: firehose-to-syslog
+    jobs: 
+    - unit-testing
+    - downstream-master
+    - unit-testing-master
+    - tag-master
+    - ship-it
+  - name: master
+    jobs:
+    - downstream-master
+    - unit-testing-master
+    - tag-master
+    - ship-it
+  - name: develop
+    jobs:
+    - unit-testing
+
+
+
+jobs:
+- name: unit-testing
+  public: true
+  serial: true
+  plan:
+   - get: firehose-to-syslog-ci 
+     resource: firehose-to-syslog-develop
+     trigger: true
+   - task: unit-testing
+     file: firehose-to-syslog-ci/ci/unit-testing/unit-testing.yml
+     
+
+- name: unit-testing-master
+  public: true
+  serial: true
+  plan:
+  - get: firehose-to-syslog-ci
+    resource: firehose-to-syslog-master 
+    trigger: true
+  - task: unit-testing
+    file: firehose-to-syslog-ci/ci/unit-testing/unit-testing.yml
+
+
+- name: tag-master
+  public: true
+  serial: true
+  plan:  
+  - get: firehose-to-syslog-ci
+    resource: firehose-to-syslog-master 
+    passed: [unit-testing-master]
+  - put: version
+    params: {bump: minor}
+  - put: firehose-to-syslog-master 
+    params: 
+      only_tag: true
+      repository: firehose-to-syslog-ci
+      tag: version/number
+
+
+- name: ship-it
+  public: true
+  serial: true
+  plan:
+  - get: firehose-to-syslog-ci
+    resource: firehose-to-syslog-master 
+    passed: [tag-master]
+    trigger: true
+  - get: version
+  - task: build-binary
+    file: firehose-to-syslog-ci/ci/build-all/build-all.yml
+  - put: gh-release
+    params :
+      name: version/number
+      tag: version/number
+      globs:
+      - firehose-to-syslog-ci-build/dist/*/*/*
+
+
+  
+
+
+
+
+- name: downstream-master
+  public: true
+  serial: true
+  plan:
+  - aggregate:
+    - get: firehose-to-syslog-ci
+      resource: firehose-to-syslog-develop
+    - get: release-repo-master
+      resource: firehose-to-syslog-master 
+      trigger: true
+      passed: [tag-master]
+    - get: release-repo
+      resource: firehose-to-syslog-merge-target
+  - task: merge-master-to-develop
+    file: firehose-to-syslog-ci/ci/merge-master-to-develop/merge-master-to-develop.yml
+    params:
+      GIT_USERNAME: {{github-username}}
+      GIT_EMAIL:  {{github-mail}}
+
+
+
+
+resources:
+- name: firehose-to-syslog-merge-target
+  type: git
+  source:
+    branch: develop
+    private_key: {{private-key-github-concourse}}
+    uri: git@github.com:cloudfoundry-community/firehose-to-syslog.git
+
+- name: firehose-to-syslog-develop
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry-community/firehose-to-syslog.git
+    branch: develop
+    private_key: {{private-key-github-concourse}}
+
+- name: firehose-to-syslog-master
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry-community/firehose-to-syslog.git
+    branch: master
+    private_key: {{private-key-github-concourse}}
+
+- name: slack-notification
+  type: slack
+  source: 
+    url: {{firehose-to-syslog-hook}}
+
+
+
+- name: gh-release
+  type: github-release
+  source:
+    user: cloudfoundry-community
+    repository: firehose-to-syslog
+    access_token: {{private-key-github-concourse}}
+
+- name: version
+  type: semver-gwenn
+  source:
+    driver: git
+    uri: git@github.com:cloudfoundry-community/firehose-to-syslog.git
+    branch: version
+    file: version
+    private_key: {{private-key-github-concourse}}
+    git_user: {{concourse-user-gitinfo}}
+
+
+
+resource_types:
+- name: semver-gwenn
+  type: docker-image
+  source:
+    repository: getourneau/semver-resource
+
+
