@@ -181,6 +181,7 @@ For Mac OSX golang profiling do not work.
 		cf set-env firehose-to-syslog SKIP_SSL_VALIDATION true
 		cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
 		cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
+		cf set-env firehose-to-syslog FIREHOSE_PASSWORD  [your doppler.firehose enabled user password]
 
 1. Turn off the health check if you're staging to Diego.
 
