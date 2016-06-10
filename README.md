@@ -17,29 +17,30 @@ CloudFoundry.
 usage: firehose-to-syslog --api-endpoint=API-ENDPOINT [<flags>]
 
 Flags:
-  --help              Show help (also see --help-long and --help-man).
-  --debug             Enable debug mode. This disables forwarding to syslog
+  --help               Show help (also see --help-long and --help-man).
+  --debug              Enable debug mode. This disables forwarding to syslog
   --api-endpoint=API-ENDPOINT  
-                      Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io
+                       Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io
   --doppler-endpoint=DOPPLER-ENDPOINT  
-                      Overwrite default doppler endpoint return by /v2/info
+                       Overwrite default doppler endpoint return by /v2/info
   --syslog-server=SYSLOG-SERVER  
-                      Syslog server.
+                       Syslog server.
   --subscription-id="firehose"  
-                      Id for the subscription.
-  --user="admin"      Admin user.
-  --password="admin"  Admin password.
+                       Id for the subscription.
+  --user="admin"       Admin user.
+  --password="admin"   Admin password.
   --skip-ssl-validation  
-                      Please don't
-  --fh-keep-alive=25s Keep Alive duration for the firehose consumer
+                       Please don't
+  --fh-keep-alive=25s  Keep Alive duration for the firehose consumer
   --events="LogMessage"  
-                      Comma seperated list of events you would like. Valid options are **
+                       Comma seperated list of events you would like. Valid options are **
   --boltdb-path="my.db"  
-                      Bolt Database path
-  --cc-pull-time=60s  CloudController Pooling time in sec
-  --version           Show application version.
-  --mode-prof         Enable profiling mode, one of [cpu, mem, block]
-  --path-prof         Set the Path to write Profiling file
+                       Bolt Database path
+  --cc-pull-time=60s   CloudController Pooling time in sec
+  --version            Show application version.
+  --mode-prof          Enable profiling mode, one of [cpu, mem, block]
+  --path-prof          Set the Path to write Profiling file
+  --log-formatter-type Set the log formatter type to use. Valid options are text, json. If none provided, defaults to json.
 ```
 
 ** !!! **--events** Please use --help to get last updated event.
@@ -182,6 +183,7 @@ For Mac OSX golang profiling do not work.
 		cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
 		cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
 		cf set-env firehose-to-syslog FIREHOSE_PASSWORD  [your doppler.firehose enabled user password]
+		cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter type to use. Valid options are : text, json]
 
 1. Turn off the health check if you're staging to Diego.
 
