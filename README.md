@@ -40,6 +40,7 @@ Flags:
   --version           Show application version.
   --mode-prof         Enable profiling mode, one of [cpu, mem, block]
   --path-prof         Set the Path to write Profiling file
+  --log-formatter-type Set the log formatter type to use. Valid options are JSONFormatter, TextFormatter. If none provided, defaults to JSONFormatter.
 ```
 
 ** !!! **--events** Please use --help to get last updated event.
