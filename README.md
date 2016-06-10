@@ -183,6 +183,7 @@ For Mac OSX golang profiling do not work.
 		cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
 		cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
 		cf set-env firehose-to-syslog FIREHOSE_PASSWORD  [your doppler.firehose enabled user password]
+		cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter to use. Valid options are : TextFormatter, JSONFormatter]
 
 1. Turn off the health check if you're staging to Diego.
 
