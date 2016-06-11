@@ -49,7 +49,7 @@ func SetupLogging(syslogSvr string, debug bool, logFmttrType string) {
 
 func GetLogFormatter(logFormatterType string) logrus.Formatter {
 	switch logFormatterType {
-	case "Text":
+	case "text":
 		return &logrus.TextFormatter{}
 	default:
 		return &logrus.JSONFormatter{}

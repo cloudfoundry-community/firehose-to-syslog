@@ -17,14 +17,14 @@ var _ = Describe("Logging", func() {
 		Context("called with a Text formatter", func() {
 			It("should set the logging formatter as TextFormatter", func() {
 				expected := &logrus.TextFormatter{}
-				Expect(GetLogFormatter("Text")).To(Equal(expected))
+				Expect(GetLogFormatter("text")).To(Equal(expected))
 			})
 		})
 
 		Context("called with a JSON formatter", func() {
 			It("should set the logging formatter as JSONFormatter", func() {
 				expected := &logrus.JSONFormatter{}
-				Expect(GetLogFormatter("JSON")).To(Equal(expected))
+				Expect(GetLogFormatter("json")).To(Equal(expected))
 			})
 		})
 
