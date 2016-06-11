@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	debugFlag bool
-	syslogServer string
+	debugFlag        bool
+	syslogServer     string
 	logFormatterType string
 )
 
@@ -49,7 +49,7 @@ func SetupLogging(syslogSvr string, debug bool, logFmttrType string) {
 
 func GetLogFormatter(logFormatterType string) logrus.Formatter {
 	switch logFormatterType {
-	case "TextFormatter":
+	case "Text":
 		return &logrus.TextFormatter{}
 	default:
 		return &logrus.JSONFormatter{}
