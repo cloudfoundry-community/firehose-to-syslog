@@ -61,8 +61,8 @@
 		},
 		{
 			"ImportPath": "github.com/pkg/profile",
-			"Comment": "v1.0.0",
-			"Rev": "c795610ec6e479e5795f7852db65ea15073674a6"
+			"Comment": "v1.0.0-9-g8a808a6",
+			"Rev": "8a808a6967b79da66deacfe508b26d398a69518f"
 		},
 		{
 			"ImportPath": "github.com/pquerna/ffjson/ffjson",
