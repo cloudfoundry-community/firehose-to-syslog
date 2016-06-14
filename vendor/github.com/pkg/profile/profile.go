@@ -13,9 +13,6 @@ import (
 	"sync/atomic"
 )
 
-// started counts the number of times Start has been called
-var started uint32
-
 const (
 	cpuMode = iota
 	memMode
@@ -40,8 +37,11 @@ type profile struct {
 	// memProfileRate holds the rate for the memory profile.
 	memProfileRate int
 
-	// closers holds the cleanup functions that run after each profile
-	closers []func()
+	// closer holds a cleanup function that run after each profile
+	closer func()
+
+	// stopped records if a call to profile.Stop has been made
+	stopped uint32
 }
 
 // NoShutdownHook controls whether the profiling package should
@@ -90,10 +90,16 @@ func ProfilePath(path string) func(*profile) {
 
 // Stop stops the profile and flushes any unwritten data.
 func (p *profile) Stop() {
-	for _, c := range p.closers {
-		c()
+	if !atomic.CompareAndSwapUint32(&p.stopped, 0, 1) {
+		// someone has already called close
+		return
 	}
+	p.closer()
+	atomic.StoreUint32(&started, 0)
 }
+
+// started is non zero if a profile is running.
+var started uint32
 
 // Start starts a new profiling session.
 // The caller should call the Stop method on the value returned
@@ -121,6 +127,12 @@ func Start(options ...func(*profile)) interface {
 		log.Fatalf("profile: could not create initial output directory: %v", err)
 	}
 
+	logf := func(format string, args ...interface{}) {
+		if !prof.quiet {
+			log.Printf(format, args...)
+		}
+	}
+
 	switch prof.mode {
 	case cpuMode:
 		fn := filepath.Join(path, "cpu.pprof")
@@ -128,14 +140,13 @@ func Start(options ...func(*profile)) interface {
 		if err != nil {
 			log.Fatalf("profile: could not create cpu profile %q: %v", fn, err)
 		}
-		if !prof.quiet {
-			log.Printf("profile: cpu profiling enabled, %s", fn)
-		}
+		logf("profile: cpu profiling enabled, %s", fn)
 		pprof.StartCPUProfile(f)
-		prof.closers = append(prof.closers, func() {
+		prof.closer = func() {
 			pprof.StopCPUProfile()
 			f.Close()
-		})
+			logf("profile: cpu profiling disabled, %s", fn)
+		}
 
 	case memMode:
 		fn := filepath.Join(path, "mem.pprof")
@@ -145,14 +156,13 @@ func Start(options ...func(*profile)) interface {
 		}
 		old := runtime.MemProfileRate
 		runtime.MemProfileRate = prof.memProfileRate
-		if !prof.quiet {
-			log.Printf("profile: memory profiling enabled (rate %d), %s", runtime.MemProfileRate, fn)
-		}
-		prof.closers = append(prof.closers, func() {
+		logf("profile: memory profiling enabled (rate %d), %s", runtime.MemProfileRate, fn)
+		prof.closer = func() {
 			pprof.Lookup("heap").WriteTo(f, 0)
 			f.Close()
 			runtime.MemProfileRate = old
-		})
+			logf("profile: memory profiling disabled, %s", fn)
+		}
 
 	case blockMode:
 		fn := filepath.Join(path, "block.pprof")
@@ -161,14 +171,13 @@ func Start(options ...func(*profile)) interface {
 			log.Fatalf("profile: could not create block profile %q: %v", fn, err)
 		}
 		runtime.SetBlockProfileRate(1)
-		if !prof.quiet {
-			log.Printf("profile: block profiling enabled, %s", fn)
-		}
-		prof.closers = append(prof.closers, func() {
+		logf("profile: block profiling enabled, %s", fn)
+		prof.closer = func() {
 			pprof.Lookup("block").WriteTo(f, 0)
 			f.Close()
 			runtime.SetBlockProfileRate(0)
-		})
+			logf("profile: block profiling disabled, %s", fn)
+		}
 	}
 
 	if !prof.noShutdownHook {
@@ -183,10 +192,6 @@ func Start(options ...func(*profile)) interface {
 			os.Exit(0)
 		}()
 	}
-
-	prof.closers = append(prof.closers, func() {
-		atomic.SwapUint32(&started, 0)
-	})
 
 	return &prof
 }
