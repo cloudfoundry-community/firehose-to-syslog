@@ -48,6 +48,8 @@ type Consumer struct {
 	idleTimeout          time.Duration
 	sync.RWMutex
 	stopChan chan struct{}
+	client   *http.Client
+	dialer   websocket.Dialer
 }
 
 // noaa.Consumer is deprecated.  Use the one in the consumer package.
@@ -55,7 +57,20 @@ type Consumer struct {
 // NewConsumer creates a new consumer to a traffic controller.
 func NewConsumer(trafficControllerUrl string, tlsConfig *tls.Config, proxy func(*http.Request) (*url.URL, error)) *Consumer {
 	log.Printf("You are using a deprecated noaa consumer (noaa.Consumer).  Please switch to 'github.com/cloudfoundry/noaa/consumer'.Consumer at your earliest convenience.")
-	return &Consumer{trafficControllerUrl: trafficControllerUrl, tlsConfig: tlsConfig, proxy: proxy, debugPrinter: NullDebugPrinter{}, stopChan: make(chan struct{})}
+	transport := &http.Transport{Proxy: proxy, TLSClientConfig: tlsConfig}
+	consumer := &Consumer{
+		trafficControllerUrl: trafficControllerUrl,
+		tlsConfig:            tlsConfig,
+		proxy:                proxy,
+		debugPrinter:         NullDebugPrinter{},
+		stopChan:             make(chan struct{}),
+		client:               &http.Client{Transport: transport},
+	}
+	consumer.dialer = websocket.Dialer{
+		NetDial:         consumer.proxyDial,
+		TLSClientConfig: tlsConfig,
+	}
+	return consumer
 }
 
 // noaa.Consumer is deprecated.  Use the one in the consumer package.
@@ -251,13 +266,11 @@ func (cnsmr *Consumer) readEnvelopesFromTrafficController(appGuid string, authTo
 	}
 
 	recentPath := fmt.Sprintf("%s://%s/apps/%s/%s", scheme, trafficControllerUrl.Host, appGuid, endpoint)
-	transport := &http.Transport{Proxy: cnsmr.proxy, TLSClientConfig: cnsmr.tlsConfig}
-	client := &http.Client{Transport: transport}
 
 	req, _ := http.NewRequest("GET", recentPath, nil)
 	req.Header.Set("Authorization", authToken)
 
-	resp, err := client.Do(req)
+	resp, err := cnsmr.client.Do(req)
 
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Error dialing traffic controller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (traffic controller endpoint is %s).", err.Error(), cnsmr.trafficControllerUrl))
@@ -389,8 +402,6 @@ func headersString(header http.Header) string {
 func (cnsmr *Consumer) establishWebsocketConnection(path string, authToken string) (*websocket.Conn, error) {
 	header := http.Header{"Origin": []string{"http://localhost"}, "Authorization": []string{authToken}}
 
-	dialer := websocket.Dialer{NetDial: cnsmr.proxyDial, TLSClientConfig: cnsmr.tlsConfig}
-
 	url := cnsmr.trafficControllerUrl + path
 
 	cnsmr.debugPrinter.Print("WEBSOCKET REQUEST:",
@@ -399,7 +410,7 @@ func (cnsmr *Consumer) establishWebsocketConnection(path string, authToken strin
 			"Upgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Version: 13\nSec-WebSocket-Key: [HIDDEN]\n"+
 			headersString(header))
 
-	ws, resp, err := dialer.Dial(url, header)
+	ws, resp, err := cnsmr.dialer.Dial(url, header)
 
 	if resp != nil {
 		cnsmr.debugPrinter.Print("WEBSOCKET RESPONSE:",

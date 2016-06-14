@@ -3,7 +3,6 @@ notifications:
   email:
   - cf-lamb@pivotallabs.com
 before_install:
-- go get golang.org/x/tools/cmd/cover golang.org/x/tools/cmd/vet
 - go get github.com/mattn/goveralls
 - go get github.com/onsi/ginkgo/ginkgo
 after_success:
@@ -16,7 +15,6 @@ install:
 script: PATH=$HOME/gopath/bin:$PATH bin/test
 
 go:
-- 1.4
 - 1.5
 - 1.6
 - tip

@@ -5,13 +5,13 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.7.2-4-gcdd90c3",
-			"Rev": "cdd90c38c6e3718c731b555b9c3ed1becebec3ba"
+			"Comment": "v0.10.0",
+			"Rev": "4b6ea7319e214d98c938f12692336f7ca9348d6b"
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus/hooks/syslog",
-			"Comment": "v0.7.2-4-gcdd90c3",
-			"Rev": "cdd90c38c6e3718c731b555b9c3ed1becebec3ba"
+			"Comment": "v0.10.0",
+			"Rev": "4b6ea7319e214d98c938f12692336f7ca9348d6b"
 		},
 		{
 			"ImportPath": "github.com/alecthomas/template",
@@ -36,15 +36,15 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "bb28530a73e4d31bc16a0df66f6100e0503b5bae"
+			"Rev": "75f17396a9775320dabb89682c68255e5d68a9b8"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/consumer",
-			"Rev": "bb28530a73e4d31bc16a0df66f6100e0503b5bae"
+			"Rev": "75f17396a9775320dabb89682c68255e5d68a9b8"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/errors",
-			"Rev": "bb28530a73e4d31bc16a0df66f6100e0503b5bae"
+			"Rev": "75f17396a9775320dabb89682c68255e5d68a9b8"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
@@ -92,6 +92,14 @@
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",
 			"Comment": "v2.1.11",
 			"Rev": "8cccfa8eb2e3183254457fb1749b2667fbc364c7"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/noaa/consumer/internal",
+			"Rev": "75f17396a9775320dabb89682c68255e5d68a9b8"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "9d4e42a20653790449273b3c85e67d6d8bae6e2e"
 		}
 	]
 }
