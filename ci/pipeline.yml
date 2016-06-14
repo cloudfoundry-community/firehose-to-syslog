@@ -132,7 +132,7 @@ resources:
   source:
     user: cloudfoundry-community
     repository: firehose-to-syslog
-    access_token: {{private-key-github-concourse}}
+    access_token: {{github-access-token}}
 
 - name: version
   type: semver-gwenn
