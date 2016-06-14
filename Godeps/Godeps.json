@@ -1,6 +1,7 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
 	"GoVersion": "go1.6",
+	"GodepVersion": "v74",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -8,7 +9,16 @@
 			"Rev": "cdd90c38c6e3718c731b555b9c3ed1becebec3ba"
 		},
 		{
+			"ImportPath": "github.com/Sirupsen/logrus/hooks/syslog",
+			"Comment": "v0.7.2-4-gcdd90c3",
+			"Rev": "cdd90c38c6e3718c731b555b9c3ed1becebec3ba"
+		},
+		{
 			"ImportPath": "github.com/alecthomas/template",
+			"Rev": "b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0"
+		},
+		{
+			"ImportPath": "github.com/alecthomas/template/parse",
 			"Rev": "b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0"
 		},
 		{
@@ -29,21 +39,19 @@
 			"Rev": "bb28530a73e4d31bc16a0df66f6100e0503b5bae"
 		},
 		{
+			"ImportPath": "github.com/cloudfoundry/noaa/consumer",
+			"Rev": "bb28530a73e4d31bc16a0df66f6100e0503b5bae"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/noaa/errors",
+			"Rev": "bb28530a73e4d31bc16a0df66f6100e0503b5bae"
+		},
+		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
 			"Rev": "e9b4698e850553401d1d2dd998c756fdf29356ea"
 		},
 		{
-			"ImportPath": "github.com/gogo/protobuf/gogoproto",
-			"Comment": "v0.1-115-gc57e439",
-			"Rev": "c57e439bad574c2e0877ff18d514badcfced004d"
-		},
-		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Comment": "v0.1-115-gc57e439",
-			"Rev": "c57e439bad574c2e0877ff18d514badcfced004d"
-		},
-		{
-			"ImportPath": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
 			"Comment": "v0.1-115-gc57e439",
 			"Rev": "c57e439bad574c2e0877ff18d514badcfced004d"
 		},
@@ -53,6 +61,7 @@
 		},
 		{
 			"ImportPath": "github.com/pkg/profile",
+			"Comment": "v1.0.0",
 			"Rev": "c795610ec6e479e5795f7852db65ea15073674a6"
 		},
 		{
@@ -64,6 +73,10 @@
 			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
 		},
 		{
+			"ImportPath": "github.com/pquerna/ffjson/fflib/v1/internal",
+			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "7dbad50ab5b31073856416cdcfeb2796d682f844"
 		},
@@ -72,8 +85,8 @@
 			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
 		},
 		{
-			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "9d4e42a20653790449273b3c85e67d6d8bae6e2e"
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",
