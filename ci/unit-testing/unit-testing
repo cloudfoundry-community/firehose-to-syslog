@@ -1,12 +1,14 @@
 #!/bin/bash
 set -e -u -x
+export ROOT_DIR=$PWD
+export GOPATH=$PWD/gopath
+export PATH=$GOPATH/bin:$PATH
 
-mkdir -p $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
-cp -R firehose-to-syslog-ci/*  $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
-cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
-go get github.com/tools/godep
+
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
-go get github.com/golang/protobuf/proto
-godep restore
+
+cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
+
+
 make test

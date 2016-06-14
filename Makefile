@@ -6,13 +6,13 @@ test:
 	ginkgo -r -v .
 
 linux32:
-	GOARCH=386 GOOS=linux godep go build -o dist/linux/386/firehose-to-syslog_linux_386
+	GOARCH=386 GOOS=linux go build --ldflags="-X main.version=${BUILD_NUMBER}" -o dist/linux/386/firehose-to-syslog_linux_386
 
 linux64:
-	GOARCH=amd64 GOOS=linux godep go build -o dist/linux/amd64/firehose-to-syslog_linux_amd64
+	GOARCH=amd64 GOOS=linux go build --ldflags="-X main.version=${BUILD_NUMBER}" -o dist/linux/amd64/firehose-to-syslog_linux_amd64
 
 darwin64:
-	GOARCH=amd64 GOOS=darwin godep go build -o dist/darwin/amd64/firehose-to-syslog_darwin_amd64
+	GOARCH=amd64 GOOS=darwin go build --ldflags="-X main.version=${BUILD_NUMBER}" -o dist/darwin/amd64/firehose-to-syslog_darwin_amd64
 
 clean:
 	-rm -rf dist/*

@@ -11,15 +11,15 @@ import (
 )
 
 var (
-	debugFlag    bool
-	syslogServer string
+	debugFlag        bool
+	syslogServer     string
+	logFormatterType string
 )
 
 func Connect() bool {
-
 	success := false
 
-	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetFormatter(GetLogFormatter(logFormatterType))
 
 	if !debugFlag {
 		logrus.SetOutput(ioutil.Discard)
@@ -41,9 +41,19 @@ func Connect() bool {
 	return success
 }
 
-func SetupLogging(syslogSvr string, debug bool) {
+func SetupLogging(syslogSvr string, debug bool, logFmttrType string) {
 	debugFlag = debug
 	syslogServer = syslogSvr
+	logFormatterType = logFmttrType
+}
+
+func GetLogFormatter(logFormatterType string) logrus.Formatter {
+	switch logFormatterType {
+	case "text":
+		return &logrus.TextFormatter{}
+	default:
+		return &logrus.JSONFormatter{}
+	}
 }
 
 func LogStd(message string, force bool) {
@@ -51,7 +61,6 @@ func LogStd(message string, force bool) {
 }
 
 func LogError(message string, errMsg interface{}) {
-
 	Log(message, false, true, errMsg)
 }
 

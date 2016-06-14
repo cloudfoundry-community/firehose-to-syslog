@@ -34,10 +34,11 @@ var (
 	extraFields        = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").OverrideDefaultFromEnvar("EXTRA_FIELDS").String()
 	modeProf           = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").OverrideDefaultFromEnvar("MODE_PROF").String()
 	pathProf           = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").OverrideDefaultFromEnvar("PATH_PROF").String()
+	logFormatterType   = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
 )
 
-const (
-	version = "1.3.1"
+var (
+	version = "0.0.0"
 )
 
 func main() {
@@ -45,7 +46,7 @@ func main() {
 	kingpin.Parse()
 	logging.LogStd(fmt.Sprintf("Starting firehose-to-syslog %s ", version), true)
 
-	logging.SetupLogging(*syslogServer, *debug)
+	logging.SetupLogging(*syslogServer, *debug, *logFormatterType)
 
 	c := cfclient.Config{
 		ApiAddress:        *apiEndpoint,
