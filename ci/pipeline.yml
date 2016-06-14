@@ -69,6 +69,8 @@ jobs:
   - get: version
   - task: build-binary
     file: firehose-to-syslog-ci/ci/build-all/build-all.yml
+    params:
+      VERSION_APP: version/number
   - put: gh-release
     params :
       name: version/number
