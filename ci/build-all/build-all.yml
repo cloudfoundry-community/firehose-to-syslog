@@ -10,6 +10,7 @@ image_resource:
 inputs:
   - name: firehose-to-syslog-ci
     path: gopath/src/github.com/cloudfoundry-community/firehose-to-syslog/
+  - name: version
 
 outputs:
   - name: firehose-to-syslog-ci-build 

@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e -u -x
-ls -la
 export ROOT_DIR=$PWD
 export GOPATH=$PWD/gopath
 export PATH=$GOPATH/bin:$PATH
-cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
 export BUILD_NUMBER=`[ ${VERSION_APP} ] && cat ${VERSION_APP} || echo "0.0.0"`
+cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
+
 
 make clean
 make compile
