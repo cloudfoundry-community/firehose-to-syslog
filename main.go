@@ -37,8 +37,8 @@ var (
 	logFormatterType   = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
 )
 
-const (
-	version = "1.3.1"
+var (
+	version = "0.0.0"
 )
 
 func main() {
@@ -87,7 +87,7 @@ func main() {
 		case "block":
 			defer profile.Start(profile.BlockProfile, profile.ProfilePath(*pathProf)).Stop()
 		default:
-		// do nothing
+			// do nothing
 		}
 	}
 
