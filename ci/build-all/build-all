@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e -u -x
-ls -lah
 export ROOT_DIR=$PWD
 export GOPATH=$PWD/gopath
 export PATH=$GOPATH/bin:$PATH
