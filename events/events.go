@@ -133,6 +133,7 @@ func (e *Event) AnnotateWithEnveloppeData(msg *events.Envelope) {
 	e.Fields["ip"] = msg.GetIp()
 	e.Fields["job"] = msg.GetJob()
 	e.Fields["index"] = msg.GetIndex()
+	//e.Fields["tags"] = msg.GetTags()
 	e.Type = msg.GetEventType().String()
 
 }
@@ -183,21 +184,20 @@ func HttpStartStop(msg *events.Envelope) Event {
 	httpStartStop := msg.GetHttpStartStop()
 
 	fields := logrus.Fields{
-		"cf_app_id":         utils.FormatUUID(httpStartStop.GetApplicationId()),
-		"content_length":    httpStartStop.GetContentLength(),
-		"instance_id":       httpStartStop.GetInstanceId(),
-		"instance_index":    httpStartStop.GetInstanceIndex(),
-		"method":            httpStartStop.GetMethod(),
-		"parent_request_id": utils.FormatUUID(httpStartStop.GetParentRequestId()),
-		"peer_type":         httpStartStop.GetPeerType(),
-		"remote_addr":       httpStartStop.GetRemoteAddress(),
-		"request_id":        utils.FormatUUID(httpStartStop.GetRequestId()),
-		"start_timestamp":   httpStartStop.GetStartTimestamp(),
-		"status_code":       httpStartStop.GetStatusCode(),
-		"stop_timestamp":    httpStartStop.GetStopTimestamp(),
-		"uri":               httpStartStop.GetUri(),
-		"user_agent":        httpStartStop.GetUserAgent(),
-		"duration_ms":       (((httpStartStop.GetStopTimestamp() - httpStartStop.GetStartTimestamp()) / 1000) / 1000),
+		"cf_app_id":       utils.FormatUUID(httpStartStop.GetApplicationId()),
+		"content_length":  httpStartStop.GetContentLength(),
+		"instance_id":     httpStartStop.GetInstanceId(),
+		"instance_index":  httpStartStop.GetInstanceIndex(),
+		"method":          httpStartStop.GetMethod(),
+		"peer_type":       httpStartStop.GetPeerType(),
+		"remote_addr":     httpStartStop.GetRemoteAddress(),
+		"request_id":      utils.FormatUUID(httpStartStop.GetRequestId()),
+		"start_timestamp": httpStartStop.GetStartTimestamp(),
+		"status_code":     httpStartStop.GetStatusCode(),
+		"stop_timestamp":  httpStartStop.GetStopTimestamp(),
+		"uri":             httpStartStop.GetUri(),
+		"user_agent":      httpStartStop.GetUserAgent(),
+		"duration_ms":     (((httpStartStop.GetStopTimestamp() - httpStartStop.GetStartTimestamp()) / 1000) / 1000),
 	}
 
 	return Event{

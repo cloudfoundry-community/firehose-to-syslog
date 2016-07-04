@@ -48,12 +48,12 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
-			"Rev": "e9b4698e850553401d1d2dd998c756fdf29356ea"
+			"Rev": "64ff74a60c9558e7fcb55c9d22eff49412ec5826"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Comment": "v0.1-115-gc57e439",
-			"Rev": "c57e439bad574c2e0877ff18d514badcfced004d"
+			"Comment": "v0.2-20-g318371c",
+			"Rev": "318371cbef6bab80e8d1c69b470fffa79eebfb54"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
