@@ -94,6 +94,7 @@ var _ = Describe("Events", func() {
 		Context("given a envelope", func() {
 			It("should give us what we want", func() {
 				event := events.LogMessage(envelope)
+				event.AnnotateWithEnveloppeData(envelope)
 				Expect(event.Fields["origin"]).To(Equal(origin))
 				Expect(event.Fields["cf_app_id"]).To(Equal(appID))
 				Expect(event.Fields["timestamp"]).To(Equal(posixStart))
