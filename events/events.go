@@ -6,7 +6,6 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/firehose-to-syslog/utils"
-
 	"github.com/cloudfoundry/sonde-go/events"
 	"strings"
 	"sync"
