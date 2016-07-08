@@ -43,6 +43,10 @@
 			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
 		},
 		{
+			"ImportPath": "github.com/cloudfoundry/noaa/consumer/internal",
+			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
+		},
+		{
 			"ImportPath": "github.com/cloudfoundry/noaa/errors",
 			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
 		},
@@ -51,7 +55,17 @@
 			"Rev": "64ff74a60c9558e7fcb55c9d22eff49412ec5826"
 		},
 		{
+			"ImportPath": "github.com/gogo/protobuf/gogoproto",
+			"Comment": "v0.2-22-g2752d97",
+			"Rev": "2752d97bbd91927dd1c43296dbf8700e50e2708c"
+		},
+		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
+			"Comment": "v0.2-22-g2752d97",
+			"Rev": "2752d97bbd91927dd1c43296dbf8700e50e2708c"
+		},
+		{
+			"ImportPath": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
 			"Comment": "v0.2-22-g2752d97",
 			"Rev": "2752d97bbd91927dd1c43296dbf8700e50e2708c"
 		},
@@ -89,17 +103,13 @@
 			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
 		},
 		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "9d4e42a20653790449273b3c85e67d6d8bae6e2e"
+		},
+		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",
 			"Comment": "v2.1.11",
 			"Rev": "8cccfa8eb2e3183254457fb1749b2667fbc364c7"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry/noaa/consumer/internal",
-			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
-		},
-		{
-			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "9d4e42a20653790449273b3c85e67d6d8bae6e2e"
 		}
 	]
 }
