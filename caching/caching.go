@@ -103,7 +103,7 @@ func GetAppInfo(appGuid string) App {
 	appdb.View(func(tx *bolt.Tx) error {
 		log.LogStd(fmt.Sprintf("Looking for App %s in Cache!\n", appGuid), false)
 		b := tx.Bucket([]byte("AppBucket"))
-		d = b.Get([]byte(appGuid))
+		d = cloneBytes(b.Get([]byte(appGuid)))
 		return nil
 	})
 	err := json.Unmarshal([]byte(d), &app)
@@ -111,6 +111,13 @@ func GetAppInfo(appGuid string) App {
 		return App{}
 	}
 	return app
+}
+
+// cloneBytes returns a copy of a given slice.
+func cloneBytes(v []byte) []byte {
+	var clone = make([]byte, len(v))
+	copy(clone, v)
+	return clone
 }
 
 func SetCfClient(cfClient *cfClient.Client) {
