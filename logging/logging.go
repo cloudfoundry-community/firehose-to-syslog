@@ -2,18 +2,20 @@ package logging
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/Sirupsen/logrus/hooks/syslog"
 	"io/ioutil"
 	"log/syslog"
 	"os"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus/hooks/syslog"
 )
 
 var (
 	debugFlag        bool
 	syslogServer     string
 	logFormatterType string
+	syslogProtocol   string
 )
 
 func Connect() bool {
@@ -27,7 +29,7 @@ func Connect() bool {
 		logrus.SetOutput(os.Stdout)
 	}
 	if syslogServer != "" {
-		hook, err := logrus_syslog.NewSyslogHook("tcp", syslogServer, syslog.LOG_INFO, "doppler")
+		hook, err := logrus_syslog.NewSyslogHook(syslogProtocol, syslogServer, syslog.LOG_INFO, "doppler")
 		if err != nil {
 			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", syslogServer), err.Error())
 		} else {
@@ -41,9 +43,10 @@ func Connect() bool {
 	return success
 }
 
-func SetupLogging(syslogSvr string, debug bool, logFmttrType string) {
+func SetupLogging(syslogSvr, syslogProto string, debug bool, logFmttrType string) {
 	debugFlag = debug
 	syslogServer = syslogSvr
+	syslogProtocol = syslogProto
 	logFormatterType = logFmttrType
 }
 
