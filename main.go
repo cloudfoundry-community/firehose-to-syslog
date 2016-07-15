@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/events"
@@ -11,9 +15,6 @@ import (
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"log"
-	"os"
-	"time"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 	apiEndpoint        = kingpin.Flag("api-endpoint", "Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io").OverrideDefaultFromEnvar("API_ENDPOINT").Required().String()
 	dopplerEndpoint    = kingpin.Flag("doppler-endpoint", "Overwrite default doppler endpoint return by /v2/info").OverrideDefaultFromEnvar("DOPPLER_ENDPOINT").String()
 	syslogServer       = kingpin.Flag("syslog-server", "Syslog server.").OverrideDefaultFromEnvar("SYSLOG_ENDPOINT").String()
+	syslogProtocol     = kingpin.Flag("syslog-protocol", "Syslog protocol (tcp/udp).").Default("tcp").OverrideDefaultFromEnvar("SYSLOG_PROTOCOL").String()
 	subscriptionId     = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").OverrideDefaultFromEnvar("FIREHOSE_SUBSCRIPTION_ID").String()
 	user               = kingpin.Flag("user", "Admin user.").Default("admin").OverrideDefaultFromEnvar("FIREHOSE_USER").String()
 	password           = kingpin.Flag("password", "Admin password.").Default("admin").OverrideDefaultFromEnvar("FIREHOSE_PASSWORD").String()
@@ -46,7 +48,7 @@ func main() {
 	kingpin.Parse()
 	logging.LogStd(fmt.Sprintf("Starting firehose-to-syslog %s ", version), true)
 
-	logging.SetupLogging(*syslogServer, *debug, *logFormatterType)
+	logging.SetupLogging(*syslogServer, *syslogProtocol, *debug, *logFormatterType)
 
 	c := cfclient.Config{
 		ApiAddress:        *apiEndpoint,
