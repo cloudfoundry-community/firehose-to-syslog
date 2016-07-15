@@ -17,30 +17,31 @@ CloudFoundry.
 usage: firehose-to-syslog --api-endpoint=API-ENDPOINT [<flags>]
 
 Flags:
-  --help               Show help (also see --help-long and --help-man).
-  --debug              Enable debug mode. This disables forwarding to syslog
-  --api-endpoint=API-ENDPOINT  
-                       Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io
-  --doppler-endpoint=DOPPLER-ENDPOINT  
-                       Overwrite default doppler endpoint return by /v2/info
-  --syslog-server=SYSLOG-SERVER  
-                       Syslog server.
-  --subscription-id="firehose"  
-                       Id for the subscription.
-  --user="admin"       Admin user.
-  --password="admin"   Admin password.
-  --skip-ssl-validation  
-                       Please don't
-  --fh-keep-alive=25s  Keep Alive duration for the firehose consumer
-  --events="LogMessage"  
-                       Comma seperated list of events you would like. Valid options are **
-  --boltdb-path="my.db"  
-                       Bolt Database path
-  --cc-pull-time=60s   CloudController Pooling time in sec
-  --version            Show application version.
-  --mode-prof          Enable profiling mode, one of [cpu, mem, block]
-  --path-prof          Set the Path to write Profiling file
-  --log-formatter-type Set the log formatter type to use. Valid options are text, json. If none provided, defaults to json.
+  --help                         Show context-sensitive help (also try --help-long and --help-man).
+  --debug                        Enable debug mode. This disables forwarding to syslog
+  --api-endpoint=API-ENDPOINT    Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io
+  --doppler-endpoint=DOPPLER-ENDPOINT
+                                 Overwrite default doppler endpoint return by /v2/info
+  --syslog-server=SYSLOG-SERVER  Syslog server.
+  --syslog-protocol="tcp"        Syslog protocol (tcp/udp).
+  --subscription-id="firehose"   Id for the subscription.
+  --user="admin"                 Admin user.
+  --password="admin"             Admin password.
+  --skip-ssl-validation          Please don't
+  --fh-keep-alive=25s            Keep Alive duration for the firehose consumer
+  --log-event-totals             Logs the counters for all selected events since nozzle was last started.
+  --log-event-totals-time=30s    How frequently the event totals are calculated (in sec).
+  --events="LogMessage"          Comma separated list of events you would like. Valid options are Error, ContainerMetric,
+                                 HttpStart, HttpStop, HttpStartStop, LogMessage, ValueMetric, CounterEvent
+  --boltdb-path="my.db"          Bolt Database path
+  --cc-pull-time=60s             CloudController Polling time in sec
+  --extra-fields=""              Extra fields you want to annotate your events with, example:
+                                 '--extra-fields=env:dev,something:other
+  --mode-prof=""                 Enable profiling mode, one of [cpu, mem, block]
+  --path-prof=""                 Set the Path to write profiling file
+  --log-formatter-type=LOG-FORMATTER-TYPE
+                                 Log formatter type to use. Valid options are text, json. If none provided, defaults to json.
+  --version                      Show application version.
 ```
 
 ** !!! **--events** Please use --help to get last updated event.
