@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.6.3",
 	"GodepVersion": "v74",
 	"Deps": [
 		{
