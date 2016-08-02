@@ -6,6 +6,7 @@ import (
 	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
 	json "github.com/pquerna/ffjson/ffjson"
+	"regexp"
 )
 
 type App struct {
@@ -127,4 +128,9 @@ func SetCfClient(cfClient *cfClient.Client) {
 
 func SetAppDb(db *bolt.DB) {
 	appdb = db
+}
+
+func IsNeeded(wantedEvents string) bool {
+	r := regexp.MustCompile("LogMessage|HttpStart|HttpStop|HttpStartStop|ContainerMetric")
+	return r.MatchString(wantedEvents)
 }

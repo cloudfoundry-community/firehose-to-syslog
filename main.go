@@ -71,15 +71,6 @@ func main() {
 
 	}
 
-	//Use bolt for in-memory  - file caching
-	db, err := bolt.Open(*boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
-	if err != nil {
-		log.Fatal("Error opening bolt db: ", err)
-		os.Exit(1)
-
-	}
-	defer db.Close()
-
 	if *modeProf != "" {
 		switch *modeProf {
 		case "cpu":
@@ -93,23 +84,33 @@ func main() {
 		}
 	}
 
-	caching.SetCfClient(cfClient)
-	caching.SetAppDb(db)
-	caching.CreateBucket()
-
-	//Let's Update the database the first time
-	logging.LogStd("Start filling app/space/org cache.", true)
-	apps := caching.GetAllApp()
-	logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
-
-	// Ticker Pooling the CC every X sec
-	ccPooling := time.NewTicker(*tickerTime)
-
-	go func() {
-		for range ccPooling.C {
-			apps = caching.GetAllApp()
+	if caching.IsNeeded(*wantedEvents) {
+		//Use bolt for in-memory  - file caching
+		db, err := bolt.Open(*boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
+		if err != nil {
+			log.Fatal("Error opening bolt db: ", err)
+			os.Exit(1)
 		}
-	}()
+		defer db.Close()
+
+		caching.SetCfClient(cfClient)
+		caching.SetAppDb(db)
+		caching.CreateBucket()
+
+		//Let's Update the database the first time
+		logging.LogStd("Start filling app/space/org cache.", true)
+		apps := caching.GetAllApp()
+		logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
+
+		// Ticker Pooling the CC every X sec
+		ccPooling := time.NewTicker(*tickerTime)
+
+		go func() {
+			for range ccPooling.C {
+				apps = caching.GetAllApp()
+			}
+		}()
+	}
 
 	// Parse extra fields from cmd call
 	extraFields, err := extrafields.ParseExtraFields(*extraFields)
