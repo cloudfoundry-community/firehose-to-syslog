@@ -58,7 +58,11 @@ func routeEvent(msg *events.Envelope, extraFields map[string]string) {
 		}
 
 		event.AnnotateWithEnveloppeData(msg)
-		event.AnnotateWithAppData()
+
+		if _, hasAppId := event.Fields["cf_app_id"]; hasAppId {
+			event.AnnotateWithAppData()
+		}
+
 		event.AnnotateWithMetaData(extraFields)
 		event.ShipEvent()
 
@@ -286,10 +290,7 @@ func ContainerMetric(msg *events.Envelope) Event {
 func (e *Event) AnnotateWithAppData() {
 
 	cf_app_id := e.Fields["cf_app_id"]
-	appGuid := ""
-	if cf_app_id != nil {
-		appGuid = fmt.Sprintf("%s", cf_app_id)
-	}
+	appGuid := fmt.Sprintf("%s", cf_app_id)
 
 	if cf_app_id != nil && appGuid != "<nil>" && cf_app_id != "" {
 		appInfo := getAppInfo(appGuid)
