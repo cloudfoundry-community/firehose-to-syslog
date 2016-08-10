@@ -325,8 +325,8 @@ func (c *Consumer) tryWebsocketConnection(path, token string) (*websocket.Conn, 
 		httpErr.statusCode = resp.StatusCode
 	}
 	if err != nil {
-		errMsg := "Error dialing traffic controller server: %s.\n" +
-			"Please ask your Cloud Foundry Operator to check the platform configuration (traffic controller is %s)."
+		errMsg := "Error dialing trafficcontroller server: %s.\n" +
+			"Please ask your Cloud Foundry Operator to check the platform configuration (trafficcontroller is %s)."
 		httpErr.error = errors.New(fmt.Sprintf(errMsg, err.Error(), c.trafficControllerUrl))
 		return nil, httpErr
 	}

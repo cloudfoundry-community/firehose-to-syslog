@@ -148,8 +148,6 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
          0     0%   100%       20ms 18.18%  bufio.(*Reader).fill
 ```
 
-For Mac OSX golang profiling do not work.
-
 # Push as an App to Cloud Foundry
 
 1. Create doppler.firehose enabled user

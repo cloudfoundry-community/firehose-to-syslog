@@ -45,4 +45,23 @@ var _ = Describe("Extra Fields", func() {
 			})
 		})
 	})
+	Describe("FieldExist", func() {
+		Context("Called with existing value", func() {
+			It("should return true", func() {
+				extraEvents := "to:many"
+				field, _ := ParseExtraFields(extraEvents)
+				Expect(FieldExist(field, "to")).To(BeTrue())
+			})
+		})
+		Context("Called with existing value", func() {
+			It("should return false", func() {
+				extraEvents := "tpo:many,test:b,foo:bar"
+				field, _ := ParseExtraFields(extraEvents)
+				Expect(FieldExist(field, "to")).To(BeFalse())
+				Expect(FieldExist(field, "t")).To(BeFalse())
+				Expect(FieldExist(field, "fo")).To(BeFalse())
+			})
+		})
+
+	})
 })

@@ -2,61 +2,15 @@ package logging
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log/syslog"
 	"os"
 	"time"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/Sirupsen/logrus/hooks/syslog"
 )
 
-var (
-	debugFlag        bool
-	syslogServer     string
-	logFormatterType string
-	syslogProtocol   string
-)
+//go:generate counterfeiter . Logging
 
-func Connect() bool {
-	success := false
-
-	logrus.SetFormatter(GetLogFormatter(logFormatterType))
-
-	if !debugFlag {
-		logrus.SetOutput(ioutil.Discard)
-	} else {
-		logrus.SetOutput(os.Stdout)
-	}
-	if syslogServer != "" {
-		hook, err := logrus_syslog.NewSyslogHook(syslogProtocol, syslogServer, syslog.LOG_INFO, "doppler")
-		if err != nil {
-			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", syslogServer), err.Error())
-		} else {
-			LogStd(fmt.Sprintf("Received hook to syslog server [%s]!\n", syslogServer), false)
-			logrus.AddHook(hook)
-
-			success = true
-		}
-	}
-
-	return success
-}
-
-func SetupLogging(syslogSvr, syslogProto string, debug bool, logFmttrType string) {
-	debugFlag = debug
-	syslogServer = syslogSvr
-	syslogProtocol = syslogProto
-	logFormatterType = logFmttrType
-}
-
-func GetLogFormatter(logFormatterType string) logrus.Formatter {
-	switch logFormatterType {
-	case "text":
-		return &logrus.TextFormatter{}
-	default:
-		return &logrus.JSONFormatter{}
-	}
+type Logging interface {
+	Connect() bool
+	ShipEvents(map[string]interface{}, string)
 }
 
 func LogStd(message string, force bool) {
@@ -69,7 +23,7 @@ func LogError(message string, errMsg interface{}) {
 
 func Log(message string, force bool, isError bool, err interface{}) {
 
-	if debugFlag || force || isError {
+	if force || isError {
 
 		writer := os.Stdout
 		var formattedMessage string
