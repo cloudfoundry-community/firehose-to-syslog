@@ -2,14 +2,15 @@ package events
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
-	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	"github.com/cloudfoundry-community/firehose-to-syslog/utils"
-	"github.com/cloudfoundry/sonde-go/events"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/deejross/firehose-to-syslog/caching"
+	log "github.com/deejross/firehose-to-syslog/logging"
+	"github.com/deejross/firehose-to-syslog/utils"
 )
 
 type Event struct {
@@ -21,6 +22,7 @@ type Event struct {
 var selectedEvents map[string]bool
 var selectedEventsCount map[string]uint64 = make(map[string]uint64)
 var mutex sync.Mutex
+var logMessageLimit int
 
 func RouteEvents(in <-chan *events.Envelope, extraFields map[string]string) {
 	for msg := range in {
@@ -338,7 +340,26 @@ func (e Event) ShipEvent() {
 		}
 	}()
 
-	logrus.WithFields(e.Fields).Info(e.Msg)
+	if logMessageLimit > 0 && len(e.Msg) > logMessageLimit {
+		index := 0
+		length := len(e.Msg)
+		for {
+			remainingChars := length - index
+			if remainingChars <= 0 {
+				break
+			}
+
+			if remainingChars < length-index {
+				logrus.WithFields(e.Fields).Info(e.Msg[index:length])
+				break
+			} else {
+				logrus.WithFields(e.Fields).Info(e.Msg[index : index+logMessageLimit])
+				index += logMessageLimit
+			}
+		}
+	} else {
+		logrus.WithFields(e.Fields).Info(e.Msg)
+	}
 }
 
 func LogEventTotals(logTotalsTime time.Duration, dopplerEndpoint string) {
@@ -357,6 +378,10 @@ func LogEventTotals(logTotalsTime time.Duration, dopplerEndpoint string) {
 			log.LogStd(output, true)
 		}
 	}()
+}
+
+func SetLogMessageLimit(limit int) {
+	logMessageLimit = limit
 }
 
 func getEventTotals(totalElapsedTime float64, elapsedTime float64, lastCount uint64, dopplerEndpoint string) (string, uint64) {

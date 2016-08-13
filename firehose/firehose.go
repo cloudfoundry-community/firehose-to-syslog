@@ -2,7 +2,7 @@ package firehose
 
 import (
 	"crypto/tls"
-	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	log "github.com/deejross/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
 	"time"

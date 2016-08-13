@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
-	"github.com/cloudfoundry-community/firehose-to-syslog/events"
-	"github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
-	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
-	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/deejross/firehose-to-syslog/caching"
+	"github.com/deejross/firehose-to-syslog/events"
+	"github.com/deejross/firehose-to-syslog/extrafields"
+	"github.com/deejross/firehose-to-syslog/firehose"
+	"github.com/deejross/firehose-to-syslog/logging"
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -37,6 +37,7 @@ var (
 	modeProf           = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").OverrideDefaultFromEnvar("MODE_PROF").String()
 	pathProf           = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").OverrideDefaultFromEnvar("PATH_PROF").String()
 	logFormatterType   = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
+	logMessageLimit    = kingpin.Flag("log-message-limit", "Split log messages longer than a given limit").Default("0").OverrideDefaultFromEnvar("LOG_MESSAGE_LIMIT").Int()
 )
 
 var (
@@ -122,6 +123,9 @@ func main() {
 	if *logEventTotals == true {
 		events.LogEventTotals(*logEventTotalsTime, *dopplerEndpoint)
 	}
+
+	// set max message length per message
+	events.SetLogMessageLimit(*logMessageLimit)
 
 	if logging.Connect() || *debug {
 

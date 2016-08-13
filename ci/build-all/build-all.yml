@@ -9,13 +9,13 @@ image_resource:
 
 inputs:
   - name: firehose-to-syslog-ci
-    path: gopath/src/github.com/cloudfoundry-community/firehose-to-syslog/
+    path: gopath/src/github.com/deejross/firehose-to-syslog/
   - name: version
 
 outputs:
   - name: firehose-to-syslog-ci-build 
   
 run:
-  path: gopath/src/github.com/cloudfoundry-community/firehose-to-syslog/ci/build-all/build-all
+  path: gopath/src/github.com/deejross/firehose-to-syslog/ci/build-all/build-all
 params:
   VERSION_APP:

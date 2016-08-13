@@ -3,7 +3,7 @@ package caching
 import (
 	"fmt"
 	"github.com/boltdb/bolt"
-	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	log "github.com/deejross/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
 	json "github.com/pquerna/ffjson/ffjson"
 	"regexp"
