@@ -31,6 +31,7 @@ Flags:
   --fh-keep-alive=25s            Keep Alive duration for the firehose consumer
   --log-event-totals             Logs the counters for all selected events since nozzle was last started.
   --log-event-totals-time=30s    How frequently the event totals are calculated (in sec).
+  --log-message-limit=0          The number of characters each log message can be. Messages longer that this are split into multiple messages.
   --events="LogMessage"          Comma separated list of events you would like. Valid options are Error, ContainerMetric,
                                  HttpStart, HttpStop, HttpStartStop, LogMessage, ValueMetric, CounterEvent
   --boltdb-path="my.db"          Bolt Database path
@@ -203,4 +204,5 @@ validation.
 * [Mark Alston](https://github.com/malston) - Added support for more
   events and general code cleaup.
 * [Etourneau Gwenn](https://github.com/shinji62) - Added validation of
-  selected events and general code cleanup, caching system..
+  selected events and general code cleanup, caching system.
+* [Ross Peoples](https://github.com/deejross) - Added LOG_MESSAGE_LIMIT setting.
