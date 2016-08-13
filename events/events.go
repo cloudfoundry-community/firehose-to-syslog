@@ -349,7 +349,7 @@ func (e Event) ShipEvent() {
 				break
 			}
 
-			if remainingChars < length-index {
+			if remainingChars < logMessageLimit {
 				logrus.WithFields(e.Fields).Info(e.Msg[index:length])
 				break
 			} else {
