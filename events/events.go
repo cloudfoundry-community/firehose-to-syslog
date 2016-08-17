@@ -344,12 +344,13 @@ func (e Event) ShipEvent() {
 		index := 0
 		length := len(e.Msg)
 		for {
+			e.Fields["msg_seq"] = index
 			remainingChars := length - index
 			if remainingChars <= 0 {
 				break
 			}
 
-			if remainingChars < logMessageLimit {
+			if remainingChars <= logMessageLimit {
 				logrus.WithFields(e.Fields).Info(e.Msg[index:length])
 				break
 			} else {
