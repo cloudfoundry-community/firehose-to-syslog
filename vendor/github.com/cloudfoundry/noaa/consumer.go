@@ -37,7 +37,7 @@ var (
 
 // noaa.Consumer is deprecated.  Use the one in the consumer package.
 //
-// Consumer represents the actions that can be performed against traffic controller.
+// Consumer represents the actions that can be performed against trafficcontroller.
 type Consumer struct {
 	trafficControllerUrl string
 	tlsConfig            *tls.Config
@@ -54,7 +54,7 @@ type Consumer struct {
 
 // noaa.Consumer is deprecated.  Use the one in the consumer package.
 //
-// NewConsumer creates a new consumer to a traffic controller.
+// NewConsumer creates a new consumer to a trafficcontroller.
 func NewConsumer(trafficControllerUrl string, tlsConfig *tls.Config, proxy func(*http.Request) (*url.URL, error)) *Consumer {
 	log.Printf("You are using a deprecated noaa consumer (noaa.Consumer).  Please switch to 'github.com/cloudfoundry/noaa/consumer'.Consumer at your earliest convenience.")
 	transport := &http.Transport{Proxy: proxy, TLSClientConfig: tlsConfig}
@@ -208,8 +208,8 @@ func makeError(err error, code int32) *events.Envelope {
 
 // noaa.Consumer is deprecated.  Use the one in the consumer package.
 //
-// RecentLogs connects to traffic controller via its 'recentlogs' http(s) endpoint and returns a slice of recent messages.
-// It does not guarantee any order of the messages; they are in the order returned by traffic controller.
+// RecentLogs connects to trafficcontroller via its 'recentlogs' http(s) endpoint and returns a slice of recent messages.
+// It does not guarantee any order of the messages; they are in the order returned by trafficcontroller.
 //
 // The SortRecent method is provided to sort the data returned by this method.
 func (cnsmr *Consumer) RecentLogs(appGuid string, authToken string) ([]*events.LogMessage, error) {
@@ -229,7 +229,7 @@ func (cnsmr *Consumer) RecentLogs(appGuid string, authToken string) ([]*events.L
 
 // noaa.Consumer is deprecated.  Use the one in the consumer package.
 //
-// ContainerMetrics connects to traffic controller via its 'containermetrics' http(s) endpoint and returns the most recent messages for an app.
+// ContainerMetrics connects to trafficcontroller via its 'containermetrics' http(s) endpoint and returns the most recent messages for an app.
 // The returned metrics will be sorted by InstanceIndex.
 func (cnsmr *Consumer) ContainerMetrics(appGuid string, authToken string) ([]*events.ContainerMetric, error) {
 	envelopes, err := cnsmr.readEnvelopesFromTrafficController(appGuid, authToken, "containermetrics")
@@ -273,7 +273,7 @@ func (cnsmr *Consumer) readEnvelopesFromTrafficController(appGuid string, authTo
 	resp, err := cnsmr.client.Do(req)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error dialing traffic controller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (traffic controller endpoint is %s).", err.Error(), cnsmr.trafficControllerUrl))
+		return nil, errors.New(fmt.Sprintf("Error dialing trafficcontroller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (trafficcontroller endpoint is %s).", err.Error(), cnsmr.trafficControllerUrl))
 	}
 
 	defer resp.Body.Close()
@@ -342,7 +342,7 @@ func getMultipartReader(resp *http.Response) (*multipart.Reader, error) {
 
 // noaa.Consumer is deprecated.  Use the one in the consumer package.
 //
-// Close terminates the websocket connection to traffic controller.
+// Close terminates the websocket connection to trafficcontroller.
 func (cnsmr *Consumer) Close() error {
 	cnsmr.Lock()
 	defer cnsmr.Unlock()
@@ -430,7 +430,7 @@ func (cnsmr *Consumer) establishWebsocketConnection(path string, authToken strin
 
 	if err != nil {
 
-		return nil, errors.New(fmt.Sprintf("Error dialing traffic controller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (traffic controller is %s).", err.Error(), cnsmr.trafficControllerUrl))
+		return nil, errors.New(fmt.Sprintf("Error dialing trafficcontroller server: %s.\nPlease ask your Cloud Foundry Operator to check the platform configuration (trafficcontroller is %s).", err.Error(), cnsmr.trafficControllerUrl))
 	}
 
 	return ws, err
