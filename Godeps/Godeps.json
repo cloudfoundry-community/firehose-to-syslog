@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
-	"GoVersion": "go1.6.3",
+	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
 	"Deps": [
 		{
@@ -36,59 +36,64 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
+			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/consumer",
-			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
+			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/consumer/internal",
-			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
+			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/errors",
-			"Rev": "a4c517a96b01b568e0670f1682c5a19869eb12d9"
+			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
-			"Rev": "64ff74a60c9558e7fcb55c9d22eff49412ec5826"
+			"Rev": "81c3f6be579cf4337477a8b0d03852d0760b5801"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/gogoproto",
-			"Comment": "v0.2-22-g2752d97",
-			"Rev": "2752d97bbd91927dd1c43296dbf8700e50e2708c"
+			"Comment": "v0.2-56-ga4cceea",
+			"Rev": "a4cceea7a401a73fefafd1a21fedbd4694124a82"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Comment": "v0.2-22-g2752d97",
-			"Rev": "2752d97bbd91927dd1c43296dbf8700e50e2708c"
+			"Comment": "v0.2-56-ga4cceea",
+			"Rev": "a4cceea7a401a73fefafd1a21fedbd4694124a82"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
-			"Comment": "v0.2-22-g2752d97",
-			"Rev": "2752d97bbd91927dd1c43296dbf8700e50e2708c"
+			"Comment": "v0.2-56-ga4cceea",
+			"Rev": "a4cceea7a401a73fefafd1a21fedbd4694124a82"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
-			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
+			"Comment": "v1.0.0-20-ga69d25b",
+			"Rev": "a69d25be2fe2923a97c2af6849b2f52426f68fc0"
+		},
+		{
+			"ImportPath": "github.com/mailru/easyjson",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+		},
+		{
+			"ImportPath": "github.com/mailru/easyjson/buffer",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+		},
+		{
+			"ImportPath": "github.com/mailru/easyjson/jlexer",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+		},
+		{
+			"ImportPath": "github.com/mailru/easyjson/jwriter",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
 		},
 		{
 			"ImportPath": "github.com/pkg/profile",
 			"Comment": "v1.0.0-9-g8a808a6",
 			"Rev": "8a808a6967b79da66deacfe508b26d398a69518f"
-		},
-		{
-			"ImportPath": "github.com/pquerna/ffjson/ffjson",
-			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
-		},
-		{
-			"ImportPath": "github.com/pquerna/ffjson/fflib/v1",
-			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
-		},
-		{
-			"ImportPath": "github.com/pquerna/ffjson/fflib/v1/internal",
-			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

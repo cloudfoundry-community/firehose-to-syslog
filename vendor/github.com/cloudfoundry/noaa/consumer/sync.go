@@ -14,9 +14,9 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// RecentLogs connects to traffic controller via its 'recentlogs' http(s)
+// RecentLogs connects to trafficcontroller via its 'recentlogs' http(s)
 // endpoint and returns a slice of recent messages.  It does not guarantee any
-// order of the messages; they are in the order returned by traffic controller.
+// order of the messages; they are in the order returned by trafficcontroller.
 //
 // The noaa.SortRecent function is provided to sort the data returned by
 // this method.
@@ -33,7 +33,7 @@ func (c *Consumer) RecentLogs(appGuid string, authToken string) ([]*events.LogMe
 	return messages, nil
 }
 
-// ContainerMetrics connects to traffic controller via its 'containermetrics'
+// ContainerMetrics connects to trafficcontroller via its 'containermetrics'
 // http(s) endpoint and returns the most recent messages for an app.  The
 // returned metrics will be sorted by InstanceIndex.
 func (c *Consumer) ContainerMetrics(appGuid string, authToken string) ([]*events.ContainerMetric, error) {
@@ -132,8 +132,8 @@ func (c *Consumer) tryTCConnection(recentPath, token string) (*http.Response, *h
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		message := `Error dialing traffic controller server: %s.
-Please ask your Cloud Foundry Operator to check the platform configuration (traffic controller endpoint is %s).`
+		message := `Error dialing trafficcontroller server: %s.
+Please ask your Cloud Foundry Operator to check the platform configuration (trafficcontroller endpoint is %s).`
 		return nil, &httpError{
 			statusCode: -1,
 			error:      errors.New(fmt.Sprintf(message, err, c.trafficControllerUrl)),

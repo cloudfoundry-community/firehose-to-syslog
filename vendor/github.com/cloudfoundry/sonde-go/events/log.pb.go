@@ -577,6 +577,8 @@ var (
 	ErrIntOverflowLog   = fmt.Errorf("proto: integer overflow")
 )
 
+func init() { proto.RegisterFile("log.proto", fileDescriptorLog) }
+
 var fileDescriptorLog = []byte{
 	// 288 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x4c, 0x50, 0xc1, 0x4a, 0x03, 0x31,

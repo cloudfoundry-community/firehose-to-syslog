@@ -1,3 +1,7 @@
+#Disclaimer
+
+This is V2 if you encounter any trouble with this version please use the 1.X.X
+
 # Firehose-to-syslog
 
 This nifty util aggregates all the events from the firehose feature in
@@ -147,8 +151,6 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
          0     0%   100%       20ms 18.18%  bufio.(*Reader).Read
          0     0%   100%       20ms 18.18%  bufio.(*Reader).fill
 ```
-
-For Mac OSX golang profiling do not work.
 
 # Push as an App to Cloud Foundry
 

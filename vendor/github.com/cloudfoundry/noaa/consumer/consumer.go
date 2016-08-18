@@ -41,8 +41,8 @@ type DebugPrinter interface {
 	Print(title, dump string)
 }
 
-// Consumer represents the actions that can be performed against traffic controller.
-// See sync.go and async.go for traffic controller access methods.
+// Consumer represents the actions that can be performed against trafficcontroller.
+// See sync.go and async.go for trafficcontroller access methods.
 type Consumer struct {
 	trafficControllerUrl string
 	idleTimeout          time.Duration
@@ -61,7 +61,7 @@ type Consumer struct {
 	tokenRefresher TokenRefresher
 }
 
-// New creates a new consumer to a traffic controller.
+// New creates a new consumer to a trafficcontroller.
 func New(trafficControllerUrl string, tlsConfig *tls.Config, proxy func(*http.Request) (*url.URL, error)) *Consumer {
 	transport := &http.Transport{Proxy: proxy, TLSClientConfig: tlsConfig, TLSHandshakeTimeout: internal.HandshakeTimeout, DisableKeepAlives: true}
 	consumer := &Consumer{
