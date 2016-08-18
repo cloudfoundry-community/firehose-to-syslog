@@ -1,3 +1,7 @@
+#Disclaimer
+
+This is V2 if you encounter any trouble with this version please use the 1.X.X
+
 # Firehose-to-syslog
 
 This nifty util aggregates all the events from the firehose feature in
