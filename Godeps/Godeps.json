@@ -75,21 +75,25 @@
 			"Rev": "a69d25be2fe2923a97c2af6849b2f52426f68fc0"
 		},
 		{
+			"ImportPath": "github.com/mailru/easyjson",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+		},
+		{
+			"ImportPath": "github.com/mailru/easyjson/buffer",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+		},
+		{
+			"ImportPath": "github.com/mailru/easyjson/jlexer",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+		},
+		{
+			"ImportPath": "github.com/mailru/easyjson/jwriter",
+			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+		},
+		{
 			"ImportPath": "github.com/pkg/profile",
 			"Comment": "v1.0.0-9-g8a808a6",
 			"Rev": "8a808a6967b79da66deacfe508b26d398a69518f"
-		},
-		{
-			"ImportPath": "github.com/pquerna/ffjson/ffjson",
-			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
-		},
-		{
-			"ImportPath": "github.com/pquerna/ffjson/fflib/v1",
-			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
-		},
-		{
-			"ImportPath": "github.com/pquerna/ffjson/fflib/v1/internal",
-			"Rev": "184f78649ba053f484de46921391e6d0c6f5172f"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
