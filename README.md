@@ -70,8 +70,8 @@ We have 3 caching strategies:
 
 
     # Setup repo
-    go get github.com/deejross/firehose-to-syslog
-    cd $GOPATH/src/github.com/deejross/firehose-to-syslog
+    go get github.com/cloudfoundry-community/firehose-to-syslog
+    cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
 
     # Test
 	ginkgo -r .
@@ -163,7 +163,7 @@ For Mac OSX golang profiling do not work.
 
 1. Download the latest release of  firehose-to-syslog.
 
-		git clone https://github.com/deejross/firehose-to-syslog
+		git clone https://github.com/cloudfoundry-community/firehose-to-syslog
 		cd firehose-to-syslog
 
 1. Utilize the CF cli to authenticate with your PCF instance.

@@ -8,8 +8,8 @@ image_resource:
 
 inputs:
   - name: firehose-to-syslog-ci
-    path: gopath/src/github.com/deejross/firehose-to-syslog/
+    path: gopath/src/github.com/cloudfoundry-community/firehose-to-syslog/
   
 run:
-  path: gopath/src/github.com/deejross/firehose-to-syslog/ci/unit-testing/unit-testing
+  path: gopath/src/github.com/cloudfoundry-community/firehose-to-syslog/ci/unit-testing/unit-testing
 

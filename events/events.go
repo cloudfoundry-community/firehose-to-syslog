@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
+	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/firehose-to-syslog/utils"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/deejross/firehose-to-syslog/caching"
-	log "github.com/deejross/firehose-to-syslog/logging"
-	"github.com/deejross/firehose-to-syslog/utils"
 )
 
 type Event struct {

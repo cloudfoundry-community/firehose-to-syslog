@@ -2,10 +2,11 @@ package firehose
 
 import (
 	"crypto/tls"
-	log "github.com/deejross/firehose-to-syslog/logging"
+	"time"
+
+	log "github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
-	"time"
 )
 
 func CreateFirehoseChan(DopplerEndpoint string, Token string, subId string, skipSSLValidation bool, keepAlive time.Duration) <-chan *events.Envelope {

@@ -1,7 +1,7 @@
 package utils_test
 
 import (
-	. "github.com/deejross/firehose-to-syslog/utils"
+	. "github.com/cloudfoundry-community/firehose-to-syslog/utils"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"

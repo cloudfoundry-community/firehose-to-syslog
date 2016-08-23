@@ -1,10 +1,11 @@
 package extrafields_test
 
 import (
-	. "github.com/deejross/firehose-to-syslog/extrafields"
+	"testing"
+
+	. "github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestEvents(t *testing.T) {

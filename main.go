@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
+	"github.com/cloudfoundry-community/firehose-to-syslog/events"
+	"github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
+	"github.com/cloudfoundry-community/firehose-to-syslog/firehose"
+	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/go-cfclient"
-	"github.com/deejross/firehose-to-syslog/caching"
-	"github.com/deejross/firehose-to-syslog/events"
-	"github.com/deejross/firehose-to-syslog/extrafields"
-	"github.com/deejross/firehose-to-syslog/firehose"
-	"github.com/deejross/firehose-to-syslog/logging"
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
 )

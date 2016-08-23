@@ -1,7 +1,7 @@
 package caching_test
 
 import (
-	"github.com/deejross/firehose-to-syslog/caching"
+	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
