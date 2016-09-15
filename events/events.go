@@ -210,7 +210,7 @@ func (e *Event) AnnotateWithEnveloppeData(msg *events.Envelope) {
 	e.Fields["deployment"] = msg.GetDeployment()
 	e.Fields["ip"] = msg.GetIp()
 	e.Fields["job"] = msg.GetJob()
-	e.Fields["index"] = msg.GetIndex()
+	e.Fields["job_index"] = msg.GetIndex()
 	e.Type = msg.GetEventType().String()
 
 }
