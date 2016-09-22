@@ -34,6 +34,7 @@ var (
 	modeProf           = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").OverrideDefaultFromEnvar("MODE_PROF").String()
 	pathProf           = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").OverrideDefaultFromEnvar("PATH_PROF").String()
 	logFormatterType   = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
+	mergeStackTraces   = kingpin.Flag("merge-stacktraces", "Detect multi-line Java stack trace events and merge them into a single event.").Default("false").OverrideDefaultFromEnvar("MERGE_STACKTRACES").Bool()
 )
 
 var (
@@ -82,7 +83,7 @@ func main() {
 		cachingClient = caching.NewCachingEmpty()
 	}
 	//Creating Events
-	events := eventRouting.NewEventRouting(cachingClient, loggingClient)
+	events := eventRouting.NewEventRouting(cachingClient, loggingClient, *mergeStackTraces)
 	err := events.SetupEventRouting(*wantedEvents)
 	if err != nil {
 		log.Fatal("Error setting up event routing: ", err)

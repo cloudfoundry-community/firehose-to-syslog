@@ -2,33 +2,36 @@ package eventRouting
 
 import (
 	"fmt"
+	"os"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	fevents "github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/sonde-go/events"
-	"os"
-	"sort"
-	"strings"
-	"sync"
-	"time"
 )
 
 type EventRouting struct {
 	CachingClient       caching.Caching
 	selectedEvents      map[string]bool
 	selectedEventsCount map[string]uint64
+	mergeStackTraces    bool
 	mutex               *sync.Mutex
 	log                 logging.Logging
 	ExtraFields         map[string]string
 }
 
-func NewEventRouting(caching caching.Caching, logging logging.Logging) *EventRouting {
+func NewEventRouting(caching caching.Caching, logging logging.Logging, mergeStackTraces bool) *EventRouting {
 	return &EventRouting{
 		CachingClient:       caching,
 		selectedEvents:      make(map[string]bool),
 		selectedEventsCount: make(map[string]uint64),
+		mergeStackTraces:    mergeStackTraces,
 		log:                 logging,
 		mutex:               &sync.Mutex{},
 		ExtraFields:         make(map[string]string),
@@ -40,6 +43,8 @@ func (e *EventRouting) GetSelectedEvents() map[string]bool {
 }
 
 func (e *EventRouting) RouteEvent(msg *events.Envelope) {
+
+	var hasAppId bool
 
 	eventType := msg.GetEventType()
 
@@ -67,13 +72,15 @@ func (e *EventRouting) RouteEvent(msg *events.Envelope) {
 		event.AnnotateWithEnveloppeData(msg)
 
 		event.AnnotateWithMetaData(e.ExtraFields)
-		if _, hasAppId := event.Fields["cf_app_id"]; hasAppId {
+		if _, hasAppId = event.Fields["cf_app_id"]; hasAppId {
 			event.AnnotateWithAppData(e.CachingClient)
 		}
 
 		e.mutex.Lock()
-		e.log.ShipEvents(event.Fields, event.Msg)
-		e.selectedEventsCount[eventType.String()]++
+		if !(e.mergeStackTraces && hasAppId && event.CachePartialEventMessage(e.CachingClient, e.log)) {
+			e.log.ShipEvents(event.Fields, event.Msg)
+			e.selectedEventsCount[eventType.String()]++
+		}
 		e.mutex.Unlock()
 	}
 }

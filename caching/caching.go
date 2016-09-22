@@ -23,6 +23,9 @@ type Caching interface {
 	GetAllApp() []App
 	GetAppInfo(string) App
 	GetAppInfoCache(string) App
+	PutMultiLineMessage(string, string, []byte)
+	GetMultiLineMessage(string, string) []byte
+	DeleteMultiLineMessage(string, string)
 	Close()
 }
 

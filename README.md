@@ -45,6 +45,7 @@ Flags:
   --path-prof=""                 Set the Path to write profiling file
   --log-formatter-type=LOG-FORMATTER-TYPE
                                  Log formatter type to use. Valid options are text, json. If none provided, defaults to json.
+  --merge-stacktraces            Detect multi-line Java stack trace events and merge them into a single event.
   --version                      Show application version.
 ```
 

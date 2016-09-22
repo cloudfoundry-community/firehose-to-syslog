@@ -2,13 +2,14 @@ package caching
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
 	json "github.com/mailru/easyjson"
-	"log"
-	"os"
-	"time"
 )
 
 type CachingBolt struct {
@@ -141,4 +142,47 @@ func (c *CachingBolt) GetAppInfoCache(appGuid string) App {
 		c.GetAppByGuid(appGuid)
 	}
 	return c.GetAppInfo(appGuid)
+}
+
+func (c *CachingBolt) PutMultiLineMessage(appGuid string, index string, msg []byte) {
+
+	c.Appdb.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte("MultiLineBucket"))
+		if err != nil {
+			return fmt.Errorf("Create bucket: %s", err)
+		}
+		err = b.Put([]byte(fmt.Sprintf("%s/%s", appGuid, index)), msg)
+		if err != nil {
+			return fmt.Errorf("Error inserting data: %s", err)
+		}
+		return nil
+	})
+}
+
+func (c *CachingBolt) GetMultiLineMessage(appGuid string, index string) []byte {
+
+	var msg []byte
+
+	c.Appdb.View(func(tx *bolt.Tx) error {
+		if b := tx.Bucket([]byte("MultiLineBucket")); b != nil {
+			msg = b.Get([]byte(fmt.Sprintf("%s/%s", appGuid, index)))
+		}
+		return nil
+	})
+	return msg
+}
+
+func (c *CachingBolt) DeleteMultiLineMessage(appGuid string, index string) {
+
+	c.Appdb.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte("MultiLineBucket"))
+		if err != nil {
+			return fmt.Errorf("Create bucket: %s", err)
+		}
+		err = b.Delete([]byte(fmt.Sprintf("%s/%s", appGuid, index)))
+		if err != nil {
+			return fmt.Errorf("Error inserting data: %s", err)
+		}
+		return nil
+	})
 }
