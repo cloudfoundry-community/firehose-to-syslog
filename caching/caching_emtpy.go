@@ -33,3 +33,13 @@ func (c *CachingEmpty) Close() {}
 func (c *CachingEmpty) GetAppInfoCache(appGuid string) App {
 	return App{}
 }
+
+func (c *CachingEmpty) PutMultiLineMessage(appGuid string, index string, msg []byte) {
+}
+
+func (c *CachingEmpty) GetMultiLineMessage(appGuid string, index string) []byte {
+	return make([]byte, 0)
+}
+
+func (c *CachingEmpty) DeleteMultiLineMessage(appGuid string, index string) {
+}
