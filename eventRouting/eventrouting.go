@@ -20,16 +20,18 @@ type EventRouting struct {
 	CachingClient       caching.Caching
 	selectedEvents      map[string]bool
 	selectedEventsCount map[string]uint64
+	mergeStackTraces    bool
 	mutex               *sync.Mutex
 	log                 logging.Logging
 	ExtraFields         map[string]string
 }
 
-func NewEventRouting(caching caching.Caching, logging logging.Logging) *EventRouting {
+func NewEventRouting(caching caching.Caching, logging logging.Logging, mergeStackTraces bool) *EventRouting {
 	return &EventRouting{
 		CachingClient:       caching,
 		selectedEvents:      make(map[string]bool),
 		selectedEventsCount: make(map[string]uint64),
+		mergeStackTraces:    mergeStackTraces,
 		log:                 logging,
 		mutex:               &sync.Mutex{},
 		ExtraFields:         make(map[string]string),
@@ -75,7 +77,7 @@ func (e *EventRouting) RouteEvent(msg *events.Envelope) {
 		}
 
 		e.mutex.Lock()
-		if !(hasAppId && event.CachePartialEventMessage(e.CachingClient, e.log)) {
+		if !(e.mergeStackTraces && hasAppId && event.CachePartialEventMessage(e.CachingClient, e.log)) {
 			e.log.ShipEvents(event.Fields, event.Msg)
 			e.selectedEventsCount[eventType.String()]++
 		}
