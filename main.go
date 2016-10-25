@@ -95,7 +95,7 @@ func main() {
 
 	//Enable LogsTotalevent
 	if *logEventTotals {
-		logging.LogStd("Logging total events %", true)
+		logging.LogStd("Logging total events", true)
 		events.LogEventTotals(*logEventTotalsTime)
 	}
 
