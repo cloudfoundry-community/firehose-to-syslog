@@ -110,7 +110,7 @@ func main() {
 	cachingClient.PerformPoollingCaching(*tickerTime)
 
 	firehoseConfig := &firehoseclient.FirehoseConfig{
-		TrafficControllerURL:   *dopplerEndpoint,
+		TrafficControllerURL:   cfClient.Endpoint.DopplerEndpoint,
 		InsecureSSLSkipVerify:  *skipSSLValidation,
 		IdleTimeoutSeconds:     *keepAlive,
 		FirehoseSubscriptionID: *subscriptionId,
