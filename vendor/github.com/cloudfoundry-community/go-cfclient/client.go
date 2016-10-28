@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"golang.org/x/net/context"
-	"golang.org/x/oauth2"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
-	"os"
+
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 )
 
 //Client used to communicate with Cloud Foundry
@@ -28,13 +28,12 @@ type Endpoint struct {
 
 //Config is used to configure the creation of a client
 type Config struct {
-	ApiAddress        string
-	LoginAddress      string
-	Username          string
-	Password          string
-	SkipSslValidation bool
+	ApiAddress        string `json:"api_url"`
+	Username          string `json:"user"`
+	Password          string `json:"password"`
+	SkipSslValidation bool   `json:"skip_ssl_validation"`
 	HttpClient        *http.Client
-	Token             string
+	Token             string `json:"auth_token"`
 	TokenSource       oauth2.TokenSource
 }
 
@@ -52,8 +51,7 @@ type request struct {
 //Need to be remove in close future
 func DefaultConfig() *Config {
 	return &Config{
-		ApiAddress:        "https://api.10.244.0.34.xip.io",
-		LoginAddress:      "https://login.10.244.0.34.xip.io",
+		ApiAddress:        "http://api.bosh-lite.com",
 		Username:          "admin",
 		Password:          "admin",
 		Token:             "",
@@ -72,16 +70,12 @@ func DefaultEndpoint() *Endpoint {
 }
 
 // NewClient returns a new client
-func NewClient(config *Config) *Client {
+func NewClient(config *Config) (client *Client, err error) {
 	// bootstrap the config
 	defConfig := DefaultConfig()
 
 	if len(config.ApiAddress) == 0 {
 		config.ApiAddress = defConfig.ApiAddress
-	}
-
-	if len(config.LoginAddress) == 0 {
-		config.LoginAddress = defConfig.LoginAddress
 	}
 
 	if len(config.Username) == 0 {
@@ -100,21 +94,16 @@ func NewClient(config *Config) *Client {
 	if config.SkipSslValidation == false {
 		ctx = context.WithValue(ctx, oauth2.HTTPClient, defConfig.HttpClient)
 	} else {
-
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-
 		ctx = context.WithValue(ctx, oauth2.HTTPClient, &http.Client{Transport: tr})
-
 	}
 
 	endpoint, err := getInfo(config.ApiAddress, oauth2.NewClient(ctx, nil))
 
 	if err != nil {
-		log.Println("Could not get api /v2/info :", err)
-		os.Exit(1)
-
+		return nil, fmt.Errorf("Could not get api /v2/info: %v", err)
 	}
 
 	authConfig := &oauth2.Config{
@@ -128,20 +117,20 @@ func NewClient(config *Config) *Client {
 
 	token, err := authConfig.PasswordCredentialsToken(ctx, config.Username, config.Password)
 
-
 	if err != nil {
-		log.Printf("Error getting token %v\n", err)
+		return nil, fmt.Errorf("Error getting token: %v", err)
 	}
 
 	config.TokenSource = authConfig.TokenSource(ctx, token)
 	config.HttpClient = oauth2.NewClient(ctx, config.TokenSource)
 
-	client := &Client{
+	client = &Client{
 		config:   *config,
 		Endpoint: *endpoint,
 	}
-	return client
+	return client, nil
 }
+
 func getInfo(api string, httpClient *http.Client) (*Endpoint, error) {
 	var endpoint Endpoint
 
@@ -163,8 +152,8 @@ func getInfo(api string, httpClient *http.Client) (*Endpoint, error) {
 	return &endpoint, err
 }
 
-// newRequest is used to create a new request
-func (c *Client) newRequest(method, path string) *request {
+// NewRequest is used to create a new request
+func (c *Client) NewRequest(method, path string) *request {
 	r := &request{
 		method: method,
 		url:    c.config.ApiAddress + path,
@@ -173,8 +162,19 @@ func (c *Client) newRequest(method, path string) *request {
 	return r
 }
 
-// doRequest runs a request with our client
-func (c *Client) doRequest(r *request) (*http.Response, error) {
+// NewRequestWithBody is used to create a new request with
+// arbigtrary body io.Reader.
+func (c *Client) NewRequestWithBody(method, path string, body io.Reader) *request {
+	r := c.NewRequest(method, path)
+
+	// Set request body
+	r.body = body
+
+	return r
+}
+
+// DoRequest runs a request with our client
+func (c *Client) DoRequest(r *request) (*http.Response, error) {
 	req, err := r.toHTTP()
 	if err != nil {
 		return nil, err
@@ -188,11 +188,11 @@ func (r *request) toHTTP() (*http.Request, error) {
 
 	// Check if we should encode the body
 	if r.body == nil && r.obj != nil {
-		if b, err := encodeBody(r.obj); err != nil {
+		b, err := encodeBody(r.obj)
+		if err != nil {
 			return nil, err
-		} else {
-			r.body = b
 		}
+		r.body = b
 	}
 
 	// Create the HTTP request
@@ -216,12 +216,10 @@ func encodeBody(obj interface{}) (io.Reader, error) {
 	return buf, nil
 }
 
-func (c *Client) GetToken() string {
+func (c *Client) GetToken() (string, error) {
 	token, err := c.config.TokenSource.Token()
 	if err != nil {
-		log.Printf("Error getting token %v\n", err)
-		return ""
+		return "", fmt.Errorf("Error getting bearer token: %v", err)
 	}
-
-	return "bearer " + token.AccessToken
+	return "bearer " + token.AccessToken, nil
 }

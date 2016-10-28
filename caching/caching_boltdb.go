@@ -84,7 +84,10 @@ func (c *CachingBolt) fillDatabase(listApps []App) {
 
 func (c *CachingBolt) GetAppByGuid(appGuid string) []App {
 	var apps []App
-	app := c.GcfClient.AppByGuid(appGuid)
+	app, err := c.GcfClient.AppByGuid(appGuid)
+	if err != nil {
+		return apps
+	}
 	apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
 	c.fillDatabase(apps)
 	return apps
@@ -102,7 +105,12 @@ func (c *CachingBolt) GetAllApp() []App {
 		}
 	}()
 
-	for _, app := range c.GcfClient.ListApps() {
+	cfApps, err := c.GcfClient.ListApps()
+	if err != nil {
+		return apps
+	}
+
+	for _, app := range cfApps {
 		logging.LogStd(fmt.Sprintf("App [%s] Found...", app.Name), false)
 		apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
 	}
