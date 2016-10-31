@@ -67,7 +67,7 @@ func main() {
 		Password:          *password,
 		SkipSslValidation: *skipSSLValidation,
 	}
-	cfClient := cfclient.NewClient(&c)
+	cfClient, _ := cfclient.NewClient(&c)
 
 	if len(*dopplerEndpoint) > 0 {
 		cfClient.Endpoint.DopplerEndpoint = *dopplerEndpoint
