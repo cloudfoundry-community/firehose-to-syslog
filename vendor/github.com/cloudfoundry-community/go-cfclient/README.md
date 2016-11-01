@@ -9,7 +9,11 @@
 
 ### Usage
 
-`go get github.com/cloudfoundry-community/go-cfclient`
+```
+go get github.com/cloudfoundry-community/go-cfclient
+```
+
+Some example code:
 
 ```go
 package main
@@ -21,12 +25,11 @@ import (
 func main() {
   c := &Config{
     ApiAddress:   "https://api.10.244.0.34.xip.io",
-    LoginAddress: "https://login.10.244.0.34.xip.io",
     Username:     "admin",
     Password:     "admin",
   }
-  client := NewClient(c)
-  apps := client.ListApps()
+  client, _ := NewClient(c)
+  apps, _ := client.ListApps()
   fmt.Println(apps)
 }
 ```
