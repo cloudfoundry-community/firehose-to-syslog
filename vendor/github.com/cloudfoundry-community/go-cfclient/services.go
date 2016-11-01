@@ -2,17 +2,17 @@ package cfclient
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
 )
 
-type ServiceResponse struct {
-	Count     int               `json:"total_results"`
-	Pages     int               `json:"total_pages"`
-	Resources []ServiceResource `json:"resources"`
+type servicesResponse struct {
+	Count     int                `json:"total_results"`
+	Pages     int                `json:"total_pages"`
+	Resources []servicesResource `json:"resources"`
 }
 
-type ServiceResource struct {
+type servicesResource struct {
 	Meta   Meta    `json:"metadata"`
 	Entity Service `json:"entity"`
 }
@@ -23,27 +23,27 @@ type Service struct {
 	c     *Client
 }
 
-func (c *Client) ListServices() []Service {
+func (c *Client) ListServices() ([]Service, error) {
 	var services []Service
-	var serviceResp ServiceResponse
-	r := c.newRequest("GET", "/v2/services")
-	resp, err := c.doRequest(r)
+	var serviceResp servicesResponse
+	r := c.NewRequest("GET", "/v2/services")
+	resp, err := c.DoRequest(r)
 	if err != nil {
-		log.Printf("Error requesting services %v", err)
+		return nil, fmt.Errorf("Error requesting services %v", err)
 	}
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error reading services request %v", resBody)
+		return nil, fmt.Errorf("Error reading services request: %v", err)
 	}
 
 	err = json.Unmarshal(resBody, &serviceResp)
 	if err != nil {
-		log.Printf("Error unmarshaling services %v", err)
+		return nil, fmt.Errorf("Error unmarshaling services %v", err)
 	}
 	for _, service := range serviceResp.Resources {
 		service.Entity.Guid = service.Meta.Guid
 		service.Entity.c = c
 		services = append(services, service.Entity)
 	}
-	return services
+	return services, nil
 }

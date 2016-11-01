@@ -94,5 +94,5 @@ func (f *FirehoseNozzle) handleMessage(envelope *events.Envelope) {
 }
 
 func (ct *CfClientTokenRefresh) RefreshAuthToken() (string, error) {
-	return ct.cfClient.GetToken(), nil
+	return ct.cfClient.GetToken()
 }
