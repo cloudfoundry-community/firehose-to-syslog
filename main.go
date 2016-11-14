@@ -118,7 +118,7 @@ func main() {
 
 	if loggingClient.Connect() || *debug {
 
-		logging.LogStd("Connected to Fluentd Server! Connecting to Firehose...", true)
+		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
 		firehoseClient := firehoseclient.NewFirehoseNozzle(cfClient, events, firehoseConfig)
 		err = firehoseClient.Start()
 		if err != nil {

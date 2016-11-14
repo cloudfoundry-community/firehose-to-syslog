@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GodepVersion": "v75",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -76,19 +76,19 @@
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson",
-			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+			"Rev": "159cdb893c982e3d1bc6450322fedd514f9c9de3"
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson/buffer",
-			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+			"Rev": "159cdb893c982e3d1bc6450322fedd514f9c9de3"
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson/jlexer",
-			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+			"Rev": "159cdb893c982e3d1bc6450322fedd514f9c9de3"
 		},
 		{
 			"ImportPath": "github.com/mailru/easyjson/jwriter",
-			"Rev": "3d7eb5818bd515e07588ded25d0d501516a0309d"
+			"Rev": "159cdb893c982e3d1bc6450322fedd514f9c9de3"
 		},
 		{
 			"ImportPath": "github.com/pkg/profile",

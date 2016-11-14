@@ -72,8 +72,14 @@ func (e *EventRouting) RouteEvent(msg *events.Envelope) {
 		}
 
 		e.mutex.Lock()
-		e.log.ShipEvents(event.Fields, event.Msg)
-		e.selectedEventsCount[eventType.String()]++
+		//We do not ship Event
+		if ignored, hasIgnoredField := event.Fields["cf_ignored_app"]; ignored == true && hasIgnoredField {
+			e.selectedEventsCount["ignored_app_message"]++
+		} else {
+			e.log.ShipEvents(event.Fields, event.Msg)
+			e.selectedEventsCount[eventType.String()]++
+
+		}
 		e.mutex.Unlock()
 	}
 }

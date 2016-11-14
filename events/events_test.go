@@ -47,12 +47,13 @@ var _ = Describe("Events", func() {
 			caching.GetAppInfoCacheStub = func(appid string) App {
 				Expect(appid).To(Equal("eea38ba5-53a5-4173-9617-b442d35ec2fd"))
 				return App{
-					Name:      "App-Name",
-					Guid:      appid,
-					SpaceName: "Space-Name",
-					SpaceGuid: "Space-Guid",
-					OrgName:   "Org-Name",
-					OrgGuid:   "Org-Guid",
+					Name:       "App-Name",
+					Guid:       appid,
+					SpaceName:  "Space-Name",
+					SpaceGuid:  "Space-Guid",
+					OrgName:    "Org-Name",
+					OrgGuid:    "Org-Guid",
+					IgnoredApp: true,
 				}
 			}
 			event.AnnotateWithAppData(caching)
@@ -61,6 +62,7 @@ var _ = Describe("Events", func() {
 			Expect(event.Fields["cf_space_name"]).To(Equal("Space-Name"))
 			Expect(event.Fields["cf_org_id"]).To(Equal("Org-Guid"))
 			Expect(event.Fields["cf_org_name"]).To(Equal("Org-Name"))
+			Expect(event.Fields["cf_ignored_app"]).To(Equal(true))
 
 		})
 
