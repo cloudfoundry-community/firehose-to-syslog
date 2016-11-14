@@ -88,7 +88,15 @@ func (c *CachingBolt) GetAppByGuid(appGuid string) []App {
 	if err != nil {
 		return apps
 	}
-	apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
+	apps = append(apps, App{
+		app.Name,
+		app.Guid,
+		app.SpaceData.Entity.Name,
+		app.SpaceData.Entity.Guid,
+		app.SpaceData.Entity.OrgData.Entity.Name,
+		app.SpaceData.Entity.OrgData.Entity.Guid,
+		c.isOptOut(app.Environment),
+	})
 	c.fillDatabase(apps)
 	return apps
 
@@ -112,7 +120,15 @@ func (c *CachingBolt) GetAllApp() []App {
 
 	for _, app := range cfApps {
 		logging.LogStd(fmt.Sprintf("App [%s] Found...", app.Name), false)
-		apps = append(apps, App{app.Name, app.Guid, app.SpaceData.Entity.Name, app.SpaceData.Entity.Guid, app.SpaceData.Entity.OrgData.Entity.Name, app.SpaceData.Entity.OrgData.Entity.Guid})
+		apps = append(apps, App{
+			app.Name,
+			app.Guid,
+			app.SpaceData.Entity.Name,
+			app.SpaceData.Entity.Guid,
+			app.SpaceData.Entity.OrgData.Entity.Name,
+			app.SpaceData.Entity.OrgData.Entity.Guid,
+			c.isOptOut(app.Environment),
+		})
 	}
 
 	c.fillDatabase(apps)
@@ -140,6 +156,13 @@ func (c *CachingBolt) GetAppInfo(appGuid string) App {
 
 func (c *CachingBolt) Close() {
 	c.Appdb.Close()
+}
+
+func (c *CachingBolt) isOptOut(envVar map[string]interface{}) bool {
+	if val, ok := envVar["F2S_DISABLE_LOGGING"]; ok != false && val == "true" {
+		return true
+	}
+	return false
 }
 
 func (c *CachingBolt) GetAppInfoCache(appGuid string) App {

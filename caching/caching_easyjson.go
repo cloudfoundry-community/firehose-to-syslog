@@ -16,7 +16,11 @@ var (
 )
 
 func easyjson633f8c25DecodeGithubComCloudfoundryCommunityFirehoseToSyslogCaching(in *jlexer.Lexer, out *App) {
+	isTopLevel := in.IsStart()
 	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
 		in.Skip()
 		return
 	}
@@ -42,12 +46,17 @@ func easyjson633f8c25DecodeGithubComCloudfoundryCommunityFirehoseToSyslogCaching
 			out.OrgName = string(in.String())
 		case "OrgGuid":
 			out.OrgGuid = string(in.String())
+		case "IgnoredApp":
+			out.IgnoredApp = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
 		in.WantComma()
 	}
 	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
 }
 func easyjson633f8c25EncodeGithubComCloudfoundryCommunityFirehoseToSyslogCaching(out *jwriter.Writer, in App) {
 	out.RawByte('{')
@@ -89,6 +98,12 @@ func easyjson633f8c25EncodeGithubComCloudfoundryCommunityFirehoseToSyslogCaching
 	first = false
 	out.RawString("\"OrgGuid\":")
 	out.String(string(in.OrgGuid))
+	if !first {
+		out.RawByte(',')
+	}
+	first = false
+	out.RawString("\"IgnoredApp\":")
+	out.Bool(bool(in.IgnoredApp))
 	out.RawByte('}')
 }
 

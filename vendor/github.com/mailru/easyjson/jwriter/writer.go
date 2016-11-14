@@ -2,6 +2,7 @@
 package jwriter
 
 import (
+	"encoding/base64"
 	"io"
 	"strconv"
 	"unicode/utf8"
@@ -9,8 +10,19 @@ import (
 	"github.com/mailru/easyjson/buffer"
 )
 
+// Flags describe various encoding options. The behavior may be actually implemented in the encoder, but
+// Flags field in Writer is used to set and pass them around.
+type Flags int
+
+const (
+	NilMapAsEmpty   Flags = 1 << iota // Encode nil map as '{}' rather than 'null'.
+	NilSliceAsEmpty                   // Encode nil slice as '[]' rather than 'null'.
+)
+
 // Writer is a JSON writer.
 type Writer struct {
+	Flags Flags
+
 	Error  error
 	Buffer buffer.Buffer
 }
@@ -57,6 +69,19 @@ func (w *Writer) Raw(data []byte, err error) {
 	default:
 		w.RawString("null")
 	}
+}
+
+// Base64Bytes appends data to the buffer after base64 encoding it
+func (w *Writer) Base64Bytes(data []byte) {
+	if data == nil {
+		w.Buffer.AppendString("null")
+		return
+	}
+	w.Buffer.AppendByte('"')
+	dst := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+	base64.StdEncoding.Encode(dst, data)
+	w.Buffer.AppendBytes(dst)
+	w.Buffer.AppendByte('"')
 }
 
 func (w *Writer) Uint8(n uint8) {

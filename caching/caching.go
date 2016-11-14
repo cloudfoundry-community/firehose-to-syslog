@@ -6,12 +6,13 @@ import (
 )
 
 type App struct {
-	Name      string
-	Guid      string
-	SpaceName string
-	SpaceGuid string
-	OrgName   string
-	OrgGuid   string
+	Name       string
+	Guid       string
+	SpaceName  string
+	SpaceGuid  string
+	OrgName    string
+	OrgGuid    string
+	IgnoredApp bool
 }
 
 //go:generate counterfeiter . Caching
