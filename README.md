@@ -31,6 +31,8 @@ Flags:
   --subscription-id="firehose"   Id for the subscription.
   --user="admin"                 Admin user.
   --password="admin"             Admin password.
+  --client-id="admin"            Client ID.
+  --client-secret="admin"        Client secret.
   --skip-ssl-validation          Please don't
   --fh-keep-alive=25s            Keep Alive duration for the firehose consumer
   --log-event-totals             Logs the counters for all selected events since nozzle was last started.
@@ -154,7 +156,7 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
 
 # Push as an App to Cloud Foundry
 
-1. Create doppler.firehose enabled user
+1. Create doppler.firehose enabled user or client
 
 		uaac target https://uaa.[your cf system domain] --skip-ssl-validation
 		uaac token client get admin -s [your admin-secret]
@@ -186,6 +188,8 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
 		cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
 		cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
 		cf set-env firehose-to-syslog FIREHOSE_PASSWORD  [your doppler.firehose enabled user password]
+		cf set-env firehose-to-syslog FIREHOSE_CLIENT_ID  [your doppler.firehose enabled client id]
+		cf set-env firehose-to-syslog FIREHOSE_CLIENT_SECRET  [your doppler.firehose enabled client secret]
 		cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter type to use. Valid options are : text, json]
 
 1. Turn off the health check if you're staging to Diego.

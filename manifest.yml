@@ -7,6 +7,8 @@ env:
   EVENTS: LogMessage,ValueMetric,Error,ContainerMetric
   FIREHOSE_USER: admin
   FIREHOSE_PASSWORD: admin
+  FIREHOSE_CLIENT_ID: admin
+  FIREHOSE_CLIENT_SECRET: admin
   FIREHOSE_SUBSCRIPTION_ID: firehose-a
   LOG_EVENT_TOTALS: true
   LOG_EVENT_TOTALS_TIME: 10s
