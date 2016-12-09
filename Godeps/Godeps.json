@@ -32,7 +32,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
-			"Rev": "c783aa0efe78706e9d98ffc4a84f0d42cd322ac8"
+			"Rev": "913199a8fbe22670f7ac6867a3062aa14b56fc0d"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
