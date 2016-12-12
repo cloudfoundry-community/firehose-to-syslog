@@ -32,7 +32,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
-			"Rev": "c783aa0efe78706e9d98ffc4a84f0d42cd322ac8"
+			"Rev": "281b53c3fa2872518cabf3293a30a7cacd0fcbcb"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -101,10 +101,6 @@
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
-			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
-		},
-		{
-			"ImportPath": "golang.org/x/oauth2/internal",
 			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
 		},
 		{
