@@ -7,7 +7,6 @@ export PATH=$GOPATH/bin:$PATH
 
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
-go get golang.org/x/oauth2
 
 cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
 
