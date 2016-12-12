@@ -104,10 +104,6 @@
 			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
 		},
 		{
-			"ImportPath": "golang.org/x/oauth2/internal",
-			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
-		},
-		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "9d4e42a20653790449273b3c85e67d6d8bae6e2e"
 		},
