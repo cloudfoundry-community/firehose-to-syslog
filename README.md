@@ -158,13 +158,28 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
 
 1. Create doppler.firehose enabled user or client
 
-		uaac target https://uaa.[your cf system domain] --skip-ssl-validation
-		uaac token client get admin -s [your admin-secret]
-		cf create-user [firehose user] [firehose password]
-		uaac member add cloud_controller.admin [your firehose user]
-		uaac member add doppler.firehose [your firehose user]
 
-1. Download the latest release of  firehose-to-syslog.
+Since `cf v241`  you can use `cloud_controller.admin_read_only` instead of `cloud_controller.admin`
+
+ 1.1 Create user
+    uaac target https://uaa.[your cf system domain] --skip-ssl-validation
+    uaac token client get admin -s [your admin-secret]
+    cf create-user [firehose user] [firehose password]
+    uaac member add cloud_controller.admin [your firehose user]
+    uaac member add doppler.firehose [your firehose user]
+
+
+  1.2 Use Client id / client Secret
+    uaac target https://uaa.[your cf system domain] --skip-ssl-validation
+    uaac token client get admin -s [your admin-secret]
+    uaac client add firehose-to-syslog \
+          --name firehose-to-syslog \
+          --secret [your_client_secret] \
+          --authorized_grant_types client_credentials,refresh_token \
+          --authorities doppler.firehose,cloud_controller.admin
+
+
+1. Download the latest release of firehose-to-syslog.
 
 		git clone https://github.com/cloudfoundry-community/firehose-to-syslog
 		cd firehose-to-syslog
@@ -200,13 +215,4 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
 
 		cf push firehose-to-syslog --no-route
 
-	If you are using the offline version of the go buildpack and your app fails to stage then open up the Godeps/Godeps.json file and change the `GoVersion` from `go1.5.3` to `go1.5` and repush.
-
-# Contributors
-
-* [Ed King](https://github.com/teddyking) - Added support to skip ssl
-validation.
-* [Mark Alston](https://github.com/malston) - Added support for more
-  events and general code cleaup.
-* [Etourneau Gwenn](https://github.com/shinji62) - Added validation of
-  selected events and general code cleanup, caching system..
+	If you are using the offline version of the go buildpack and your app fails to stage then open up the Godeps/Godeps.json file and change the `GoVersion` to a supported one by the buildpacks and repush.
