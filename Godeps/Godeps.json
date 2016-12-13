@@ -101,7 +101,15 @@
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
-			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
+			"Rev": "da3ce8d62a7f77aadfda06cb82bd604d6469c645"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/clientcredentials",
+			"Rev": "da3ce8d62a7f77aadfda06cb82bd604d6469c645"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "da3ce8d62a7f77aadfda06cb82bd604d6469c645"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
