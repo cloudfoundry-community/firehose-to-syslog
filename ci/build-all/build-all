@@ -6,7 +6,6 @@ export PATH=$GOPATH/bin:$PATH
 export BUILD_NUMBER=`[ ${VERSION_APP} ] && cat ${VERSION_APP} || echo "0.0.0"`
 cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
 
-go get golang.org/x/oauth2
 
 make clean
 make compile
