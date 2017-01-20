@@ -3,9 +3,9 @@ package uaatokenrefresher
 import (
 	"fmt"
 
+	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 	"github.com/cloudfoundry-incubator/uaago"
-	"github.com/shinji62/cf-cleanup-apps/logging"
 )
 
 type UAATokenRefresher struct {

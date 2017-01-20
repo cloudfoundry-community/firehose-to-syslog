@@ -4,6 +4,10 @@
 	"GodepVersion": "v75",
 	"Deps": [
 		{
+			"ImportPath": "github.com/cloudfoundry-incubator/uaago",
+			"Rev": "1db9cfd27865007e07ffd5914c0fdf5fb7fc09ba"
+		},
+		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.10.0",
 			"Rev": "4b6ea7319e214d98c938f12692336f7ca9348d6b"
