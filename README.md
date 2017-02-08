@@ -1,6 +1,9 @@
 #Disclaimer
 
-This is V2 if you encounter any trouble with this version please use the 1.X.X
+Since **2.5.0** we stop supporting username and password for authentification.
+
+
+Please use ClientId and ClientSecret.
 
 # Firehose-to-syslog
 
@@ -161,58 +164,61 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
 
 Since `cf v241`  you can use `cloud_controller.admin_read_only` instead of `cloud_controller.admin`
 
- 1.1 Create user
-    uaac target https://uaa.[your cf system domain] --skip-ssl-validation
-    uaac token client get admin -s [your admin-secret]
-    cf create-user [firehose user] [firehose password]
-    uaac member add cloud_controller.admin [your firehose user]
-    uaac member add doppler.firehose [your firehose user]
+ 1.1 Create user **No More supported since 2.5.0**
+ ```
+uaac target https://uaa.[your cf system domain] --skip-ssl-validation
+uaac token client get admin -s [your admin-secret]
+cf create-user [firehose user] [firehose password]
+uaac member add cloud_controller.admin [your firehose user]
+uaac member add doppler.firehose [your firehose user]
+```
 
-
-  1.2 Use Client id / client Secret
-    uaac target https://uaa.[your cf system domain] --skip-ssl-validation
-    uaac token client get admin -s [your admin-secret]
-    uaac client add firehose-to-syslog \
-          --name firehose-to-syslog \
-          --secret [your_client_secret] \
-          --authorized_grant_types client_credentials,refresh_token \
-          --authorities doppler.firehose,cloud_controller.admin
-
+1.2 Use Client id / client Secret
+```
+uaac target https://uaa.[your cf system domain] --skip-ssl-validation
+uaac token client get admin -s [your admin-secret]
+uaac client add firehose-to-syslog \
+      --name firehose-to-syslog \
+      --secret [your_client_secret] \
+      --authorized_grant_types client_credentials,refresh_token \
+      --authorities doppler.firehose,cloud_controller.admin
+```
 
 1. Download the latest release of firehose-to-syslog.
-
-		git clone https://github.com/cloudfoundry-community/firehose-to-syslog
-		cd firehose-to-syslog
-
+```
+git clone https://github.com/cloudfoundry-community/firehose-to-syslog
+cd firehose-to-syslog
+```
 1. Utilize the CF cli to authenticate with your PCF instance.
-
-		cf login -a https://api.[your cf system domain] -u [your id] --skip-ssl-validation
-
+```
+cf login -a https://api.[your cf system domain] -u [your id] --skip-ssl-validation
+```
 1. Push firehose-to-syslog.
-
-		cf push firehose-to-syslog --no-start
-
+```
+cf push firehose-to-syslog --no-start
+```
 1. Set environment variables with cf cli or in the [manifest.yml](./manifest.yml).
-
-		cf set-env firehose-to-syslog API_ENDPOINT https://api.[your cf system domain]
-		cf set-env firehose-to-syslog DOPPLER_ENDPOINT wss://doppler.[your cf system domain]:443
-		cf set-env firehose-to-syslog SYSLOG_ENDPOINT [Your Syslog IP]:514
-		cf set-env firehose-to-syslog LOG_EVENT_TOTALS true
-		cf set-env firehose-to-syslog LOG_EVENT_TOTALS_TIME "10s"
-		cf set-env firehose-to-syslog SKIP_SSL_VALIDATION true
-		cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
-		cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
-		cf set-env firehose-to-syslog FIREHOSE_PASSWORD  [your doppler.firehose enabled user password]
-		cf set-env firehose-to-syslog FIREHOSE_CLIENT_ID  [your doppler.firehose enabled client id]
-		cf set-env firehose-to-syslog FIREHOSE_CLIENT_SECRET  [your doppler.firehose enabled client secret]
-		cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter type to use. Valid options are : text, json]
-
+```
+cf set-env firehose-to-syslog API_ENDPOINT https://api.[your cf system domain]
+cf set-env firehose-to-syslog DOPPLER_ENDPOINT wss://doppler.[your cf system domain]:443
+cf set-env firehose-to-syslog SYSLOG_ENDPOINT [Your Syslog IP]:514
+cf set-env firehose-to-syslog LOG_EVENT_TOTALS true
+cf set-env firehose-to-syslog LOG_EVENT_TOTALS_TIME "10s"
+cf set-env firehose-to-syslog SKIP_SSL_VALIDATION true
+cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
+cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
+cf set-env firehose-to-syslog FIREHOSE_PASSWORD  [your doppler.firehose enabled user password]
+cf set-env firehose-to-syslog FIREHOSE_CLIENT_ID  [your doppler.firehose enabled client id]
+cf set-env firehose-to-syslog FIREHOSE_CLIENT_SECRET  [your doppler.firehose enabled client secret]
+cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter type to use. Valid options are : text, json]
+```
 1. Turn off the health check if you're staging to Diego.
-
-		cf set-health-check firehose-to-syslog none
-
+```
+cf set-health-check firehose-to-syslog none
+```
 1. Push the app.
-
-		cf push firehose-to-syslog --no-route
+```
+cf push firehose-to-syslog --no-route
+```
 
 	If you are using the offline version of the go buildpack and your app fails to stage then open up the Godeps/Godeps.json file and change the `GoVersion` to a supported one by the buildpacks and repush.

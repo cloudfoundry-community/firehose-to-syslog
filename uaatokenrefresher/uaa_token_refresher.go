@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	cfclient "github.com/cloudfoundry-community/go-cfclient"
 	"github.com/cloudfoundry-incubator/uaago"
 )
 
@@ -16,18 +15,18 @@ type UAATokenRefresher struct {
 	client            *uaago.Client
 }
 
-func NewUAATokenRefresher(cfClient *cfclient.Client,
+func NewUAATokenRefresher(authEndpoint string,
 	clientID string,
 	clientSecret string,
 	skipSSLValidation bool,
 ) (*UAATokenRefresher, error) {
-	client, err := uaago.NewClient(cfClient.Endpoint.AuthEndpoint)
+	client, err := uaago.NewClient(authEndpoint)
 	if err != nil {
 		return &UAATokenRefresher{}, err
 	}
 
 	return &UAATokenRefresher{
-		url:               cfClient.Endpoint.AuthEndpoint,
+		url:               authEndpoint,
 		clientID:          clientID,
 		clientSecret:      clientSecret,
 		skipSSLValidation: skipSSLValidation,
