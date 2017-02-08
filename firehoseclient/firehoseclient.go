@@ -2,13 +2,14 @@ package firehoseclient
 
 import (
 	"crypto/tls"
+	"time"
+
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	"github.com/cloudfoundry-community/go-cfclient"
+	"github.com/cloudfoundry-community/firehose-to-syslog/uaatokenrefresher"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gorilla/websocket"
-	"time"
 )
 
 type FirehoseNozzle struct {
@@ -17,7 +18,7 @@ type FirehoseNozzle struct {
 	consumer     *consumer.Consumer
 	eventRouting *eventRouting.EventRouting
 	config       *FirehoseConfig
-	cfClient     *cfclient.Client
+	uaaRefresher consumer.TokenRefresher
 }
 
 type FirehoseConfig struct {
@@ -27,17 +28,13 @@ type FirehoseConfig struct {
 	FirehoseSubscriptionID string
 }
 
-type CfClientTokenRefresh struct {
-	cfClient *cfclient.Client
-}
-
-func NewFirehoseNozzle(cfClient *cfclient.Client, eventRouting *eventRouting.EventRouting, firehoseconfig *FirehoseConfig) *FirehoseNozzle {
+func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting *eventRouting.EventRouting, firehoseconfig *FirehoseConfig) *FirehoseNozzle {
 	return &FirehoseNozzle{
 		errs:         make(<-chan error),
 		messages:     make(<-chan *events.Envelope),
 		eventRouting: eventRouting,
 		config:       firehoseconfig,
-		cfClient:     cfClient,
+		uaaRefresher: uaaR,
 	}
 }
 
@@ -52,8 +49,7 @@ func (f *FirehoseNozzle) consumeFirehose() {
 		f.config.TrafficControllerURL,
 		&tls.Config{InsecureSkipVerify: f.config.InsecureSSLSkipVerify},
 		nil)
-	refresher := CfClientTokenRefresh{cfClient: f.cfClient}
-	f.consumer.RefreshTokenFrom(&refresher)
+	f.consumer.RefreshTokenFrom(f.uaaRefresher)
 	f.consumer.SetIdleTimeout(time.Duration(f.config.IdleTimeoutSeconds) * time.Second)
 	f.messages, f.errs = f.consumer.Firehose(f.config.FirehoseSubscriptionID, "")
 }
@@ -91,8 +87,4 @@ func (f *FirehoseNozzle) handleMessage(envelope *events.Envelope) {
 	if envelope.GetEventType() == events.Envelope_CounterEvent && envelope.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" && envelope.GetOrigin() == "doppler" {
 		logging.LogStd("We've intercepted an upstream message which indicates that the nozzle or the TrafficController is not keeping up. Please try scaling up the nozzle.", true)
 	}
-}
-
-func (ct *CfClientTokenRefresh) RefreshAuthToken() (string, error) {
-	return ct.cfClient.GetToken()
 }

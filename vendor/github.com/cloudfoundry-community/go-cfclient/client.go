@@ -38,6 +38,7 @@ type Config struct {
 	HttpClient        *http.Client
 	Token             string `json:"auth_token"`
 	TokenSource       oauth2.TokenSource
+	UserAgent         string `json:"user_agent"`
 }
 
 // request is used to help build up a request
@@ -60,6 +61,7 @@ func DefaultConfig() *Config {
 		Token:             "",
 		SkipSslValidation: false,
 		HttpClient:        http.DefaultClient,
+		UserAgent:         "Go-CF-client/1.1",
 	}
 }
 
@@ -93,6 +95,9 @@ func NewClient(config *Config) (client *Client, err error) {
 		config.Token = defConfig.Token
 	}
 
+	if len(config.UserAgent) == 0 {
+		config.UserAgent = defConfig.UserAgent
+	}
 	ctx := context.Background()
 	if config.SkipSslValidation == false {
 		ctx = context.WithValue(ctx, oauth2.HTTPClient, defConfig.HttpClient)
@@ -208,6 +213,11 @@ func (c *Client) DoRequest(r *request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("User-Agent", c.config.UserAgent)
+	if r.body != nil {
+		req.Header.Set("Content-type", "application/json")
+	}
+
 	resp, err := c.config.HttpClient.Do(req)
 	return resp, err
 }
@@ -247,6 +257,7 @@ func encodeBody(obj interface{}) (io.Reader, error) {
 
 func (c *Client) GetToken() (string, error) {
 	token, err := c.config.TokenSource.Token()
+	fmt.Println("Calling Refresh Token", token, err)
 	if err != nil {
 		return "", fmt.Errorf("Error getting bearer token: %v", err)
 	}

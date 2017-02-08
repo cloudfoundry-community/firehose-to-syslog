@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehoseclient"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/firehose-to-syslog/uaatokenrefresher"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -70,6 +71,7 @@ func main() {
 		ClientID:          *clientID,
 		ClientSecret:      *clientSecret,
 		SkipSslValidation: *skipSSLValidation,
+		UserAgent:         "firehose-to-syslog/" + version,
 	}
 	cfClient, _ := cfclient.NewClient(&c)
 
@@ -113,6 +115,17 @@ func main() {
 	//Let's start the goRoutine
 	cachingClient.PerformPoollingCaching(*tickerTime)
 
+	uaaRefresher, err := uaatokenrefresher.NewUAATokenRefresher(
+		cfClient,
+		*clientID,
+		*clientSecret,
+		*skipSSLValidation,
+	)
+
+	if err != nil {
+		logging.LogError(fmt.Sprint("Failed connecting to Get token from UAA..", err), "")
+	}
+
 	firehoseConfig := &firehoseclient.FirehoseConfig{
 		TrafficControllerURL:   cfClient.Endpoint.DopplerEndpoint,
 		InsecureSSLSkipVerify:  *skipSSLValidation,
@@ -123,7 +136,7 @@ func main() {
 	if loggingClient.Connect() || *debug {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
-		firehoseClient := firehoseclient.NewFirehoseNozzle(cfClient, events, firehoseConfig)
+		firehoseClient := firehoseclient.NewFirehoseNozzle(uaaRefresher, events, firehoseConfig)
 		err = firehoseClient.Start()
 		if err != nil {
 			logging.LogError("Failed connecting to Firehose...Please check settings and try again!", "")
