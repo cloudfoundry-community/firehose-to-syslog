@@ -21,7 +21,7 @@ CloudFoundry.
 # Options
 
 ```
-usage: firehose-to-syslog --api-endpoint=API-ENDPOINT [<flags>]
+usage: firehose-to-syslog --api-endpoint=API-ENDPOINT --client-id=CLIENT-ID --client-secret=CLIENT-SECRET [<flags>]
 
 Flags:
   --help                         Show context-sensitive help (also try --help-long and --help-man).
@@ -30,30 +30,35 @@ Flags:
   --doppler-endpoint=DOPPLER-ENDPOINT
                                  Overwrite default doppler endpoint return by /v2/info
   --syslog-server=SYSLOG-SERVER  Syslog server.
-  --syslog-protocol="tcp"        Syslog protocol (tcp/udp).
+  --syslog-protocol="tcp"        Syslog protocol (tcp/udp/tcp+tls).
   --subscription-id="firehose"   Id for the subscription.
-  --user="admin"                 Admin user.
-  --password="admin"             Admin password.
-  --client-id="admin"            Client ID.
-  --client-secret="admin"        Client secret.
+  --client-id=CLIENT-ID          Client ID.
+  --client-secret=CLIENT-SECRET  Client secret.
   --skip-ssl-validation          Please don't
   --fh-keep-alive=25s            Keep Alive duration for the firehose consumer
   --log-event-totals             Logs the counters for all selected events since nozzle was last started.
   --log-event-totals-time=30s    How frequently the event totals are calculated (in sec).
-  --events="LogMessage"          Comma separated list of events you would like. Valid options are Error, ContainerMetric,
-                                 HttpStart, HttpStop, HttpStartStop, LogMessage, ValueMetric, CounterEvent
+  --events="LogMessage"          Comma separated list of events you would like. Valid options are ContainerMetric, CounterEvent, Error,
+                                 HttpStartStop, LogMessage, ValueMetric
   --boltdb-path="my.db"          Bolt Database path
   --cc-pull-time=60s             CloudController Polling time in sec
-  --extra-fields=""              Extra fields you want to annotate your events with, example:
-                                 '--extra-fields=env:dev,something:other
+  --extra-fields=""              Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other
   --mode-prof=""                 Enable profiling mode, one of [cpu, mem, block]
   --path-prof=""                 Set the Path to write profiling file
   --log-formatter-type=LOG-FORMATTER-TYPE
                                  Log formatter type to use. Valid options are text, json. If none provided, defaults to json.
+  --cert-pem-syslog=""           Certificate Pem file
   --version                      Show application version.
 ```
 
 ** !!! **--events** Please use --help to get last updated event.
+
+
+# TLS syslog endpoint.
+
+Since v3 firehose-to-syslog support TLS syslog `--cert-pem-syslog` using PEM encoded cert file.
+Please refer to https://github.com/RackSec/srslog/blob/master/script/gen-certs.py
+for Cert generation.
 
 
 #Endpoint definition

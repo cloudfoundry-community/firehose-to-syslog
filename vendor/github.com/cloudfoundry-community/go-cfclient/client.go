@@ -257,7 +257,6 @@ func encodeBody(obj interface{}) (io.Reader, error) {
 
 func (c *Client) GetToken() (string, error) {
 	token, err := c.config.TokenSource.Token()
-	fmt.Println("Calling Refresh Token", token, err)
 	if err != nil {
 		return "", fmt.Errorf("Error getting bearer token: %v", err)
 	}

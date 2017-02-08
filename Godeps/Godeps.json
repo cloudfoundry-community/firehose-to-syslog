@@ -4,18 +4,13 @@
 	"GodepVersion": "v75",
 	"Deps": [
 		{
-			"ImportPath": "github.com/cloudfoundry-incubator/uaago",
-			"Rev": "1db9cfd27865007e07ffd5914c0fdf5fb7fc09ba"
+			"ImportPath": "github.com/RackSec/srslog",
+			"Rev": "a974ba6f7fb527d2ddc73ee9c05d3e2ccc0af0dc"
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.10.0",
-			"Rev": "4b6ea7319e214d98c938f12692336f7ca9348d6b"
-		},
-		{
-			"ImportPath": "github.com/Sirupsen/logrus/hooks/syslog",
-			"Comment": "v0.10.0",
-			"Rev": "4b6ea7319e214d98c938f12692336f7ca9348d6b"
+			"Comment": "v0.11.0-35-g61e43dc",
+			"Rev": "61e43dc76f7ee59a82bdf3d71033dc12bea4c77d"
 		},
 		{
 			"ImportPath": "github.com/alecthomas/template",
@@ -39,6 +34,10 @@
 			"Rev": "7b15efc43291ece6f107ed34f9684ff5f6454de3"
 		},
 		{
+			"ImportPath": "github.com/cloudfoundry-incubator/uaago",
+			"Rev": "1db9cfd27865007e07ffd5914c0fdf5fb7fc09ba"
+		},
+		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
 			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
 		},
@@ -56,7 +55,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
-			"Rev": "81c3f6be579cf4337477a8b0d03852d0760b5801"
+			"Rev": "78019103037ae46207993c8816e970d85bf1a9e4"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/gogoproto",
@@ -98,6 +97,10 @@
 			"ImportPath": "github.com/pkg/profile",
 			"Comment": "v1.0.0-9-g8a808a6",
 			"Rev": "8a808a6967b79da66deacfe508b26d398a69518f"
+		},
+		{
+			"ImportPath": "github.com/shinji62/logrus-syslog-ng",
+			"Rev": "2b60df6a829a654a0456501c6092e5307f674d76"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
