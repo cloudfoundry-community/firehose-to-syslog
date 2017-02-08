@@ -2,13 +2,15 @@ package caching
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfClient "github.com/cloudfoundry-community/go-cfclient"
 	json "github.com/mailru/easyjson"
-	"log"
-	"os"
-	"time"
 )
 
 type CachingBolt struct {
@@ -95,7 +97,7 @@ func (c *CachingBolt) GetAppByGuid(appGuid string) []App {
 		app.SpaceData.Entity.Guid,
 		app.SpaceData.Entity.OrgData.Entity.Name,
 		app.SpaceData.Entity.OrgData.Entity.Guid,
-		c.isOptOut(app.Environment),
+		c.isOptOut(app),
 	})
 	c.fillDatabase(apps)
 	return apps
@@ -127,7 +129,7 @@ func (c *CachingBolt) GetAllApp() []App {
 			app.SpaceData.Entity.Guid,
 			app.SpaceData.Entity.OrgData.Entity.Name,
 			app.SpaceData.Entity.OrgData.Entity.Guid,
-			c.isOptOut(app.Environment),
+			c.isOptOut(app),
 		})
 	}
 
@@ -158,10 +160,28 @@ func (c *CachingBolt) Close() {
 	c.Appdb.Close()
 }
 
-func (c *CachingBolt) isOptOut(envVar map[string]interface{}) bool {
+func (c *CachingBolt) isOptOut(app cfClient.App) bool {
+	envVar := app.Environment
+
 	if val, ok := envVar["F2S_DISABLE_LOGGING"]; ok != false && val == "true" {
 		return true
 	}
+
+	if filteredOrgs := os.Getenv("F2S_EXCLUDE_ORGS"); filteredOrgs != "" {
+		orgsToLower := strings.ToLower(filteredOrgs)
+		appOrg := strings.ToLower(app.SpaceData.Entity.OrgData.Entity.Name)
+
+		fmt.Fprintf(os.Stderr, "app org %s,  org env var %s\n", appOrg, orgsToLower)
+
+		if appOrg == orgsToLower ||
+			strings.HasPrefix(orgsToLower, appOrg+",") ||
+			strings.HasSuffix(orgsToLower, ","+appOrg) ||
+			strings.Contains(orgsToLower, ","+appOrg+",") {
+
+			return true
+		}
+	}
+
 	return false
 }
 
