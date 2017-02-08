@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehoseclient"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/firehose-to-syslog/uaatokenrefresher"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -21,10 +22,8 @@ var (
 	syslogServer       = kingpin.Flag("syslog-server", "Syslog server.").OverrideDefaultFromEnvar("SYSLOG_ENDPOINT").String()
 	syslogProtocol     = kingpin.Flag("syslog-protocol", "Syslog protocol (tcp/udp).").Default("tcp").OverrideDefaultFromEnvar("SYSLOG_PROTOCOL").String()
 	subscriptionId     = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").OverrideDefaultFromEnvar("FIREHOSE_SUBSCRIPTION_ID").String()
-	user               = kingpin.Flag("user", "Admin user.").OverrideDefaultFromEnvar("FIREHOSE_USER").String()
-	password           = kingpin.Flag("password", "Admin password.").OverrideDefaultFromEnvar("FIREHOSE_PASSWORD").String()
-	clientID           = kingpin.Flag("client-id", "Client ID.").OverrideDefaultFromEnvar("FIREHOSE_CLIENT_ID").String()
-	clientSecret       = kingpin.Flag("client-secret", "Client secret.").OverrideDefaultFromEnvar("FIREHOSE_CLIENT_SECRET").String()
+	clientID           = kingpin.Flag("client-id", "Client ID.").OverrideDefaultFromEnvar("FIREHOSE_CLIENT_ID").Required().String()
+	clientSecret       = kingpin.Flag("client-secret", "Client secret.").OverrideDefaultFromEnvar("FIREHOSE_CLIENT_SECRET").Required().String()
 	skipSSLValidation  = kingpin.Flag("skip-ssl-validation", "Please don't").Default("false").OverrideDefaultFromEnvar("SKIP_SSL_VALIDATION").Bool()
 	keepAlive          = kingpin.Flag("fh-keep-alive", "Keep Alive duration for the firehose consumer").Default("25s").OverrideDefaultFromEnvar("FH_KEEP_ALIVE").Duration()
 	logEventTotals     = kingpin.Flag("log-event-totals", "Logs the counters for all selected events since nozzle was last started.").Default("false").OverrideDefaultFromEnvar("LOG_EVENT_TOTALS").Bool()
@@ -65,11 +64,10 @@ func main() {
 
 	c := cfclient.Config{
 		ApiAddress:        *apiEndpoint,
-		Username:          *user,
-		Password:          *password,
 		ClientID:          *clientID,
 		ClientSecret:      *clientSecret,
 		SkipSslValidation: *skipSSLValidation,
+		UserAgent:         "firehose-to-syslog/" + version,
 	}
 	cfClient, _ := cfclient.NewClient(&c)
 
@@ -113,6 +111,17 @@ func main() {
 	//Let's start the goRoutine
 	cachingClient.PerformPoollingCaching(*tickerTime)
 
+	uaaRefresher, err := uaatokenrefresher.NewUAATokenRefresher(
+		cfClient.Endpoint.AuthEndpoint,
+		*clientID,
+		*clientSecret,
+		*skipSSLValidation,
+	)
+
+	if err != nil {
+		logging.LogError(fmt.Sprint("Failed connecting to Get token from UAA..", err), "")
+	}
+
 	firehoseConfig := &firehoseclient.FirehoseConfig{
 		TrafficControllerURL:   cfClient.Endpoint.DopplerEndpoint,
 		InsecureSSLSkipVerify:  *skipSSLValidation,
@@ -123,7 +132,7 @@ func main() {
 	if loggingClient.Connect() || *debug {
 
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
-		firehoseClient := firehoseclient.NewFirehoseNozzle(cfClient, events, firehoseConfig)
+		firehoseClient := firehoseclient.NewFirehoseNozzle(uaaRefresher, events, firehoseConfig)
 		err = firehoseClient.Start()
 		if err != nil {
 			logging.LogError("Failed connecting to Firehose...Please check settings and try again!", "")

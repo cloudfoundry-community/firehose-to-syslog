@@ -4,6 +4,10 @@
 	"GodepVersion": "v75",
 	"Deps": [
 		{
+			"ImportPath": "github.com/cloudfoundry-incubator/uaago",
+			"Rev": "1db9cfd27865007e07ffd5914c0fdf5fb7fc09ba"
+		},
+		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.10.0",
 			"Rev": "4b6ea7319e214d98c938f12692336f7ca9348d6b"
@@ -32,7 +36,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-community/go-cfclient",
-			"Rev": "281b53c3fa2872518cabf3293a30a7cacd0fcbcb"
+			"Rev": "7b15efc43291ece6f107ed34f9684ff5f6454de3"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
