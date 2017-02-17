@@ -4,16 +4,19 @@ package logrus_syslog
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"log/syslog"
 	"os"
+
+	syslog "github.com/RackSec/srslog"
+	"github.com/Sirupsen/logrus"
+)
+
+const (
+	SecureProto = "tcp+tls"
 )
 
 // SyslogHook to send logs via syslog.
 type SyslogHook struct {
-	Writer        *syslog.Writer
-	SyslogNetwork string
-	SyslogRaddr   string
+	Writer *syslog.Writer
 }
 
 // Creates a hook to be added to an instance of logger. This is called with
@@ -21,7 +24,12 @@ type SyslogHook struct {
 // `if err == nil { log.Hooks.Add(hook) }`
 func NewSyslogHook(network, raddr string, priority syslog.Priority, tag string) (*SyslogHook, error) {
 	w, err := syslog.Dial(network, raddr, priority, tag)
-	return &SyslogHook{w, network, raddr}, err
+	return &SyslogHook{w}, err
+}
+
+func NewSyslogHookTls(raddr string, priority syslog.Priority, tag string, certPath string) (*SyslogHook, error) {
+	w, err := syslog.DialWithTLSCertPath(SecureProto, raddr, priority, tag, certPath)
+	return &SyslogHook{w}, err
 }
 
 func (hook *SyslogHook) Fire(entry *logrus.Entry) error {

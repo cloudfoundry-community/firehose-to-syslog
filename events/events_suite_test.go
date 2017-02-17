@@ -1,10 +1,11 @@
 package events_test
 
 import (
+	"testing"
+
 	. "github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestEvents(t *testing.T) {

@@ -2,11 +2,12 @@ package logging
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	logrus_syslog "github.com/Sirupsen/logrus/hooks/syslog"
 	"io/ioutil"
-	"log/syslog"
 	"os"
+
+	syslog "github.com/RackSec/srslog"
+	"github.com/Sirupsen/logrus"
+	logrus_syslog "github.com/shinji62/logrus-syslog-ng"
 )
 
 type LoggingLogrus struct {
@@ -14,15 +15,17 @@ type LoggingLogrus struct {
 	syslogServer     string
 	debugFlag        bool
 	logFormatterType string
+	certPath         string
 	syslogProtocol   string
 }
 
-func NewLogging(SyslogServerFlag string, SysLogProtocolFlag string, LogFormatterFlag string, DebugFlag bool) Logging {
+func NewLogging(SyslogServerFlag string, SysLogProtocolFlag string, LogFormatterFlag string, certP string, DebugFlag bool) Logging {
 	return &LoggingLogrus{
 		Logger:           logrus.New(),
 		syslogServer:     SyslogServerFlag,
 		logFormatterType: LogFormatterFlag,
 		syslogProtocol:   SysLogProtocolFlag,
+		certPath:         certP,
 		debugFlag:        DebugFlag,
 	}
 }
@@ -39,7 +42,14 @@ func (l *LoggingLogrus) Connect() bool {
 	}
 
 	if l.syslogServer != "" {
-		hook, err := logrus_syslog.NewSyslogHook(l.syslogProtocol, l.syslogServer, syslog.LOG_INFO, "doppler")
+		var hook logrus.Hook
+		var err error
+		if l.syslogProtocol == logrus_syslog.SecureProto {
+			hook, err = logrus_syslog.NewSyslogHookTls(l.syslogServer, syslog.LOG_INFO, "doppler", l.certPath)
+
+		} else {
+			hook, err = logrus_syslog.NewSyslogHook(l.syslogProtocol, l.syslogServer, syslog.LOG_INFO, "doppler")
+		}
 		if err != nil {
 			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", l.syslogServer), err.Error())
 		} else {

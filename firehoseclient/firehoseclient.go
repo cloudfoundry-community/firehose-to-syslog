@@ -16,7 +16,7 @@ type FirehoseNozzle struct {
 	errs         <-chan error
 	messages     <-chan *events.Envelope
 	consumer     *consumer.Consumer
-	eventRouting *eventRouting.EventRouting
+	eventRouting eventRouting.EventRouting
 	config       *FirehoseConfig
 	uaaRefresher consumer.TokenRefresher
 }
@@ -28,7 +28,7 @@ type FirehoseConfig struct {
 	FirehoseSubscriptionID string
 }
 
-func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting *eventRouting.EventRouting, firehoseconfig *FirehoseConfig) *FirehoseNozzle {
+func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting eventRouting.EventRouting, firehoseconfig *FirehoseConfig) *FirehoseNozzle {
 	return &FirehoseNozzle{
 		errs:         make(<-chan error),
 		messages:     make(<-chan *events.Envelope),
