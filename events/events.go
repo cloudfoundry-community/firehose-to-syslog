@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/utils"
@@ -12,48 +13,6 @@ type Event struct {
 	Fields map[string]interface{}
 	Msg    string
 	Type   string
-}
-
-func HttpStart(msg *events.Envelope) *Event {
-	httpStart := msg.GetHttpStart()
-
-	fields := logrus.Fields{
-		"cf_app_id":         utils.FormatUUID(httpStart.GetApplicationId()),
-		"instance_id":       httpStart.GetInstanceId(),
-		"instance_index":    httpStart.GetInstanceIndex(),
-		"method":            httpStart.GetMethod().String(),
-		"parent_request_id": utils.FormatUUID(httpStart.GetParentRequestId()),
-		"peer_type":         httpStart.GetPeerType().String(),
-		"request_id":        utils.FormatUUID(httpStart.GetRequestId()),
-		"remote_addr":       httpStart.GetRemoteAddress(),
-		"timestamp":         httpStart.GetTimestamp(),
-		"uri":               httpStart.GetUri(),
-		"user_agent":        httpStart.GetUserAgent(),
-	}
-
-	return &Event{
-		Fields: fields,
-		Msg:    "",
-	}
-}
-
-func HttpStop(msg *events.Envelope) *Event {
-	httpStop := msg.GetHttpStop()
-
-	fields := logrus.Fields{
-		"cf_app_id":      utils.FormatUUID(httpStop.GetApplicationId()),
-		"content_length": httpStop.GetContentLength(),
-		"peer_type":      httpStop.GetPeerType().String(),
-		"request_id":     utils.FormatUUID(httpStop.GetRequestId()),
-		"status_code":    httpStop.GetStatusCode(),
-		"timestamp":      httpStop.GetTimestamp(),
-		"uri":            httpStop.GetUri(),
-	}
-
-	return &Event{
-		Fields: fields,
-		Msg:    "",
-	}
 }
 
 func HttpStartStop(msg *events.Envelope) *Event {

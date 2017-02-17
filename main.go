@@ -20,7 +20,7 @@ var (
 	apiEndpoint        = kingpin.Flag("api-endpoint", "Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io").OverrideDefaultFromEnvar("API_ENDPOINT").Required().String()
 	dopplerEndpoint    = kingpin.Flag("doppler-endpoint", "Overwrite default doppler endpoint return by /v2/info").OverrideDefaultFromEnvar("DOPPLER_ENDPOINT").String()
 	syslogServer       = kingpin.Flag("syslog-server", "Syslog server.").OverrideDefaultFromEnvar("SYSLOG_ENDPOINT").String()
-	syslogProtocol     = kingpin.Flag("syslog-protocol", "Syslog protocol (tcp/udp).").Default("tcp").OverrideDefaultFromEnvar("SYSLOG_PROTOCOL").String()
+	syslogProtocol     = kingpin.Flag("syslog-protocol", "Syslog protocol (tcp/udp/tcp+tls).").Default("tcp").OverrideDefaultFromEnvar("SYSLOG_PROTOCOL").String()
 	subscriptionId     = kingpin.Flag("subscription-id", "Id for the subscription.").Default("firehose").OverrideDefaultFromEnvar("FIREHOSE_SUBSCRIPTION_ID").String()
 	clientID           = kingpin.Flag("client-id", "Client ID.").OverrideDefaultFromEnvar("FIREHOSE_CLIENT_ID").Required().String()
 	clientSecret       = kingpin.Flag("client-secret", "Client secret.").OverrideDefaultFromEnvar("FIREHOSE_CLIENT_SECRET").Required().String()
@@ -35,6 +35,7 @@ var (
 	modeProf           = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").OverrideDefaultFromEnvar("MODE_PROF").String()
 	pathProf           = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").OverrideDefaultFromEnvar("PATH_PROF").String()
 	logFormatterType   = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
+	certPath           = kingpin.Flag("cert-pem-syslog", "Certificate Pem file").Envar("CERT_PEM").Default("").String()
 )
 
 var (
@@ -46,7 +47,7 @@ func main() {
 	kingpin.Parse()
 
 	//Setup Logging
-	loggingClient := logging.NewLogging(*syslogServer, *syslogProtocol, *logFormatterType, *debug)
+	loggingClient := logging.NewLogging(*syslogServer, *syslogProtocol, *logFormatterType, *certPath, *debug)
 	logging.LogStd(fmt.Sprintf("Starting firehose-to-syslog %s ", version), true)
 
 	if *modeProf != "" {
@@ -69,11 +70,16 @@ func main() {
 		SkipSslValidation: *skipSSLValidation,
 		UserAgent:         "firehose-to-syslog/" + version,
 	}
-	cfClient, _ := cfclient.NewClient(&c)
+	cfClient, err := cfclient.NewClient(&c)
+	if err != nil {
+		log.Fatal("New Client: ", err)
+		os.Exit(1)
 
+	}
 	if len(*dopplerEndpoint) > 0 {
 		cfClient.Endpoint.DopplerEndpoint = *dopplerEndpoint
 	}
+	fmt.Println(cfClient.Endpoint.DopplerEndpoint)
 	logging.LogStd(fmt.Sprintf("Using %s as doppler endpoint", cfClient.Endpoint.DopplerEndpoint), true)
 
 	//Creating Caching
@@ -85,7 +91,7 @@ func main() {
 	}
 	//Creating Events
 	events := eventRouting.NewEventRouting(cachingClient, loggingClient)
-	err := events.SetupEventRouting(*wantedEvents)
+	err = events.SetupEventRouting(*wantedEvents)
 	if err != nil {
 		log.Fatal("Error setting up event routing: ", err)
 		os.Exit(1)

@@ -4,6 +4,7 @@ package caching
 
 import (
 	json "encoding/json"
+
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
 )
