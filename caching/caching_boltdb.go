@@ -13,16 +13,17 @@ import (
 )
 
 const (
-	MISSING_APPS_BUCKET = "MissingAppsBucket"
-	APP_BUCKET          = "AppBucket"
+	MISSING_APP_BUCKET = "MissingAppBucket"
+	APP_BUCKET         = "AppBucket"
 )
 
 type CachingBolt struct {
-	GcfClient *cfClient.Client
-	Appdb     *bolt.DB
+	GcfClient         *cfClient.Client
+	Appdb             *bolt.DB
+	ignoreMissingApps bool
 }
 
-func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string) Caching {
+func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string, ignoreMissingApps bool) Caching {
 
 	//Use bolt for in-memory  - file caching
 	db, err := bolt.Open(boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -32,14 +33,17 @@ func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string) Cach
 
 	}
 
-	cachingBolt := &CachingBolt{
-		GcfClient: gcfClientSet,
-		Appdb:     db,
+	c := &CachingBolt{
+		GcfClient:         gcfClientSet,
+		Appdb:             db,
+		ignoreMissingApps: ignoreMissingApps,
 	}
 
-	cachingBolt.createMissingAppsBucket()
+	if ignoreMissingApps {
+		c.createMissingAppsBucket()
+	}
 
-	return cachingBolt
+	return c
 }
 
 func (c *CachingBolt) CreateBucket() {
@@ -54,7 +58,7 @@ func (c *CachingBolt) CreateBucket() {
 
 func (c *CachingBolt) createMissingAppsBucket() {
 	c.Appdb.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(MISSING_APPS_BUCKET))
+		_, err := tx.CreateBucketIfNotExists([]byte(MISSING_APP_BUCKET))
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
@@ -64,7 +68,7 @@ func (c *CachingBolt) createMissingAppsBucket() {
 	go func() {
 		for range time.Tick(1 * time.Hour) {
 			c.Appdb.Update(func(tx *bolt.Tx) error {
-				err := tx.DeleteBucket([]byte(MISSING_APPS_BUCKET))
+				err := tx.DeleteBucket([]byte(MISSING_APP_BUCKET))
 				if err != nil {
 					return fmt.Errorf("clear bucket: %s", err)
 				}
@@ -188,7 +192,7 @@ func (c *CachingBolt) alreadyMissed(appGuid string) bool {
 	var d []byte
 
 	c.Appdb.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(MISSING_APPS_BUCKET))
+		b := tx.Bucket([]byte(MISSING_APP_BUCKET))
 		d = b.Get([]byte(appGuid))
 		return nil
 	})
@@ -198,7 +202,7 @@ func (c *CachingBolt) alreadyMissed(appGuid string) bool {
 
 func (c *CachingBolt) recordMissingApp(appGuid string) {
 	c.Appdb.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(MISSING_APPS_BUCKET))
+		b, err := tx.CreateBucketIfNotExists([]byte(MISSING_APP_BUCKET))
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
@@ -227,15 +231,15 @@ func (c *CachingBolt) GetAppInfoCache(appGuid string) App {
 		return app
 	}
 
-	if c.alreadyMissed(appGuid) {
+	if c.ignoreMissingApps && c.alreadyMissed(appGuid) {
 		return App{}
 	}
 
 	// First time seeing app
 	apps := c.GetAppByGuid(appGuid)
-	if apps[0].Name == "" {
+	if c.ignoreMissingApps && apps[0].Name == "" {
 		c.recordMissingApp(appGuid)
-		return App{}
+		return apps[0]
 	}
 	return apps[0]
 }
