@@ -10,7 +10,7 @@ import (
 
 type Logging interface {
 	Connect() bool
-	ShipEvents(map[string]interface{}, string)
+	ShipEvents(map[string]interface{}, string, map[string]interface{})
 }
 
 func LogStd(message string, force bool) {
