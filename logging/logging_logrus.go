@@ -61,7 +61,7 @@ func (l *LoggingLogrus) Connect() bool {
 	return success
 }
 
-func (l *LoggingLogrus) ShipEvents(eventFields map[string]interface{}, Message string) {
+func (l *LoggingLogrus) ShipEvents(eventFields map[string]interface{}, Message string, extraEventFields map[string]interface{}) {
 	l.Logger.WithFields(eventFields).Info(Message)
 }
 

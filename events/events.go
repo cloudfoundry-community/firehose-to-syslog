@@ -11,6 +11,7 @@ import (
 
 type Event struct {
 	Fields map[string]interface{}
+	ExtraFields map[string]interface{}
 	Msg    string
 	Type   string
 }
@@ -161,10 +162,10 @@ func (e *Event) AnnotateWithAppData(caching caching.Caching) {
 }
 
 func (e *Event) AnnotateWithMetaData(extraFields map[string]string) {
-	e.Fields["cf_origin"] = "firehose"
-	e.Fields["event_type"] = e.Type
+	e.ExtraFields["cf_origin"] = "firehose"
+	e.ExtraFields["event_type"] = e.Type
 	for k, v := range extraFields {
-		e.Fields[k] = v
+		e.ExtraFields[k] = v
 	}
 }
 

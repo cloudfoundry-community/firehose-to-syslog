@@ -72,7 +72,7 @@ func (e *EventRoutingDefault) RouteEvent(msg *events.Envelope) {
 		if ignored, hasIgnoredField := event.Fields["cf_ignored_app"]; ignored == true && hasIgnoredField {
 			e.selectedEventsCount["ignored_app_message"]++
 		} else {
-			e.log.ShipEvents(event.Fields, event.Msg)
+			e.log.ShipEvents(event.Fields, event.Msg, event.ExtraFields)
 			e.selectedEventsCount[eventType.String()]++
 
 		}
@@ -132,7 +132,7 @@ func (e *EventRoutingDefault) LogEventTotals(logTotalsTime time.Duration) {
 			startTime = time.Now()
 			event, lastCount := e.getEventTotals(totalElapsedTime, elapsedTime, count)
 			count = lastCount
-			e.log.ShipEvents(event.Fields, event.Msg)
+			e.log.ShipEvents(event.Fields, event.Msg, nil)
 		}
 	}()
 }
