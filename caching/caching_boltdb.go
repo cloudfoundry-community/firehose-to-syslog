@@ -23,7 +23,7 @@ type CachingBolt struct {
 	ignoreMissingApps bool
 }
 
-func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string, ignoreMissingApps bool) Caching {
+func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string, ignoreMissingApps bool, missingAppsTtl time.Duration) Caching {
 
 	//Use bolt for in-memory  - file caching
 	db, err := bolt.Open(boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -40,7 +40,7 @@ func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string, igno
 	}
 
 	if ignoreMissingApps {
-		c.createMissingAppsBucket()
+		c.createMissingAppBucket(missingAppsTtl)
 	}
 
 	return c
@@ -56,7 +56,7 @@ func (c *CachingBolt) CreateBucket() {
 	})
 }
 
-func (c *CachingBolt) createMissingAppsBucket() {
+func (c *CachingBolt) createMissingAppBucket(ttl time.Duration) {
 	c.Appdb.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(MISSING_APP_BUCKET))
 		if err != nil {
@@ -66,7 +66,7 @@ func (c *CachingBolt) createMissingAppsBucket() {
 	})
 
 	go func() {
-		for range time.Tick(1 * time.Hour) {
+		for range time.Tick(ttl) {
 			c.Appdb.Update(func(tx *bolt.Tx) error {
 				err := tx.DeleteBucket([]byte(MISSING_APP_BUCKET))
 				if err != nil {
@@ -239,7 +239,7 @@ func (c *CachingBolt) GetAppInfoCache(appGuid string) App {
 	apps := c.GetAppByGuid(appGuid)
 	if c.ignoreMissingApps && apps[0].Name == "" {
 		c.recordMissingApp(appGuid)
-		return apps[0]
 	}
+
 	return apps[0]
 }
