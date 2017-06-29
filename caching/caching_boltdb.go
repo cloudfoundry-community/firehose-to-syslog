@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"time"
-	"bytes"
 )
 
 const (
@@ -197,7 +196,7 @@ func (c *CachingBolt) alreadyMissed(appGuid string) bool {
 		return nil
 	})
 
-	return bytes.Equal(d, []byte("0"))
+	return d != nil
 }
 
 func (c *CachingBolt) recordMissingApp(appGuid string) {
