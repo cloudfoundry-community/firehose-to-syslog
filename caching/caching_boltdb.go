@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	cfClient "github.com/cloudfoundry-community/go-cfclient"
 	json "github.com/mailru/easyjson"
 	"log"
 	"os"
@@ -17,12 +16,12 @@ const (
 )
 
 type CachingBolt struct {
-	GcfClient         *cfClient.Client
+	GcfClient         AppClient
 	Appdb             *bolt.DB
 	ignoreMissingApps bool
 }
 
-func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string, ignoreMissingApps bool, missingAppsTtl time.Duration) Caching {
+func NewCachingBolt(client AppClient, boltDatabasePath string, ignoreMissingApps bool, missingAppsTtl time.Duration) Caching {
 
 	//Use bolt for in-memory  - file caching
 	db, err := bolt.Open(boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
@@ -33,7 +32,7 @@ func NewCachingBolt(gcfClientSet *cfClient.Client, boltDatabasePath string, igno
 	}
 
 	c := &CachingBolt{
-		GcfClient:         gcfClientSet,
+		GcfClient:         client,
 		Appdb:             db,
 		ignoreMissingApps: ignoreMissingApps,
 	}
