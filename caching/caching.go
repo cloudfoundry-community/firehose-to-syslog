@@ -3,6 +3,8 @@ package caching
 import (
 	"regexp"
 	"time"
+
+	cfclient "github.com/cloudfoundry-community/go-cfclient"
 )
 
 type App struct {
@@ -25,6 +27,11 @@ type Caching interface {
 	GetAppInfo(string) App
 	GetAppInfoCache(string) App
 	Close()
+}
+
+type AppClient interface {
+	AppByGuid(appGuid string) (cfclient.App, error)
+	ListApps() ([]cfclient.App, error)
 }
 
 func IsNeeded(wantedEvents string) bool {
