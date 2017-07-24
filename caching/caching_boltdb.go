@@ -29,6 +29,7 @@ type CachingBolt struct {
 	lock      sync.RWMutex
 	cache     map[string]*App
 	closing   chan struct{}
+	wg        sync.WaitGroup
 	config    *CachingBoltConfig
 }
 
@@ -89,6 +90,10 @@ func (c *CachingBolt) populateCache() error {
 
 func (c *CachingBolt) Close() error {
 	close(c.closing)
+
+	// Wait for background goroutine exit
+	c.wg.Wait()
+
 	return c.appdb.Close()
 }
 
@@ -212,15 +217,24 @@ func (c *CachingBolt) createMissingAppBucket(ttl time.Duration) error {
 		return err
 	}
 
+	c.wg.Add(1)
 	go func() {
-		for range time.Tick(ttl) {
-			c.appdb.Update(func(tx *bolt.Tx) error {
-				err := tx.DeleteBucket([]byte(MISSING_APP_BUCKET))
-				if err != nil {
-					return fmt.Errorf("clear bucket: %s", err)
-				}
-				return nil
-			})
+		defer c.wg.Done()
+
+		ticker := time.NewTicker(ttl)
+		for {
+			select {
+			case <-ticker.C:
+				c.appdb.Update(func(tx *bolt.Tx) error {
+					err := tx.DeleteBucket([]byte(MISSING_APP_BUCKET))
+					if err != nil {
+						return fmt.Errorf("clear bucket: %s", err)
+					}
+					return nil
+				})
+			case <-c.closing:
+				return
+			}
 		}
 	}()
 
@@ -232,17 +246,23 @@ func (c *CachingBolt) createMissingAppBucket(ttl time.Duration) error {
 func (c *CachingBolt) invalidateCache() {
 	ticker := time.NewTicker(c.config.CacheInvalidateTTL)
 
+	c.wg.Add(1)
 	go func() {
-		select {
-		case <-ticker.C:
-			apps, err := c.getAllAppsFromRemote()
-			if err != nil {
-				c.lock.Lock()
-				c.cache = apps
-				c.lock.Unlock()
+		defer c.wg.Done()
+
+		for {
+			select {
+			case <-ticker.C:
+				// continue
+				apps, err := c.getAllAppsFromRemote()
+				if err == nil {
+					c.lock.Lock()
+					c.cache = apps
+					c.lock.Unlock()
+				}
+			case <-c.closing:
+				return
 			}
-		case <-c.closing:
-			return
 		}
 	}()
 }
@@ -250,19 +270,13 @@ func (c *CachingBolt) invalidateCache() {
 func (c *CachingBolt) fillDatabase(apps map[string]*App) {
 	for _, app := range apps {
 		c.appdb.Update(func(tx *bolt.Tx) error {
-			b, err := tx.CreateBucketIfNotExists([]byte(APP_BUCKET))
-			if err != nil {
-				return fmt.Errorf("create bucket: %s", err)
-			}
-
 			serialize, err := json.Marshal(app)
 			if err != nil {
 				return fmt.Errorf("Error Marshaling data: %s", err)
 			}
 
-			err = b.Put([]byte(app.Guid), serialize)
-
-			if err != nil {
+			b := tx.Bucket([]byte(APP_BUCKET))
+			if err := b.Put([]byte(app.Guid), serialize); err != nil {
 				return fmt.Errorf("Error inserting data: %s", err)
 			}
 			return nil
@@ -282,23 +296,6 @@ func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
 	}
 }
 
-func (c *CachingBolt) getAppFromCache(appGuid string) (*App, error) {
-	var d []byte
-	c.appdb.View(func(tx *bolt.Tx) error {
-		logging.LogStd(fmt.Sprintf("Looking for App %s in Cache!\n", appGuid), false)
-		b := tx.Bucket([]byte(APP_BUCKET))
-		d = b.Get([]byte(appGuid))
-		return nil
-	})
-
-	var app App
-	err := json.Unmarshal([]byte(d), &app)
-	if err != nil {
-		return nil, err
-	}
-	return &app, nil
-}
-
 func (c *CachingBolt) getAppFromRemote(appGuid string) (*App, error) {
 	cfApp, err := c.appClient.AppByGuid(appGuid)
 	if err != nil {
@@ -316,6 +313,10 @@ func (c *CachingBolt) alreadyMissed(appGuid string) bool {
 
 	c.appdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(MISSING_APP_BUCKET))
+		if b == nil {
+			return nil
+		}
+
 		d = b.Get([]byte(appGuid))
 		return nil
 	})
