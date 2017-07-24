@@ -2,7 +2,6 @@ package caching
 
 import (
 	"regexp"
-	"time"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 )
@@ -20,13 +19,11 @@ type App struct {
 //go:generate counterfeiter . Caching
 
 type Caching interface {
-	CreateBucket()
-	PerformPoollingCaching(time.Duration)
-	GetAppByGuid(string) []App
-	GetAllApp() []App
-	GetAppInfo(string) App
-	GetAppInfoCache(string) App
-	Close()
+	Open() error
+	Close() error
+
+	GetAllApps() (map[string]*App, error)
+	GetApp(string) (*App, error)
 }
 
 type AppClient interface {
