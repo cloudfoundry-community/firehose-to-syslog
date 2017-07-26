@@ -44,9 +44,9 @@ var _ = Describe("Events", func() {
 
 	Context("given Application Metadata", func() {
 		It("Should give us the right Application metadata", func() {
-			caching.GetAppStub = func(appid string) (*App, error) {
+			caching.GetAppInfoCacheStub = func(appid string) App {
 				Expect(appid).To(Equal("eea38ba5-53a5-4173-9617-b442d35ec2fd"))
-				return &App{
+				return App{
 					Name:       "App-Name",
 					Guid:       appid,
 					SpaceName:  "Space-Name",
@@ -54,7 +54,7 @@ var _ = Describe("Events", func() {
 					OrgName:    "Org-Name",
 					OrgGuid:    "Org-Guid",
 					IgnoredApp: true,
-				}, nil
+				}
 			}
 			event.AnnotateWithAppData(caching)
 			Expect(event.Fields["cf_app_name"]).To(Equal("App-Name"))

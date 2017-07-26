@@ -87,20 +87,10 @@ func main() {
 	//Creating Caching
 	var cachingClient caching.Caching
 	if caching.IsNeeded(*wantedEvents) {
-		config := &caching.CachingBoltConfig{
-			Path: *boltDatabasePath,
-			IgnoreMissingApps: *ignoreMissingApps,
-			MissingAppsTTL: *missingAppsTtl,
-			CacheInvalidateTTL:*tickerTime,
-		}
-		cachingClient, err = caching.NewCachingBolt(cfClient, config)
-		if err != nil {
-			log.Fatal("Failed to create boltdb cache", err)
-		}
+		cachingClient = caching.NewCachingBolt(cfClient, *boltDatabasePath, *ignoreMissingApps, *missingAppsTtl)
 	} else {
 		cachingClient = caching.NewCachingEmpty()
 	}
-
 	//Creating Events
 	events := eventRouting.NewEventRouting(cachingClient, loggingClient)
 	err = events.SetupEventRouting(*wantedEvents)
@@ -119,9 +109,15 @@ func main() {
 		events.LogEventTotals(*logEventTotalsTime)
 	}
 
-	if err := cachingClient.Open(); err != nil {
-		log.Fatal("Error open cache: ", err)
-	}
+	// Parse extra fields from cmd call
+	cachingClient.CreateBucket()
+	//Let's Update the database the first time
+	logging.LogStd("Start filling app/space/org cache.", true)
+	apps := cachingClient.GetAllApp()
+	logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
+
+	//Let's start the goRoutine
+	cachingClient.PerformPoollingCaching(*tickerTime)
 
 	uaaRefresher, err := uaatokenrefresher.NewUAATokenRefresher(
 		cfClient.Endpoint.AuthEndpoint,

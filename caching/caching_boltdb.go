@@ -1,15 +1,13 @@
 package caching
 
 import (
-	"errors"
 	"fmt"
-	"sync"
-	"time"
-
 	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
-	cfclient "github.com/cloudfoundry-community/go-cfclient"
 	json "github.com/mailru/easyjson"
+	"log"
+	"os"
+	"time"
 )
 
 const (
@@ -17,185 +15,37 @@ const (
 	APP_BUCKET         = "AppBucket"
 )
 
-type CachingBoltConfig struct {
-	Path               string
-	IgnoreMissingApps  bool
-	MissingAppsTTL     time.Duration
-	CacheInvalidateTTL time.Duration
-}
-
 type CachingBolt struct {
-	appClient AppClient
-	appdb     *bolt.DB
-	lock      sync.RWMutex
-	cache     map[string]*App
-	closing   chan struct{}
-	wg        sync.WaitGroup
-	config    *CachingBoltConfig
+	GcfClient         AppClient
+	Appdb             *bolt.DB
+	ignoreMissingApps bool
 }
 
-func NewCachingBolt(client AppClient, config *CachingBoltConfig) (*CachingBolt, error) {
-	return &CachingBolt{
-		appClient: client,
-		closing:   make(chan struct{}),
-		config:    config,
-	}, nil
-}
+func NewCachingBolt(client AppClient, boltDatabasePath string, ignoreMissingApps bool, missingAppsTtl time.Duration) Caching {
 
-func (c *CachingBolt) Open() error {
-	// Open bolt db
-	db, err := bolt.Open(c.config.Path, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	//Use bolt for in-memory  - file caching
+	db, err := bolt.Open(boltDatabasePath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		logging.LogError("Fail to open boltdb: ", err)
-		return err
-	}
-	c.appdb = db
+		log.Fatal("Error opening bolt db: ", err)
+		os.Exit(1)
 
-	if err := c.createBucket(); err != nil {
-		logging.LogError("Fail to create bucket: ", err)
-		return err
 	}
 
-	if c.config.CacheInvalidateTTL != time.Duration(0) {
-		c.invalidateCache()
+	c := &CachingBolt{
+		GcfClient:         client,
+		Appdb:             db,
+		ignoreMissingApps: ignoreMissingApps,
 	}
 
-	if c.config.IgnoreMissingApps {
-		err := c.createMissingAppBucket(c.config.MissingAppsTTL)
-		if err != nil {
-			return err
-		}
+	if ignoreMissingApps {
+		c.createMissingAppBucket(missingAppsTtl)
 	}
 
-	return c.populateCache()
+	return c
 }
 
-func (c *CachingBolt) populateCache() error {
-	apps, err := c.getAllAppsFromBoltDB()
-	if err != nil {
-		return err
-	}
-
-	if len(apps) == 0 {
-		// populate from remote
-		apps, err = c.getAllAppsFromRemote()
-		if err != nil {
-			return err
-		}
-	}
-
-	c.cache = apps
-
-	return nil
-}
-
-func (c *CachingBolt) Close() error {
-	close(c.closing)
-
-	// Wait for background goroutine exit
-	c.wg.Wait()
-
-	return c.appdb.Close()
-}
-
-// GetAppInfo tries first get app info from cache. If caches doesn't have this
-// app info (cache miss), it issues API to retrieve the app info from remote
-// if the app is not already missing and clients don't ignore the missing app
-// info, and then add the app info to the cache
-// On the other hand, if the app is already missing and clients want to
-// save remote API and ignore missing app, then a nil app info and an error
-// will be returned.
-func (c *CachingBolt) GetApp(appGuid string) (*App, error) {
-	c.lock.RLock()
-	if app, ok := c.cache[appGuid]; ok {
-		// in in-memory cache
-		c.lock.RUnlock()
-		return app, nil
-	}
-	c.lock.RUnlock()
-
-	if c.config.IgnoreMissingApps && c.alreadyMissed(appGuid) {
-		return nil, errors.New("App was missed and ignored")
-	}
-
-	// First time seeing app
-	app, err := c.getAppFromRemote(appGuid)
-	if err != nil {
-		if c.config.IgnoreMissingApps {
-			c.recordMissingApp(appGuid)
-		}
-		return nil, err
-	}
-
-	// Add to in-memory cache
-	c.lock.Lock()
-	c.cache[app.Guid] = app
-	c.lock.Unlock()
-
-	return app, nil
-}
-
-// GetAllApps returns all apps info
-func (c *CachingBolt) GetAllApps() (map[string]*App, error) {
-	c.lock.RLock()
-	apps := make(map[string]*App, len(c.cache))
-	for _, app := range c.cache {
-		dup := *app
-		apps[dup.Guid] = &dup
-	}
-	c.lock.RUnlock()
-
-	return apps, nil
-}
-
-// getAllAppsFromBoltDB get all app information from boltdb
-func (c *CachingBolt) getAllAppsFromBoltDB() (map[string]*App, error) {
-	var allData [][]byte
-	c.appdb.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(APP_BUCKET))
-		b.ForEach(func(guid []byte, v []byte) error {
-			allData = append(allData, v)
-			return nil
-		})
-		return nil
-	})
-
-	apps := make(map[string]*App, len(allData))
-	for i := range allData {
-		var app App
-		err := json.Unmarshal(allData[i], &app)
-		if err != nil {
-			return nil, err
-		}
-		apps[app.Guid] = &app
-	}
-
-	return apps, nil
-}
-
-func (c *CachingBolt) getAllAppsFromRemote() (map[string]*App, error) {
-	logging.LogStd("Retrieving Apps for Cache...", false)
-
-	cfApps, err := c.appClient.ListApps()
-	if err != nil {
-		return nil, err
-	}
-
-	apps := make(map[string]*App, len(cfApps))
-	for i := range cfApps {
-		logging.LogStd(fmt.Sprintf("App [%s] Found...", cfApps[i].Name), false)
-		app := c.fromPCFApp(&cfApps[i])
-		apps[app.Guid] = app
-	}
-
-	c.fillDatabase(apps)
-	logging.LogStd(fmt.Sprintf("Found [%d] Apps!", len(apps)), false)
-
-	return apps, nil
-}
-
-func (c *CachingBolt) createBucket() error {
-	return c.appdb.Update(func(tx *bolt.Tx) error {
+func (c *CachingBolt) CreateBucket() {
+	c.Appdb.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(APP_BUCKET))
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
@@ -204,8 +54,8 @@ func (c *CachingBolt) createBucket() error {
 	})
 }
 
-func (c *CachingBolt) createMissingAppBucket(ttl time.Duration) error {
-	err := c.appdb.Update(func(tx *bolt.Tx) error {
+func (c *CachingBolt) createMissingAppBucket(ttl time.Duration) {
+	c.Appdb.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(MISSING_APP_BUCKET))
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
@@ -213,79 +63,64 @@ func (c *CachingBolt) createMissingAppBucket(ttl time.Duration) error {
 		return nil
 	})
 
-	if err != nil {
-		return err
-	}
-
-	c.wg.Add(1)
 	go func() {
-		defer c.wg.Done()
-
-		ticker := time.NewTicker(ttl)
-		for {
-			select {
-			case <-ticker.C:
-				c.appdb.Update(func(tx *bolt.Tx) error {
-					err := tx.DeleteBucket([]byte(MISSING_APP_BUCKET))
-					if err != nil {
-						return fmt.Errorf("clear bucket: %s", err)
-					}
-					return nil
-				})
-			case <-c.closing:
-				return
-			}
-		}
-	}()
-
-	return nil
-}
-
-// invalidateCache perodically fetches a full copy apps info from remote
-// and update boltdb and in-memory cache
-func (c *CachingBolt) invalidateCache() {
-	ticker := time.NewTicker(c.config.CacheInvalidateTTL)
-
-	c.wg.Add(1)
-	go func() {
-		defer c.wg.Done()
-
-		for {
-			select {
-			case <-ticker.C:
-				// continue
-				apps, err := c.getAllAppsFromRemote()
-				if err == nil {
-					c.lock.Lock()
-					c.cache = apps
-					c.lock.Unlock()
+		for range time.Tick(ttl) {
+			c.Appdb.Update(func(tx *bolt.Tx) error {
+				err := tx.DeleteBucket([]byte(MISSING_APP_BUCKET))
+				if err != nil {
+					return fmt.Errorf("clear bucket: %s", err)
 				}
-			case <-c.closing:
-				return
-			}
+				return nil
+			})
 		}
 	}()
 }
 
-func (c *CachingBolt) fillDatabase(apps map[string]*App) {
-	for _, app := range apps {
-		c.appdb.Update(func(tx *bolt.Tx) error {
+func (c *CachingBolt) PerformPoollingCaching(tickerTime time.Duration) {
+	// Ticker Pooling the CC every X sec
+	ccPooling := time.NewTicker(tickerTime)
+
+	var apps []App
+	go func() {
+		for range ccPooling.C {
+			apps = c.GetAllApp()
+		}
+	}()
+
+}
+
+func (c *CachingBolt) fillDatabase(listApps []App) {
+	for _, app := range listApps {
+		c.Appdb.Update(func(tx *bolt.Tx) error {
+			b, err := tx.CreateBucketIfNotExists([]byte(APP_BUCKET))
+			if err != nil {
+				return fmt.Errorf("create bucket: %s", err)
+			}
+
 			serialize, err := json.Marshal(app)
+
 			if err != nil {
 				return fmt.Errorf("Error Marshaling data: %s", err)
 			}
+			err = b.Put([]byte(app.Guid), serialize)
 
-			b := tx.Bucket([]byte(APP_BUCKET))
-			if err := b.Put([]byte(app.Guid), serialize); err != nil {
+			if err != nil {
 				return fmt.Errorf("Error inserting data: %s", err)
 			}
 			return nil
 		})
+
 	}
+
 }
 
-func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
-	return &App{
+func (c *CachingBolt) GetAppByGuid(appGuid string) []App {
+	var apps []App
+	app, err := c.GcfClient.AppByGuid(appGuid)
+	if err != nil {
+		return apps
+	}
+	apps = append(apps, App{
 		app.Name,
 		app.Guid,
 		app.SpaceData.Entity.Name,
@@ -293,30 +128,69 @@ func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
 		app.SpaceData.Entity.OrgData.Entity.Name,
 		app.SpaceData.Entity.OrgData.Entity.Guid,
 		c.isOptOut(app.Environment),
-	}
+	})
+	c.fillDatabase(apps)
+	return apps
+
 }
 
-func (c *CachingBolt) getAppFromRemote(appGuid string) (*App, error) {
-	cfApp, err := c.appClient.AppByGuid(appGuid)
+func (c *CachingBolt) GetAllApp() []App {
+
+	logging.LogStd("Retrieving Apps for Cache...", false)
+	var apps []App
+
+	defer func() {
+		if r := recover(); r != nil {
+			logging.LogError("Recovered in caching.GetAllApp()", r)
+		}
+	}()
+
+	cfApps, err := c.GcfClient.ListApps()
 	if err != nil {
-		return nil, err
+		return apps
 	}
 
-	app := c.fromPCFApp(&cfApp)
-	c.fillDatabase(map[string]*App{app.Guid: app})
+	for _, app := range cfApps {
+		logging.LogStd(fmt.Sprintf("App [%s] Found...", app.Name), false)
+		apps = append(apps, App{
+			app.Name,
+			app.Guid,
+			app.SpaceData.Entity.Name,
+			app.SpaceData.Entity.Guid,
+			app.SpaceData.Entity.OrgData.Entity.Name,
+			app.SpaceData.Entity.OrgData.Entity.Guid,
+			c.isOptOut(app.Environment),
+		})
+	}
 
-	return app, nil
+	c.fillDatabase(apps)
+	logging.LogStd(fmt.Sprintf("Found [%d] Apps!", len(apps)), false)
+
+	return apps
+}
+
+func (c *CachingBolt) GetAppInfo(appGuid string) App {
+
+	var d []byte
+	var app App
+	c.Appdb.View(func(tx *bolt.Tx) error {
+		logging.LogStd(fmt.Sprintf("Looking for App %s in Cache!\n", appGuid), false)
+		b := tx.Bucket([]byte(APP_BUCKET))
+		d = b.Get([]byte(appGuid))
+		return nil
+	})
+	err := json.Unmarshal([]byte(d), &app)
+	if err != nil {
+		return App{}
+	}
+	return app
 }
 
 func (c *CachingBolt) alreadyMissed(appGuid string) bool {
 	var d []byte
 
-	c.appdb.View(func(tx *bolt.Tx) error {
+	c.Appdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(MISSING_APP_BUCKET))
-		if b == nil {
-			return nil
-		}
-
 		d = b.Get([]byte(appGuid))
 		return nil
 	})
@@ -324,8 +198,8 @@ func (c *CachingBolt) alreadyMissed(appGuid string) bool {
 	return d != nil
 }
 
-func (c *CachingBolt) recordMissingApp(appGuid string) error {
-	return c.appdb.Update(func(tx *bolt.Tx) error {
+func (c *CachingBolt) recordMissingApp(appGuid string) {
+	c.Appdb.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(MISSING_APP_BUCKET))
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
@@ -339,9 +213,31 @@ func (c *CachingBolt) recordMissingApp(appGuid string) error {
 	})
 }
 
+func (c *CachingBolt) Close() {
+	c.Appdb.Close()
+}
+
 func (c *CachingBolt) isOptOut(envVar map[string]interface{}) bool {
-	if val, ok := envVar["F2S_DISABLE_LOGGING"]; ok && val == "true" {
+	if val, ok := envVar["F2S_DISABLE_LOGGING"]; ok != false && val == "true" {
 		return true
 	}
 	return false
+}
+
+func (c *CachingBolt) GetAppInfoCache(appGuid string) App {
+	if app := c.GetAppInfo(appGuid); app.Name != "" {
+		return app
+	}
+
+	if c.ignoreMissingApps && c.alreadyMissed(appGuid) {
+		return App{}
+	}
+
+	// First time seeing app
+	apps := c.GetAppByGuid(appGuid)
+	if c.ignoreMissingApps && apps[0].Name == "" {
+		c.recordMissingApp(appGuid)
+	}
+
+	return apps[0]
 }
