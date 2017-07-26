@@ -1,6 +1,7 @@
 package caching
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -102,9 +103,8 @@ func (c *CachingBolt) Close() error {
 // if the app is not already missing and clients don't ignore the missing app
 // info, and then add the app info to the cache
 // On the other hand, if the app is already missing and clients want to
-// save remote API and ignore missing app, then a nil app info and nil error
-// will be returned. Clients probably need check the nil-ness of returned
-// App info and error
+// save remote API and ignore missing app, then a nil app info and an error
+// will be returned.
 func (c *CachingBolt) GetApp(appGuid string) (*App, error) {
 	c.lock.RLock()
 	if app, ok := c.cache[appGuid]; ok {
@@ -115,7 +115,7 @@ func (c *CachingBolt) GetApp(appGuid string) (*App, error) {
 	c.lock.RUnlock()
 
 	if c.config.IgnoreMissingApps && c.alreadyMissed(appGuid) {
-		return nil, nil
+		return nil, errors.New("App was missed and ignored")
 	}
 
 	// First time seeing app
