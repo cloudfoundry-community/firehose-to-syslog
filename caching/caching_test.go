@@ -103,7 +103,6 @@ var _ = Describe("Caching", func() {
 	var (
 		boltdbPath         = "/tmp/boltdb"
 		ignoreMissingApps  = true
-		missingAppsTTL     = 3 * time.Second
 		cacheInvalidateTTL = 3 * time.Second
 		n                  = 10
 
@@ -112,7 +111,6 @@ var _ = Describe("Caching", func() {
 		config = &CachingBoltConfig{
 			Path:               boltdbPath,
 			IgnoreMissingApps:  ignoreMissingApps,
-			MissingAppsTTL:     missingAppsTTL,
 			CacheInvalidateTTL: cacheInvalidateTTL,
 		}
 
@@ -167,9 +165,9 @@ var _ = Describe("Caching", func() {
 			Expect(app).To(Equal(nilApp))
 
 			// We ignore missing apps, so for the second time query, we already
-			// recorded the missing app, so nil, nil is expected to return
+			// recorded the missing app, so nil, err is expected to return
 			app, err = cache.GetApp(guid)
-			Ω(err).ShouldNot(HaveOccurred())
+			Ω(err).Should(HaveOccurred())
 			Expect(app).To(Equal(nilApp))
 		})
 	})

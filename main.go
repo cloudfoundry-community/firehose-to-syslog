@@ -37,7 +37,6 @@ var (
 	logFormatterType   = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
 	certPath           = kingpin.Flag("cert-pem-syslog", "Certificate Pem file").Envar("CERT_PEM").Default("").String()
 	ignoreMissingApps  = kingpin.Flag("ignore-missing-apps", "Enable throttling on cache lookup for missing apps").Envar("IGNORE_MISSING_APPS").Default("false").Bool()
-	missingAppsTtl     = kingpin.Flag("missing-apps-ttl", "Ticker time for clearing missing apps bucket").Envar("MISSING_APPS_TTL").Default("1h").Duration()
 )
 
 var (
@@ -90,7 +89,6 @@ func main() {
 		config := &caching.CachingBoltConfig{
 			Path: *boltDatabasePath,
 			IgnoreMissingApps: *ignoreMissingApps,
-			MissingAppsTTL: *missingAppsTtl,
 			CacheInvalidateTTL:*tickerTime,
 		}
 		cachingClient, err = caching.NewCachingBolt(cfClient, config)
