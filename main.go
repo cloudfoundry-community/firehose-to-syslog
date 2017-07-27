@@ -37,7 +37,6 @@ var (
 	logFormatterType   = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
 	certPath           = kingpin.Flag("cert-pem-syslog", "Certificate Pem file").Envar("CERT_PEM").Default("").String()
 	ignoreMissingApps  = kingpin.Flag("ignore-missing-apps", "Enable throttling on cache lookup for missing apps").Envar("IGNORE_MISSING_APPS").Default("false").Bool()
-	missingAppsTtl     = kingpin.Flag("missing-apps-ttl", "Ticker time for clearing missing apps bucket").Envar("MISSING_APPS_TTL").Default("1h").Duration()
 )
 
 var (
@@ -87,10 +86,19 @@ func main() {
 	//Creating Caching
 	var cachingClient caching.Caching
 	if caching.IsNeeded(*wantedEvents) {
-		cachingClient = caching.NewCachingBolt(cfClient, *boltDatabasePath, *ignoreMissingApps, *missingAppsTtl)
+		config := &caching.CachingBoltConfig{
+			Path: *boltDatabasePath,
+			IgnoreMissingApps: *ignoreMissingApps,
+			CacheInvalidateTTL:*tickerTime,
+		}
+		cachingClient, err = caching.NewCachingBolt(cfClient, config)
+		if err != nil {
+			log.Fatal("Failed to create boltdb cache", err)
+		}
 	} else {
 		cachingClient = caching.NewCachingEmpty()
 	}
+
 	//Creating Events
 	events := eventRouting.NewEventRouting(cachingClient, loggingClient)
 	err = events.SetupEventRouting(*wantedEvents)
@@ -109,15 +117,9 @@ func main() {
 		events.LogEventTotals(*logEventTotalsTime)
 	}
 
-	// Parse extra fields from cmd call
-	cachingClient.CreateBucket()
-	//Let's Update the database the first time
-	logging.LogStd("Start filling app/space/org cache.", true)
-	apps := cachingClient.GetAllApp()
-	logging.LogStd(fmt.Sprintf("Done filling cache! Found [%d] Apps", len(apps)), true)
-
-	//Let's start the goRoutine
-	cachingClient.PerformPoollingCaching(*tickerTime)
+	if err := cachingClient.Open(); err != nil {
+		log.Fatal("Error open cache: ", err)
+	}
 
 	uaaRefresher, err := uaatokenrefresher.NewUAATokenRefresher(
 		cfClient.Endpoint.AuthEndpoint,
