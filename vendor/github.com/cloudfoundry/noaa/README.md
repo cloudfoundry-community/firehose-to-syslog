@@ -1,23 +1,12 @@
-#NOAA
+# NOAA [![slack.cloudfoundry.org][slack-badge]][loggregator-slack]
 
-[![Build Status](https://travis-ci.org/cloudfoundry/noaa.svg?branch=master)](https://travis-ci.org/cloudfoundry/noaa)
+[![Concourse Status](https://loggregator.ci.cf-app.com/api/v1/pipelines/submodules/jobs/noaa-unit-tests/badge)](https://loggregator.ci.cf-app.com/teams/main/pipelines/submodules/jobs/noaa-unit-tests)
 [![Coverage Status](https://coveralls.io/repos/cloudfoundry/noaa/badge.png)](https://coveralls.io/r/cloudfoundry/noaa)
 [![GoDoc](https://godoc.org/github.com/cloudfoundry/noaa?status.png)](https://godoc.org/github.com/cloudfoundry/noaa)
 
-NOAA is a client library to consume metric and log messages from Doppler.
+noaa is a client library to consume metric and log messages from Doppler.
 
-##WARNING
-
-This library does not work with Go 1.3 through 1.3.3, due to a bug in the standard libraries.
-
-We support the two most recent stable versions of Golang.
-
-###Deprecation
-The consumer of the `noaa` package has been deprecated in favor of the consumer in the `consumer` package.
-When creating a new NOAA consumer, use `consumer.New()` instead of `noaa.NewConsumer()`.
-See the samples for more details.
-
-##Get the Code
+## Get the Code
 
 This Go project is designed to be imported into `$GOPATH`, rather than being cloned into any working directory. There are two ways to do this.
 
@@ -25,9 +14,9 @@ This Go project is designed to be imported into `$GOPATH`, rather than being clo
   ```
   $ echo $GOPATH
   /Users/myuser/go
-  
+
   $ go get github.com/cloudfoundry/noaa
-  
+
   $ ls ~/go/src/github.com/cloudfoundry/
   noaa/         sonde-go/
   ```
@@ -36,12 +25,28 @@ This Go project is designed to be imported into `$GOPATH`, rather than being clo
   ```
   $ echo $GOPATH
   /Users/myuser/go
-  
+
   $ cd /Users/myuser/go/src/github.com/cloudfoundry
   $ git clone git@github.com:cloudfoundry/noaa.git
   $ cd noaa
   $ go get ./...
   ```
+
+## Updates
+
+### Reconnecting to Traffic Controller
+
+noaa has recently updated its reconnect strategy from trying to reconnect five
+times in quick succession to a back-off strategy. The back-off strategy can be
+configured by setting the [SetMinRetryDelay()](https://godoc.org/github.com/cloudfoundry/noaa/consumer#Consumer.SetMinRetryDelay)
+and the [SetMaxRetryDelay()](https://godoc.org/github.com/cloudfoundry/noaa/consumer#Consumer.SetMaxRetryDelay).
+
+During reconnection, noaa will wait initially at the `MinRetryDelay` interval
+and double until it reaches `MaxRetryDelay` where it will try reconnecting
+indefinitely at the `MaxRetryDelay` interval.
+
+This behavior will affect functions like `consumer.Firehose()`, `consumer.Stream()`
+and `consumer.TailingLogs()`.
 
 ## Sample Applications
 
@@ -116,7 +121,11 @@ bin/container_metrics
 For more information to setup a test environment in order to pull container
 metrics look at the README.md in the container_metrics sample.
 
-##Development
+## Development
 
 Use `go get -d -v -t ./... && ginkgo --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover` to
 run the tests.
+
+
+[slack-badge]:          https://slack.cloudfoundry.org/badge.svg
+[loggregator-slack]:    https://cloudfoundry.slack.com/archives/loggregator

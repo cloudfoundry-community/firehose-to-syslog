@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/cloudfoundry-community/firehose-to-syslog",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v75",
+	"GodepVersion": "v79",
 	"Deps": [
 		{
 			"ImportPath": "github.com/RackSec/srslog",
@@ -39,19 +39,23 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
+			"Comment": "v2.1.0-3-g7704643",
+			"Rev": "7704643fe84d8b7cb7e3185031cfa3d5caa51c62"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/consumer",
-			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
+			"Comment": "v2.1.0-3-g7704643",
+			"Rev": "7704643fe84d8b7cb7e3185031cfa3d5caa51c62"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/consumer/internal",
-			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
+			"Comment": "v2.1.0-3-g7704643",
+			"Rev": "7704643fe84d8b7cb7e3185031cfa3d5caa51c62"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa/errors",
-			"Rev": "0ca0d30d65c7422750132450593d402428dd2273"
+			"Comment": "v2.1.0-3-g7704643",
+			"Rev": "7704643fe84d8b7cb7e3185031cfa3d5caa51c62"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
