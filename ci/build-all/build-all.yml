@@ -12,8 +12,8 @@ inputs:
     path: gopath/src/github.com/cloudfoundry-community/firehose-to-syslog/
   - name: version
 
-# outputs:
-#   - name: firehose-to-syslog-ci-build
+outputs:
+  - name: firehose-to-syslog-ci-build
 
 run:
   path: gopath/src/github.com/cloudfoundry-community/firehose-to-syslog/ci/build-all/build-all
