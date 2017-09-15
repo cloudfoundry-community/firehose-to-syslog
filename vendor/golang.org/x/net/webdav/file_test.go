@@ -5,6 +5,7 @@
 package webdav
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,10 +13,13 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
+
+	"golang.org/x/net/context"
 )
 
 func TestSlashClean(t *testing.T) {
@@ -193,13 +197,15 @@ func TestWalk(t *testing.T) {
 		}},
 	}
 
+	ctx := context.Background()
+
 	for _, tc := range testCases {
 		fs := NewMemFS().(*memFS)
 
 		parts := strings.Split(tc.dir, "/")
 		for p := 2; p < len(parts); p++ {
 			d := strings.Join(parts[:p], "/")
-			if err := fs.Mkdir(d, 0666); err != nil {
+			if err := fs.Mkdir(ctx, d, 0666); err != nil {
 				t.Errorf("tc.dir=%q: mkdir: %q: %v", tc.dir, d, err)
 			}
 		}
@@ -229,14 +235,14 @@ func TestWalk(t *testing.T) {
 // analogous to the Unix find command.
 //
 // The returned strings are not guaranteed to be in any particular order.
-func find(ss []string, fs FileSystem, name string) ([]string, error) {
-	stat, err := fs.Stat(name)
+func find(ctx context.Context, ss []string, fs FileSystem, name string) ([]string, error) {
+	stat, err := fs.Stat(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	ss = append(ss, name)
 	if stat.IsDir() {
-		f, err := fs.OpenFile(name, os.O_RDONLY, 0)
+		f, err := fs.OpenFile(ctx, name, os.O_RDONLY, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -246,7 +252,7 @@ func find(ss []string, fs FileSystem, name string) ([]string, error) {
 			return nil, err
 		}
 		for _, c := range children {
-			ss, err = find(ss, fs, path.Join(name, c.Name()))
+			ss, err = find(ctx, ss, fs, path.Join(name, c.Name()))
 			if err != nil {
 				return nil, err
 			}
@@ -401,6 +407,8 @@ func testFS(t *testing.T, fs FileSystem) {
 		"copy__ o=F d=∞ /d/y /d/x want errExist",
 	}
 
+	ctx := context.Background()
+
 	for i, tc := range testCases {
 		tc = strings.TrimSpace(tc)
 		j := strings.IndexByte(tc, ' ')
@@ -418,7 +426,7 @@ func testFS(t *testing.T, fs FileSystem) {
 			if len(parts) != 4 || parts[2] != "want" {
 				t.Fatalf("test case #%d %q: invalid write", i, tc)
 			}
-			f, opErr := fs.OpenFile(parts[0], os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+			f, opErr := fs.OpenFile(ctx, parts[0], os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 			if got := errStr(opErr); got != parts[3] {
 				t.Fatalf("test case #%d %q: OpenFile: got %q (%v), want %q", i, tc, got, opErr, parts[3])
 			}
@@ -432,7 +440,7 @@ func testFS(t *testing.T, fs FileSystem) {
 			}
 
 		case "find":
-			got, err := find(nil, fs, "/")
+			got, err := find(ctx, nil, fs, "/")
 			if err != nil {
 				t.Fatalf("test case #%d %q: find: %v", i, tc, err)
 			}
@@ -462,17 +470,17 @@ func testFS(t *testing.T, fs FileSystem) {
 				if parts[1] == "d=∞" {
 					depth = infiniteDepth
 				}
-				_, opErr = copyFiles(fs, parts[2], parts[3], parts[0] == "o=T", depth, 0)
+				_, opErr = copyFiles(ctx, fs, parts[2], parts[3], parts[0] == "o=T", depth, 0)
 			case "mk-dir":
-				opErr = fs.Mkdir(parts[0], 0777)
+				opErr = fs.Mkdir(ctx, parts[0], 0777)
 			case "move__":
-				_, opErr = moveFiles(fs, parts[1], parts[2], parts[0] == "o=T")
+				_, opErr = moveFiles(ctx, fs, parts[1], parts[2], parts[0] == "o=T")
 			case "rm-all":
-				opErr = fs.RemoveAll(parts[0])
+				opErr = fs.RemoveAll(ctx, parts[0])
 			case "stat":
 				var stat os.FileInfo
 				fileName := parts[0]
-				if stat, opErr = fs.Stat(fileName); opErr == nil {
+				if stat, opErr = fs.Stat(ctx, fileName); opErr == nil {
 					if stat.IsDir() {
 						got = "dir"
 					} else {
@@ -504,6 +512,13 @@ func testFS(t *testing.T, fs FileSystem) {
 }
 
 func TestDir(t *testing.T) {
+	switch runtime.GOOS {
+	case "nacl":
+		t.Skip("see golang.org/issue/12004")
+	case "plan9":
+		t.Skip("see golang.org/issue/11453")
+	}
+
 	td, err := ioutil.TempDir("", "webdav-test")
 	if err != nil {
 		t.Fatal(err)
@@ -517,9 +532,10 @@ func TestMemFS(t *testing.T) {
 }
 
 func TestMemFSRoot(t *testing.T) {
+	ctx := context.Background()
 	fs := NewMemFS()
 	for i := 0; i < 5; i++ {
-		stat, err := fs.Stat("/")
+		stat, err := fs.Stat(ctx, "/")
 		if err != nil {
 			t.Fatalf("i=%d: Stat: %v", i, err)
 		}
@@ -527,7 +543,7 @@ func TestMemFSRoot(t *testing.T) {
 			t.Fatalf("i=%d: Stat.IsDir is false, want true", i)
 		}
 
-		f, err := fs.OpenFile("/", os.O_RDONLY, 0)
+		f, err := fs.OpenFile(ctx, "/", os.O_RDONLY, 0)
 		if err != nil {
 			t.Fatalf("i=%d: OpenFile: %v", i, err)
 		}
@@ -544,19 +560,20 @@ func TestMemFSRoot(t *testing.T) {
 			t.Fatalf("i=%d: Write: got nil error, want non-nil", i)
 		}
 
-		if err := fs.Mkdir(fmt.Sprintf("/dir%d", i), 0777); err != nil {
+		if err := fs.Mkdir(ctx, fmt.Sprintf("/dir%d", i), 0777); err != nil {
 			t.Fatalf("i=%d: Mkdir: %v", i, err)
 		}
 	}
 }
 
 func TestMemFileReaddir(t *testing.T) {
+	ctx := context.Background()
 	fs := NewMemFS()
-	if err := fs.Mkdir("/foo", 0777); err != nil {
+	if err := fs.Mkdir(ctx, "/foo", 0777); err != nil {
 		t.Fatalf("Mkdir: %v", err)
 	}
 	readdir := func(count int) ([]os.FileInfo, error) {
-		f, err := fs.OpenFile("/foo", os.O_RDONLY, 0)
+		f, err := fs.OpenFile(ctx, "/foo", os.O_RDONLY, 0)
 		if err != nil {
 			t.Fatalf("OpenFile: %v", err)
 		}
@@ -640,9 +657,11 @@ func TestMemFile(t *testing.T) {
 		"seek cur -99 want err",
 	}
 
+	ctx := context.Background()
+
 	const filename = "/foo"
 	fs := NewMemFS()
-	f, err := fs.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := fs.OpenFile(ctx, filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		t.Fatalf("OpenFile: %v", err)
 	}
@@ -736,7 +755,7 @@ func TestMemFile(t *testing.T) {
 			}
 
 		case "wantData":
-			g, err := fs.OpenFile(filename, os.O_RDONLY, 0666)
+			g, err := fs.OpenFile(ctx, filename, os.O_RDONLY, 0666)
 			if err != nil {
 				t.Fatalf("test case #%d %q: OpenFile: %v", i, tc, err)
 			}
@@ -762,7 +781,7 @@ func TestMemFile(t *testing.T) {
 			if err != nil {
 				t.Fatalf("test case #%d %q: invalid size %q", i, tc, arg)
 			}
-			fi, err := fs.Stat(filename)
+			fi, err := fs.Stat(ctx, filename)
 			if err != nil {
 				t.Fatalf("test case #%d %q: Stat: %v", i, tc, err)
 			}
@@ -777,8 +796,12 @@ func TestMemFile(t *testing.T) {
 // memFile doesn't allocate a new buffer for each of those N times. Otherwise,
 // calling io.Copy(aMemFile, src) is likely to have quadratic complexity.
 func TestMemFileWriteAllocs(t *testing.T) {
+	if runtime.Compiler == "gccgo" {
+		t.Skip("gccgo allocates here")
+	}
+	ctx := context.Background()
 	fs := NewMemFS()
-	f, err := fs.OpenFile("/xxx", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := fs.OpenFile(ctx, "/xxx", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		t.Fatalf("OpenFile: %v", err)
 	}
@@ -800,6 +823,7 @@ func TestMemFileWriteAllocs(t *testing.T) {
 }
 
 func BenchmarkMemFileWrite(b *testing.B) {
+	ctx := context.Background()
 	fs := NewMemFS()
 	xxx := make([]byte, 1024)
 	for i := range xxx {
@@ -808,7 +832,7 @@ func BenchmarkMemFileWrite(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		f, err := fs.OpenFile("/xxx", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		f, err := fs.OpenFile(ctx, "/xxx", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
 			b.Fatalf("OpenFile: %v", err)
 		}
@@ -818,9 +842,119 @@ func BenchmarkMemFileWrite(b *testing.B) {
 		if err := f.Close(); err != nil {
 			b.Fatalf("Close: %v", err)
 		}
-		if err := fs.RemoveAll("/xxx"); err != nil {
+		if err := fs.RemoveAll(ctx, "/xxx"); err != nil {
 			b.Fatalf("RemoveAll: %v", err)
 		}
+	}
+}
+
+func TestCopyMoveProps(t *testing.T) {
+	ctx := context.Background()
+	fs := NewMemFS()
+	create := func(name string) error {
+		f, err := fs.OpenFile(ctx, name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return err
+		}
+		_, wErr := f.Write([]byte("contents"))
+		cErr := f.Close()
+		if wErr != nil {
+			return wErr
+		}
+		return cErr
+	}
+	patch := func(name string, patches ...Proppatch) error {
+		f, err := fs.OpenFile(ctx, name, os.O_RDWR, 0666)
+		if err != nil {
+			return err
+		}
+		_, pErr := f.(DeadPropsHolder).Patch(patches)
+		cErr := f.Close()
+		if pErr != nil {
+			return pErr
+		}
+		return cErr
+	}
+	props := func(name string) (map[xml.Name]Property, error) {
+		f, err := fs.OpenFile(ctx, name, os.O_RDWR, 0666)
+		if err != nil {
+			return nil, err
+		}
+		m, pErr := f.(DeadPropsHolder).DeadProps()
+		cErr := f.Close()
+		if pErr != nil {
+			return nil, pErr
+		}
+		if cErr != nil {
+			return nil, cErr
+		}
+		return m, nil
+	}
+
+	p0 := Property{
+		XMLName:  xml.Name{Space: "x:", Local: "boat"},
+		InnerXML: []byte("pea-green"),
+	}
+	p1 := Property{
+		XMLName:  xml.Name{Space: "x:", Local: "ring"},
+		InnerXML: []byte("1 shilling"),
+	}
+	p2 := Property{
+		XMLName:  xml.Name{Space: "x:", Local: "spoon"},
+		InnerXML: []byte("runcible"),
+	}
+	p3 := Property{
+		XMLName:  xml.Name{Space: "x:", Local: "moon"},
+		InnerXML: []byte("light"),
+	}
+
+	if err := create("/src"); err != nil {
+		t.Fatalf("create /src: %v", err)
+	}
+	if err := patch("/src", Proppatch{Props: []Property{p0, p1}}); err != nil {
+		t.Fatalf("patch /src +p0 +p1: %v", err)
+	}
+	if _, err := copyFiles(ctx, fs, "/src", "/tmp", true, infiniteDepth, 0); err != nil {
+		t.Fatalf("copyFiles /src /tmp: %v", err)
+	}
+	if _, err := moveFiles(ctx, fs, "/tmp", "/dst", true); err != nil {
+		t.Fatalf("moveFiles /tmp /dst: %v", err)
+	}
+	if err := patch("/src", Proppatch{Props: []Property{p0}, Remove: true}); err != nil {
+		t.Fatalf("patch /src -p0: %v", err)
+	}
+	if err := patch("/src", Proppatch{Props: []Property{p2}}); err != nil {
+		t.Fatalf("patch /src +p2: %v", err)
+	}
+	if err := patch("/dst", Proppatch{Props: []Property{p1}, Remove: true}); err != nil {
+		t.Fatalf("patch /dst -p1: %v", err)
+	}
+	if err := patch("/dst", Proppatch{Props: []Property{p3}}); err != nil {
+		t.Fatalf("patch /dst +p3: %v", err)
+	}
+
+	gotSrc, err := props("/src")
+	if err != nil {
+		t.Fatalf("props /src: %v", err)
+	}
+	wantSrc := map[xml.Name]Property{
+		p1.XMLName: p1,
+		p2.XMLName: p2,
+	}
+	if !reflect.DeepEqual(gotSrc, wantSrc) {
+		t.Fatalf("props /src:\ngot  %v\nwant %v", gotSrc, wantSrc)
+	}
+
+	gotDst, err := props("/dst")
+	if err != nil {
+		t.Fatalf("props /dst: %v", err)
+	}
+	wantDst := map[xml.Name]Property{
+		p0.XMLName: p0,
+		p3.XMLName: p3,
+	}
+	if !reflect.DeepEqual(gotDst, wantDst) {
+		t.Fatalf("props /dst:\ngot  %v\nwant %v", gotDst, wantDst)
 	}
 }
 
@@ -978,6 +1112,7 @@ func TestWalkFS(t *testing.T) {
 			"/a/b/z",
 		},
 	}}
+	ctx := context.Background()
 	for _, tc := range testCases {
 		fs, err := buildTestFS(tc.buildfs)
 		if err != nil {
@@ -994,11 +1129,11 @@ func TestWalkFS(t *testing.T) {
 			got = append(got, path)
 			return nil
 		}
-		fi, err := fs.Stat(tc.startAt)
+		fi, err := fs.Stat(ctx, tc.startAt)
 		if err != nil {
 			t.Fatalf("%s: cannot stat: %v", tc.desc, err)
 		}
-		err = walkFS(fs, tc.depth, tc.startAt, fi, traceFn)
+		err = walkFS(ctx, fs, tc.depth, tc.startAt, fi, traceFn)
 		if err != nil {
 			t.Errorf("%s:\ngot error %v, want nil", tc.desc, err)
 			continue
@@ -1015,23 +1150,24 @@ func TestWalkFS(t *testing.T) {
 func buildTestFS(buildfs []string) (FileSystem, error) {
 	// TODO: Could this be merged with the build logic in TestFS?
 
+	ctx := context.Background()
 	fs := NewMemFS()
 	for _, b := range buildfs {
 		op := strings.Split(b, " ")
 		switch op[0] {
 		case "mkdir":
-			err := fs.Mkdir(op[1], os.ModeDir|0777)
+			err := fs.Mkdir(ctx, op[1], os.ModeDir|0777)
 			if err != nil {
 				return nil, err
 			}
 		case "touch":
-			f, err := fs.OpenFile(op[1], os.O_RDWR|os.O_CREATE, 0666)
+			f, err := fs.OpenFile(ctx, op[1], os.O_RDWR|os.O_CREATE, 0666)
 			if err != nil {
 				return nil, err
 			}
 			f.Close()
 		case "write":
-			f, err := fs.OpenFile(op[1], os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+			f, err := fs.OpenFile(ctx, op[1], os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 			if err != nil {
 				return nil, err
 			}

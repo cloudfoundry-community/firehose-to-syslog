@@ -33,7 +33,7 @@ import:
   - proto
   - protoc-gen-gogo/descriptor
 - package: github.com/gorilla/websocket
-  version: a69d25be2fe2923a97c2af6849b2f52426f68fc0
+  version: 6f34763140ed8887aed6a044912009832b4733d7
 - package: github.com/mailru/easyjson
   version: 159cdb893c982e3d1bc6450322fedd514f9c9de3
   subpackages:
@@ -45,9 +45,10 @@ import:
 - package: github.com/shinji62/logrus-syslog-ng
   version: 2b60df6a829a654a0456501c6092e5307f674d76
 - package: golang.org/x/net
-  version: 7dbad50ab5b31073856416cdcfeb2796d682f844
+  version: 859d1a86bb617c0c20d154590c3c5d3fcb670b07
   subpackages:
   - context
+  - html/charset
 - package: golang.org/x/oauth2
   version: da3ce8d62a7f77aadfda06cb82bd604d6469c645
   subpackages:

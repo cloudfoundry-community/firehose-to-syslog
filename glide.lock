@@ -1,5 +1,5 @@
-hash: a46a0e92acafa1eb148e066badabc4006d527c497cc71f9337608a3c9f636be1
-updated: 2017-09-15T11:26:38.824860857+09:00
+hash: 6d56a468373f0b59919dcdbf0c22a4861157abd6d956f0f4e8d070dfadcdd70f
+updated: 2017-09-15T14:51:20.630536448+09:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -34,7 +34,7 @@ imports:
   subpackages:
   - proto
 - name: github.com/gorilla/websocket
-  version: a69d25be2fe2923a97c2af6849b2f52426f68fc0
+  version: 6f34763140ed8887aed6a044912009832b4733d7
 - name: github.com/mailru/easyjson
   version: 159cdb893c982e3d1bc6450322fedd514f9c9de3
   subpackages:
@@ -52,7 +52,7 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: 61e43dc76f7ee59a82bdf3d71033dc12bea4c77d
 - name: golang.org/x/net
-  version: 7dbad50ab5b31073856416cdcfeb2796d682f844
+  version: 859d1a86bb617c0c20d154590c3c5d3fcb670b07
   subpackages:
   - context
   - html
@@ -115,10 +115,11 @@ testImports:
   - matchers/support/goraph/util
   - types
 - name: golang.org/x/text
-  version: ab5ac5f9a8deb4855a60fab02bc61a4ec770bd49
+  version: 14c0d48ead0cd47e3104ada247d91be04afc7a5a
   subpackages:
   - encoding
   - encoding/charmap
+  - encoding/htmlindex
   - encoding/internal
   - encoding/internal/identifier
   - encoding/japanese
@@ -126,7 +127,9 @@ testImports:
   - encoding/simplifiedchinese
   - encoding/traditionalchinese
   - encoding/unicode
+  - internal/tag
   - internal/utf8internal
+  - language
   - runes
   - transform
 - name: gopkg.in/yaml.v2

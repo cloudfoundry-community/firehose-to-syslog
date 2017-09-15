@@ -19,17 +19,30 @@ import (
 	"golang.org/x/net/html"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/encoding/htmlindex"
 	"golang.org/x/text/transform"
 )
 
 // Lookup returns the encoding with the specified label, and its canonical
 // name. It returns nil and the empty string if label is not one of the
 // standard encodings for HTML. Matching is case-insensitive and ignores
-// leading and trailing whitespace.
+// leading and trailing whitespace. Encoders will use HTML escape sequences for
+// runes that are not supported by the character set.
 func Lookup(label string) (e encoding.Encoding, name string) {
-	label = strings.ToLower(strings.Trim(label, "\t\n\r\f "))
-	enc := encodings[label]
-	return enc.e, enc.name
+	e, err := htmlindex.Get(label)
+	if err != nil {
+		return nil, ""
+	}
+	name, _ = htmlindex.Name(e)
+	return &htmlEncoding{e}, name
+}
+
+type htmlEncoding struct{ encoding.Encoding }
+
+func (h *htmlEncoding) NewEncoder() *encoding.Encoder {
+	// HTML requires a non-terminating legacy encoder. We use HTML escapes to
+	// substitute unsupported code points.
+	return encoding.HTMLEscapeUnsupported(h.Encoding.NewEncoder())
 }
 
 // DetermineEncoding determines the encoding of an HTML document by examining
@@ -111,14 +124,14 @@ func NewReader(r io.Reader, contentType string) (io.Reader, error) {
 	return r, nil
 }
 
-// NewReaderByName returns a reader that converts from the specified charset to
-// UTF-8. It returns an error if the charset is not one of the standard
-// encodings for HTML. It is suitable for use as encoding/xml.Decoder's
-// CharsetReader function.
-func NewReaderByName(charset string, input io.Reader) (io.Reader, error) {
-	e, _ := Lookup(charset)
+// NewReaderLabel returns a reader that converts from the specified charset to
+// UTF-8. It uses Lookup to find the encoding that corresponds to label, and
+// returns an error if Lookup returns nil. It is suitable for use as
+// encoding/xml.Decoder's CharsetReader function.
+func NewReaderLabel(label string, input io.Reader) (io.Reader, error) {
+	e, _ := Lookup(label)
 	if e == nil {
-		return nil, fmt.Errorf("unsupported charset: %q", charset)
+		return nil, fmt.Errorf("unsupported charset: %q", label)
 	}
 	return transform.NewReader(input, e.NewDecoder()), nil
 }

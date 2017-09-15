@@ -6,10 +6,13 @@ package icmp_test
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"runtime"
+	"sync"
 	"testing"
+	"time"
 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/internal/iana"
@@ -49,21 +52,21 @@ func googleAddr(c *icmp.PacketConn, protocol int) (net.Addr, error) {
 	return nil, errors.New("no A or AAAA record")
 }
 
-var pingGoogleTests = []struct {
+type pingTest struct {
 	network, address string
 	protocol         int
 	mtype            icmp.Type
-}{
-	{"udp4", "0.0.0.0", iana.ProtocolICMP, ipv4.ICMPTypeEcho},
-	{"ip4:icmp", "0.0.0.0", iana.ProtocolICMP, ipv4.ICMPTypeEcho},
-
-	{"udp6", "::", iana.ProtocolIPv6ICMP, ipv6.ICMPTypeEchoRequest},
-	{"ip6:ipv6-icmp", "::", iana.ProtocolIPv6ICMP, ipv6.ICMPTypeEchoRequest},
 }
 
-func TestPingGoogle(t *testing.T) {
+var nonPrivilegedPingTests = []pingTest{
+	{"udp4", "0.0.0.0", iana.ProtocolICMP, ipv4.ICMPTypeEcho},
+
+	{"udp6", "::", iana.ProtocolIPv6ICMP, ipv6.ICMPTypeEchoRequest},
+}
+
+func TestNonPrivilegedPing(t *testing.T) {
 	if testing.Short() {
-		t.Skip("to avoid external network")
+		t.Skip("avoid external network")
 	}
 	switch runtime.GOOS {
 	case "darwin":
@@ -73,61 +76,125 @@ func TestPingGoogle(t *testing.T) {
 		t.Skipf("not supported on %s", runtime.GOOS)
 	}
 
-	m, ok := nettest.SupportsRawIPSocket()
-	for i, tt := range pingGoogleTests {
-		if tt.network[:2] == "ip" && !ok {
-			t.Log(m)
-			continue
-		}
-		c, err := icmp.ListenPacket(tt.network, tt.address)
-		if err != nil {
+	for i, tt := range nonPrivilegedPingTests {
+		if err := doPing(tt, i); err != nil {
 			t.Error(err)
-			continue
-		}
-		defer c.Close()
-
-		dst, err := googleAddr(c, tt.protocol)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-
-		wm := icmp.Message{
-			Type: tt.mtype, Code: 0,
-			Body: &icmp.Echo{
-				ID: os.Getpid() & 0xffff, Seq: 1 << uint(i),
-				Data: []byte("HELLO-R-U-THERE"),
-			},
-		}
-		wb, err := wm.Marshal(nil)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-		if n, err := c.WriteTo(wb, dst); err != nil {
-			t.Error(err, dst)
-			continue
-		} else if n != len(wb) {
-			t.Errorf("got %v; want %v", n, len(wb))
-			continue
-		}
-
-		rb := make([]byte, 1500)
-		n, peer, err := c.ReadFrom(rb)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-		rm, err := icmp.ParseMessage(tt.protocol, rb[:n])
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-		switch rm.Type {
-		case ipv4.ICMPTypeEchoReply, ipv6.ICMPTypeEchoReply:
-			t.Logf("got reflection from %v", peer)
-		default:
-			t.Errorf("got %+v; want echo reply", rm)
 		}
 	}
+}
+
+var privilegedPingTests = []pingTest{
+	{"ip4:icmp", "0.0.0.0", iana.ProtocolICMP, ipv4.ICMPTypeEcho},
+
+	{"ip6:ipv6-icmp", "::", iana.ProtocolIPv6ICMP, ipv6.ICMPTypeEchoRequest},
+}
+
+func TestPrivilegedPing(t *testing.T) {
+	if testing.Short() {
+		t.Skip("avoid external network")
+	}
+	if m, ok := nettest.SupportsRawIPSocket(); !ok {
+		t.Skip(m)
+	}
+
+	for i, tt := range privilegedPingTests {
+		if err := doPing(tt, i); err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+func doPing(tt pingTest, seq int) error {
+	c, err := icmp.ListenPacket(tt.network, tt.address)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+
+	dst, err := googleAddr(c, tt.protocol)
+	if err != nil {
+		return err
+	}
+
+	if tt.network != "udp6" && tt.protocol == iana.ProtocolIPv6ICMP {
+		var f ipv6.ICMPFilter
+		f.SetAll(true)
+		f.Accept(ipv6.ICMPTypeDestinationUnreachable)
+		f.Accept(ipv6.ICMPTypePacketTooBig)
+		f.Accept(ipv6.ICMPTypeTimeExceeded)
+		f.Accept(ipv6.ICMPTypeParameterProblem)
+		f.Accept(ipv6.ICMPTypeEchoReply)
+		if err := c.IPv6PacketConn().SetICMPFilter(&f); err != nil {
+			return err
+		}
+	}
+
+	wm := icmp.Message{
+		Type: tt.mtype, Code: 0,
+		Body: &icmp.Echo{
+			ID: os.Getpid() & 0xffff, Seq: 1 << uint(seq),
+			Data: []byte("HELLO-R-U-THERE"),
+		},
+	}
+	wb, err := wm.Marshal(nil)
+	if err != nil {
+		return err
+	}
+	if n, err := c.WriteTo(wb, dst); err != nil {
+		return err
+	} else if n != len(wb) {
+		return fmt.Errorf("got %v; want %v", n, len(wb))
+	}
+
+	rb := make([]byte, 1500)
+	if err := c.SetReadDeadline(time.Now().Add(3 * time.Second)); err != nil {
+		return err
+	}
+	n, peer, err := c.ReadFrom(rb)
+	if err != nil {
+		return err
+	}
+	rm, err := icmp.ParseMessage(tt.protocol, rb[:n])
+	if err != nil {
+		return err
+	}
+	switch rm.Type {
+	case ipv4.ICMPTypeEchoReply, ipv6.ICMPTypeEchoReply:
+		return nil
+	default:
+		return fmt.Errorf("got %+v from %v; want echo reply", rm, peer)
+	}
+}
+
+func TestConcurrentNonPrivilegedListenPacket(t *testing.T) {
+	if testing.Short() {
+		t.Skip("avoid external network")
+	}
+	switch runtime.GOOS {
+	case "darwin":
+	case "linux":
+		t.Log("you may need to adjust the net.ipv4.ping_group_range kernel state")
+	default:
+		t.Skipf("not supported on %s", runtime.GOOS)
+	}
+
+	network, address := "udp4", "127.0.0.1"
+	if !nettest.SupportsIPv4() {
+		network, address = "udp6", "::1"
+	}
+	const N = 1000
+	var wg sync.WaitGroup
+	wg.Add(N)
+	for i := 0; i < N; i++ {
+		go func() {
+			defer wg.Done()
+			c, err := icmp.ListenPacket(network, address)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			c.Close()
+		}()
+	}
+	wg.Wait()
 }

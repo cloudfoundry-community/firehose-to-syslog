@@ -216,13 +216,13 @@ var publicSuffixTestCases = []struct {
 	{"aaa.xn--p1ai", "xn--p1ai"},
 	{"www.xxx.yyy.xn--p1ai", "xn--p1ai"},
 
-	// The .zw rules are:
-	// *.zw
-	{"zw", "zw"},
-	{"www.zw", "www.zw"},
-	{"zzz.zw", "zzz.zw"},
-	{"www.zzz.zw", "zzz.zw"},
-	{"www.xxx.yyy.zzz.zw", "zzz.zw"},
+	// The .bd rules are:
+	// *.bd
+	{"bd", "bd"},
+	{"www.bd", "www.bd"},
+	{"zzz.bd", "zzz.bd"},
+	{"www.zzz.bd", "zzz.bd"},
+	{"www.xxx.yyy.zzz.bd", "zzz.bd"},
 
 	// There are no .nosuchtld rules.
 	{"nosuchtld", "nosuchtld"},
@@ -329,7 +329,7 @@ func (b byPriority) Less(i, j int) bool {
 }
 
 // eTLDPlusOneTestCases come from
-// http://mxr.mozilla.org/mozilla-central/source/netwerk/test/unit/data/test_psl.txt
+// https://github.com/publicsuffix/list/blob/master/tests/test_psl.txt
 var eTLDPlusOneTestCases = []struct {
 	domain, want string
 }{
@@ -356,10 +356,10 @@ var eTLDPlusOneTestCases = []struct {
 	{"a.b.example.uk.com", "example.uk.com"},
 	{"test.ac", "test.ac"},
 	// TLD with only 1 (wildcard) rule.
-	{"cy", ""},
-	{"c.cy", ""},
-	{"b.c.cy", "b.c.cy"},
-	{"a.b.c.cy", "b.c.cy"},
+	{"mm", ""},
+	{"c.mm", ""},
+	{"b.c.mm", "b.c.mm"},
+	{"a.b.c.mm", "b.c.mm"},
 	// More complex TLD.
 	{"jp", ""},
 	{"test.jp", "test.jp"},
