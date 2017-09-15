@@ -1,5 +1,5 @@
-hash: 87fc70c18bb5dd9f3d4afc14ac7ecf8fb82bde08c9479773a5f30f4f589dbb70
-updated: 2017-09-15T11:09:47.004338868+09:00
+hash: a46a0e92acafa1eb148e066badabc4006d527c497cc71f9337608a3c9f636be1
+updated: 2017-09-15T11:26:38.824860857+09:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -10,7 +10,7 @@ imports:
 - name: github.com/boltdb/bolt
   version: 4d30731e9122988d2012a9574c43f80f054a0d3b
 - name: github.com/cloudfoundry-community/go-cfclient
-  version: 7b15efc43291ece6f107ed34f9684ff5f6454de3
+  version: 983f0bf32d53fef86f65c095ecb693acf8a8d95e
 - name: github.com/cloudfoundry-incubator/uaago
   version: 1db9cfd27865007e07ffd5914c0fdf5fb7fc09ba
 - name: github.com/cloudfoundry/noaa
@@ -41,6 +41,8 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/pkg/errors
+  version: 2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb
 - name: github.com/pkg/profile
   version: 8a808a6967b79da66deacfe508b26d398a69518f
 - name: github.com/RackSec/srslog

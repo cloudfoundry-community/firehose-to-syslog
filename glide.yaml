@@ -13,7 +13,7 @@ import:
 - package: github.com/boltdb/bolt
   version: 4d30731e9122988d2012a9574c43f80f054a0d3b
 - package: github.com/cloudfoundry-community/go-cfclient
-  version: 7b15efc43291ece6f107ed34f9684ff5f6454de3
+  version: 983f0bf32d53fef86f65c095ecb693acf8a8d95e
 - package: github.com/cloudfoundry-incubator/uaago
   version: 1db9cfd27865007e07ffd5914c0fdf5fb7fc09ba
 - package: github.com/cloudfoundry/noaa
