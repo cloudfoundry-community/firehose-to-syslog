@@ -1,0 +1,67 @@
+package: github.com/cloudfoundry-community/firehose-to-syslog
+import:
+- package: github.com/RackSec/srslog
+  version: a974ba6f7fb527d2ddc73ee9c05d3e2ccc0af0dc
+- package: github.com/Sirupsen/logrus
+  version: 61e43dc76f7ee59a82bdf3d71033dc12bea4c77d
+- package: github.com/alecthomas/template
+  version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
+  subpackages:
+  - parse
+- package: github.com/alecthomas/units
+  version: 6b4e7dc5e3143b85ea77909c72caf89416fc2915
+- package: github.com/boltdb/bolt
+  version: 4d30731e9122988d2012a9574c43f80f054a0d3b
+- package: github.com/cloudfoundry-community/go-cfclient
+  version: 983f0bf32d53fef86f65c095ecb693acf8a8d95e
+- package: github.com/cloudfoundry-incubator/uaago
+  version: 1db9cfd27865007e07ffd5914c0fdf5fb7fc09ba
+- package: github.com/cloudfoundry/noaa
+  version: 7704643fe84d8b7cb7e3185031cfa3d5caa51c62
+  subpackages:
+  - consumer
+  - consumer/internal
+  - errors
+- package: github.com/cloudfoundry/sonde-go
+  version: 78019103037ae46207993c8816e970d85bf1a9e4
+  subpackages:
+  - events
+- package: github.com/gogo/protobuf
+  version: a4cceea7a401a73fefafd1a21fedbd4694124a82
+  subpackages:
+  - gogoproto
+  - proto
+  - protoc-gen-gogo/descriptor
+- package: github.com/gorilla/websocket
+  version: 6f34763140ed8887aed6a044912009832b4733d7
+- package: github.com/mailru/easyjson
+  version: 159cdb893c982e3d1bc6450322fedd514f9c9de3
+  subpackages:
+  - buffer
+  - jlexer
+  - jwriter
+- package: github.com/pkg/profile
+  version: 8a808a6967b79da66deacfe508b26d398a69518f
+- package: github.com/shinji62/logrus-syslog-ng
+  version: 2b60df6a829a654a0456501c6092e5307f674d76
+- package: golang.org/x/net
+  version: 859d1a86bb617c0c20d154590c3c5d3fcb670b07
+  subpackages:
+  - context
+  - html/charset
+- package: golang.org/x/oauth2
+  version: da3ce8d62a7f77aadfda06cb82bd604d6469c645
+  subpackages:
+  - clientcredentials
+  - internal
+- package: golang.org/x/sys
+  version: 9d4e42a20653790449273b3c85e67d6d8bae6e2e
+  subpackages:
+  - unix
+- package: gopkg.in/alecthomas/kingpin.v2
+  version: ~2.1.11
+testImport:
+- package: github.com/onsi/ginkgo
+  version: ~1.4.0
+- package: github.com/onsi/gomega
+  version: ~1.2.0

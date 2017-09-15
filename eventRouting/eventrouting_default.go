@@ -142,6 +142,9 @@ func (e *EventRoutingDefault) getEventTotals(totalElapsedTime float64, elapsedTi
 	defer e.mutex.Unlock()
 	totalCount := e.GetTotalCountOfSelectedEvents()
 	sinceLastTime := float64(int(elapsedTime*10)) / 10
+	if sinceLastTime == 0 {
+		sinceLastTime = 1
+	}
 	fields := logrus.Fields{
 		"total_count":   totalCount,
 		"by_sec_Events": int((totalCount - lastCount) / uint64(sinceLastTime)),

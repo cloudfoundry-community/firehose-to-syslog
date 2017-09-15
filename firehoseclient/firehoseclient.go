@@ -22,6 +22,9 @@ type FirehoseNozzle struct {
 }
 
 type FirehoseConfig struct {
+	MinRetryDelay          time.Duration
+	MaxRetryDelay          time.Duration
+	MaxRetryCount          int
 	TrafficControllerURL   string
 	InsecureSSLSkipVerify  bool
 	IdleTimeoutSeconds     time.Duration
@@ -50,7 +53,10 @@ func (f *FirehoseNozzle) consumeFirehose() {
 		&tls.Config{InsecureSkipVerify: f.config.InsecureSSLSkipVerify},
 		nil)
 	f.consumer.RefreshTokenFrom(f.uaaRefresher)
-	f.consumer.SetIdleTimeout(time.Duration(f.config.IdleTimeoutSeconds) * time.Second)
+	f.consumer.SetIdleTimeout(f.config.IdleTimeoutSeconds)
+	f.consumer.SetMinRetryDelay(f.config.MinRetryDelay)
+	f.consumer.SetMaxRetryDelay(f.config.MaxRetryDelay)
+	f.consumer.SetMaxRetryCount(f.config.MaxRetryCount)
 	f.messages, f.errs = f.consumer.Firehose(f.config.FirehoseSubscriptionID, "")
 }
 

@@ -13,6 +13,8 @@
 go get github.com/cloudfoundry-community/go-cfclient
 ```
 
+NOTE: Currently this project is not versioning its releases and so breaking changes might be introduced. Whilst hopefully notifications of breaking changes are made via commit messages, ideally your project will use a local vendoring system to lock in a version of `go-cfclient` that is known to work for you. This will allow you to control the timing and maintenance of upgrades to newer versions of this library.
+
 Some example code:
 
 ```go
@@ -23,12 +25,12 @@ import (
 )
 
 func main() {
-  c := &Config{
+  c := &cfclient.Config{
     ApiAddress:   "https://api.10.244.0.34.xip.io",
     Username:     "admin",
     Password:     "admin",
   }
-  client, _ := NewClient(c)
+  client, _ := cfclient.NewClient(c)
   apps, _ := client.ListApps()
   fmt.Println(apps)
 }
@@ -36,10 +38,10 @@ func main() {
 
 ### Developing & Contributing
 
-You can use Godep to restor the dependency
+You can use Godep to restore the dependency
 Tested with go1.5.3
 ```bash
 godep go build
 ```
 
-Pull requests welcomed. Please ensure you make your changes in a branch off of the `develop` branch, not the `master` branch.
+Pull requests welcome.

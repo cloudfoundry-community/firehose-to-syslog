@@ -12,26 +12,23 @@ import (
 
 	"github.com/cloudfoundry/noaa/consumer/internal"
 
-	"github.com/cloudfoundry/noaa"
+	"fmt"
+
 	noaa_errors "github.com/cloudfoundry/noaa/errors"
 	"github.com/gorilla/websocket"
-)
-
-const (
-	reconnectTimeout      = 500 * time.Millisecond
-	maxRetries       uint = 5
 )
 
 var (
 	// KeepAlive sets the interval between keep-alive messages sent by the client to loggregator.
 	KeepAlive = 25 * time.Second
 
-	boundaryRegexp    = regexp.MustCompile("boundary=(.*)")
-	ErrNotOK          = errors.New("unknown issue when making HTTP request to Loggregator")
-	ErrNotFound       = ErrNotOK // NotFound isn't an accurate description of how this is used; please use ErrNotOK instead
-	ErrBadResponse    = errors.New("bad server response")
-	ErrBadRequest     = errors.New("bad client request")
-	ErrLostConnection = errors.New("remote server terminated connection unexpectedly")
+	boundaryRegexp       = regexp.MustCompile("boundary=(.*)")
+	ErrNotOK             = errors.New("unknown issue when making HTTP request to Loggregator")
+	ErrNotFound          = ErrNotOK // NotFound isn't an accurate description of how this is used; please use ErrNotOK instead
+	ErrBadResponse       = errors.New("bad server response")
+	ErrBadRequest        = errors.New("bad client request")
+	ErrLostConnection    = errors.New("remote server terminated connection unexpectedly")
+	ErrMaxRetriesReached = errors.New("maximum number of connection retries reached")
 )
 
 //go:generate hel --type DebugPrinter --output mock_debug_printer_test.go
@@ -41,14 +38,27 @@ type DebugPrinter interface {
 	Print(title, dump string)
 }
 
+type nullDebugPrinter struct {
+}
+
+func (nullDebugPrinter) Print(title, body string) {
+}
+
+type RecentPathBuilder func(trafficControllerUrl *url.URL, appGuid string, endpoint string) string
+type StreamPathBuilder func(appGuid string) string
+
 // Consumer represents the actions that can be performed against trafficcontroller.
 // See sync.go and async.go for trafficcontroller access methods.
 type Consumer struct {
+	// minRetryDelay, maxRetryDelay, and maxRetryCount must be the first words in
+	// this struct in order to be used atomically by 32-bit systems.
+	// https://golang.org/src/sync/atomic/doc.go?#L50
+	minRetryDelay, maxRetryDelay, maxRetryCount int64
+
 	trafficControllerUrl string
 	idleTimeout          time.Duration
 	callback             func()
 	callbackLock         sync.RWMutex
-	proxy                func(*http.Request) (*url.URL, error)
 	debugPrinter         DebugPrinter
 	client               *http.Client
 	dialer               websocket.Dialer
@@ -59,19 +69,62 @@ type Consumer struct {
 	refreshTokens  bool
 	refresherMutex sync.RWMutex
 	tokenRefresher TokenRefresher
+
+	recentPathBuilder RecentPathBuilder
+	streamPathBuilder StreamPathBuilder
 }
 
 // New creates a new consumer to a trafficcontroller.
 func New(trafficControllerUrl string, tlsConfig *tls.Config, proxy func(*http.Request) (*url.URL, error)) *Consumer {
-	transport := &http.Transport{Proxy: proxy, TLSClientConfig: tlsConfig, TLSHandshakeTimeout: internal.HandshakeTimeout, DisableKeepAlives: true}
-	consumer := &Consumer{
-		trafficControllerUrl: trafficControllerUrl,
-		proxy:                proxy,
-		debugPrinter:         noaa.NullDebugPrinter{},
-		client:               &http.Client{Transport: transport},
+	if proxy == nil {
+		proxy = http.ProxyFromEnvironment
 	}
-	consumer.dialer = websocket.Dialer{HandshakeTimeout: internal.HandshakeTimeout, NetDial: consumer.proxyDial, TLSClientConfig: tlsConfig}
-	return consumer
+
+	return &Consumer{
+		trafficControllerUrl: trafficControllerUrl,
+		debugPrinter:         nullDebugPrinter{},
+		client: &http.Client{
+			Transport: &http.Transport{
+				Proxy:               proxy,
+				TLSClientConfig:     tlsConfig,
+				TLSHandshakeTimeout: internal.Timeout,
+				DisableKeepAlives:   true,
+			},
+			Timeout: internal.Timeout,
+		},
+		minRetryDelay: int64(DefaultMinRetryDelay),
+		maxRetryDelay: int64(DefaultMaxRetryDelay),
+		maxRetryCount: int64(DefaultMaxRetryCount),
+		dialer: websocket.Dialer{
+			HandshakeTimeout: internal.Timeout,
+			Proxy:            proxy,
+			TLSClientConfig:  tlsConfig,
+		},
+		recentPathBuilder: defaultRecentPathBuilder,
+		streamPathBuilder: defaultStreamPathBuilder,
+	}
+}
+
+func defaultRecentPathBuilder(trafficControllerUrl *url.URL, appGuid string, endpoint string) string {
+	scheme := "https"
+	if trafficControllerUrl.Scheme == "ws" {
+		scheme = "http"
+	}
+
+	return fmt.Sprintf("%s://%s/apps/%s/%s", scheme, trafficControllerUrl.Host, appGuid, endpoint)
+
+}
+
+func (c *Consumer) SetRecentPathBuilder(b RecentPathBuilder) {
+	c.recentPathBuilder = b
+}
+
+func defaultStreamPathBuilder(appGuid string) string {
+	return fmt.Sprintf("/apps/%s/stream", appGuid)
+}
+
+func (c *Consumer) SetStreamPathBuilder(b StreamPathBuilder) {
+	c.streamPathBuilder = b
 }
 
 type httpError struct {

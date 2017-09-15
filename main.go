@@ -26,6 +26,9 @@ var (
 	clientSecret       = kingpin.Flag("client-secret", "Client secret.").Envar("FIREHOSE_CLIENT_SECRET").Required().String()
 	skipSSLValidation  = kingpin.Flag("skip-ssl-validation", "Please don't").Default("false").Envar("SKIP_SSL_VALIDATION").Bool()
 	keepAlive          = kingpin.Flag("fh-keep-alive", "Keep Alive duration for the firehose consumer").Default("25s").Envar("FH_KEEP_ALIVE").Duration()
+	minRetryDelay      = kingpin.Flag("min-retry-delay", "Doppler Cloud Foundry Doppler min. retry delay duration").Default("500ms").Envar("MIN_RETRY_DELAY").Duration()
+	maxRetryDelay      = kingpin.Flag("max-retry-delay", "Doppler Cloud Foundry Doppler max. retry delay duration").Default("1m").Envar("MIN_RETRY_DELAY").Duration()
+	maxRetryCount      = kingpin.Flag("max-retry-count", "Doppler Cloud Foundry Doppler max. retry Count duration").Default("1000").Envar("MIN_RETRY_DELAY").Int()
 	logEventTotals     = kingpin.Flag("log-event-totals", "Logs the counters for all selected events since nozzle was last started.").Default("false").Envar("LOG_EVENT_TOTALS").Bool()
 	logEventTotalsTime = kingpin.Flag("log-event-totals-time", "How frequently the event totals are calculated (in sec).").Default("30s").Envar("LOG_EVENT_TOTALS_TIME").Duration()
 	wantedEvents       = kingpin.Flag("events", fmt.Sprintf("Comma separated list of events you would like. Valid options are %s", eventRouting.GetListAuthorizedEventEvents())).Default("LogMessage").Envar("EVENTS").String()
@@ -87,9 +90,9 @@ func main() {
 	var cachingClient caching.Caching
 	if caching.IsNeeded(*wantedEvents) {
 		config := &caching.CachingBoltConfig{
-			Path: *boltDatabasePath,
-			IgnoreMissingApps: *ignoreMissingApps,
-			CacheInvalidateTTL:*tickerTime,
+			Path:               *boltDatabasePath,
+			IgnoreMissingApps:  *ignoreMissingApps,
+			CacheInvalidateTTL: *tickerTime,
 		}
 		cachingClient, err = caching.NewCachingBolt(cfClient, config)
 		if err != nil {
@@ -137,6 +140,9 @@ func main() {
 		InsecureSSLSkipVerify:  *skipSSLValidation,
 		IdleTimeoutSeconds:     *keepAlive,
 		FirehoseSubscriptionID: *subscriptionId,
+		MinRetryDelay:          *minRetryDelay,
+		MaxRetryDelay:          *maxRetryDelay,
+		MaxRetryCount:          *maxRetryCount,
 	}
 
 	if loggingClient.Connect() || *debug {

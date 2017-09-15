@@ -4,11 +4,7 @@ export ROOT_DIR=$PWD
 export GOPATH=$PWD/gopath
 export PATH=$GOPATH/bin:$PATH
 
-
 go get github.com/onsi/ginkgo/ginkgo
-go get github.com/onsi/gomega
 
 cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog/
-
-
 make test
