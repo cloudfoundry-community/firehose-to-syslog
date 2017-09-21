@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	fevents "github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/sirupsen/logrus"
 )
 
 type EventRoutingDefault struct {
