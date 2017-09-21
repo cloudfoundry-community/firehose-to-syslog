@@ -1,10 +1,11 @@
 package logging
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/Sirupsen/logrus"
-	"testing"
+	"github.com/sirupsen/logrus"
 )
 
 func TestEvents(t *testing.T) {

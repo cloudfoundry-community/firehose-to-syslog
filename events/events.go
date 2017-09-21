@@ -3,10 +3,10 @@ package events
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/utils"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/sirupsen/logrus"
 )
 
 type Event struct {

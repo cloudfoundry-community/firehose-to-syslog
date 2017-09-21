@@ -6,8 +6,8 @@ import (
 	"os"
 
 	syslog "github.com/RackSec/srslog"
-	"github.com/Sirupsen/logrus"
 	logrus_syslog "github.com/shinji62/logrus-syslog-ng"
+	"github.com/sirupsen/logrus"
 )
 
 type LoggingLogrus struct {

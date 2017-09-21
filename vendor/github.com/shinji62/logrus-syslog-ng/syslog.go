@@ -7,7 +7,7 @@ import (
 	"os"
 
 	syslog "github.com/RackSec/srslog"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
