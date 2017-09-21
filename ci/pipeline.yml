@@ -50,7 +50,7 @@ jobs:
     resource: firehose-to-syslog-master 
     passed: [unit-testing-master]
   - put: version
-    params: {bump: minor}
+    params: {bump: patch}
   - put: firehose-to-syslog-master 
     params: 
       only_tag: true
