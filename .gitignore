@@ -1,3 +1,4 @@
+vendor/github.com/Sirupsen
 internal-core
 firehose-to-syslog*
 events/events.test
