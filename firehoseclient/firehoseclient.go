@@ -2,8 +2,11 @@ package firehoseclient
 
 import (
 	"crypto/tls"
+	"fmt"
 	"time"
 
+	gendiodes "code.cloudfoundry.org/diodes"
+	"github.com/cloudfoundry-community/firehose-to-syslog/diodes"
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/firehose-to-syslog/uaatokenrefresher"
@@ -13,12 +16,14 @@ import (
 )
 
 type FirehoseNozzle struct {
-	errs         <-chan error
-	messages     <-chan *events.Envelope
-	consumer     *consumer.Consumer
-	eventRouting eventRouting.EventRouting
-	config       *FirehoseConfig
-	uaaRefresher consumer.TokenRefresher
+	errs           <-chan error
+	messages       <-chan *events.Envelope
+	consumer       *consumer.Consumer
+	eventRouting   eventRouting.EventRouting
+	config         *FirehoseConfig
+	uaaRefresher   consumer.TokenRefresher
+	envelopeBuffer *diodes.OneToOneEnvelope
+	doneCh         chan struct{}
 }
 
 type FirehoseConfig struct {
@@ -38,11 +43,22 @@ func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting e
 		eventRouting: eventRouting,
 		config:       firehoseconfig,
 		uaaRefresher: uaaR,
+		envelopeBuffer: diodes.NewOneToOneEnvelope(10000000, gendiodes.AlertFunc(func(missed int) {
+			logging.LogError("Missed Logs ", missed)
+		})),
+		doneCh: make(chan struct{}),
 	}
 }
 
+func (f *FirehoseNozzle) Stop() {
+	logging.LogStd("Stopping Channel ", true)
+	close(f.doneCh)
+}
+
 func (f *FirehoseNozzle) Start() error {
+	defer f.Stop()
 	f.consumeFirehose()
+	go f.StartReading()
 	err := f.routeEvent()
 	return err
 }
@@ -60,16 +76,32 @@ func (f *FirehoseNozzle) consumeFirehose() {
 	f.messages, f.errs = f.consumer.Firehose(f.config.FirehoseSubscriptionID, "")
 }
 
+func (f *FirehoseNozzle) StartReading() {
+	for {
+		select {
+		case <-f.doneCh:
+			return
+		default:
+			envelope := f.envelopeBuffer.Next()
+			f.eventRouting.RouteEvent(envelope)
+		}
+	}
+}
+
 func (f *FirehoseNozzle) routeEvent() error {
 	for {
 		select {
 		case envelope := <-f.messages:
-			f.eventRouting.RouteEvent(envelope)
+			f.envelopeBuffer.Set(envelope)
+			//f.eventRouting.RouteEvent(envelope)
 		case err := <-f.errs:
 			f.handleError(err)
 			return err
+		case <-f.doneCh:
+			return fmt.Errorf("Closing Go routine")
 		}
 	}
+
 }
 
 func (f *FirehoseNozzle) handleError(err error) {

@@ -150,6 +150,7 @@ func main() {
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
 		firehoseClient := firehoseclient.NewFirehoseNozzle(uaaRefresher, events, firehoseConfig)
 		err = firehoseClient.Start()
+		defer firehoseClient.Stop()
 		if err != nil {
 			logging.LogError("Failed connecting to Firehose...Please check settings and try again!", "")
 

@@ -63,6 +63,7 @@ import:
 - package: golang.org/x/crypto
   subpackages:
   - ssh/terminal
+- package: code.cloudfoundry.org/diodes
 testImport:
 - package: github.com/onsi/ginkgo
   version: ~1.4.0
