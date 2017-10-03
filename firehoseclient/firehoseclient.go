@@ -34,6 +34,7 @@ type FirehoseConfig struct {
 	InsecureSSLSkipVerify  bool
 	IdleTimeoutSeconds     time.Duration
 	FirehoseSubscriptionID string
+	BufferSize             int
 }
 
 func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting eventRouting.EventRouting, firehoseconfig *FirehoseConfig) *FirehoseNozzle {
@@ -43,7 +44,7 @@ func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting e
 		eventRouting: eventRouting,
 		config:       firehoseconfig,
 		uaaRefresher: uaaR,
-		envelopeBuffer: diodes.NewOneToOneEnvelope(10000000, gendiodes.AlertFunc(func(missed int) {
+		envelopeBuffer: diodes.NewOneToOneEnvelope(firehoseconfig.BufferSize, gendiodes.AlertFunc(func(missed int) {
 			logging.LogError("Missed Logs ", missed)
 		})),
 		doneCh: make(chan struct{}),
@@ -58,7 +59,7 @@ func (f *FirehoseNozzle) Stop() {
 func (f *FirehoseNozzle) Start() error {
 	defer f.Stop()
 	f.consumeFirehose()
-	go f.StartReading()
+	go f.ReadLogsBuffer()
 	err := f.routeEvent()
 	return err
 }
@@ -76,13 +77,14 @@ func (f *FirehoseNozzle) consumeFirehose() {
 	f.messages, f.errs = f.consumer.Firehose(f.config.FirehoseSubscriptionID, "")
 }
 
-func (f *FirehoseNozzle) StartReading() {
+func (f *FirehoseNozzle) ReadLogsBuffer() {
 	for {
 		select {
 		case <-f.doneCh:
 			return
 		default:
 			envelope := f.envelopeBuffer.Next()
+			f.handleMessage(envelope)
 			f.eventRouting.RouteEvent(envelope)
 		}
 	}
@@ -93,7 +95,6 @@ func (f *FirehoseNozzle) routeEvent() error {
 		select {
 		case envelope := <-f.messages:
 			f.envelopeBuffer.Set(envelope)
-			//f.eventRouting.RouteEvent(envelope)
 		case err := <-f.errs:
 			f.handleError(err)
 			return err
@@ -116,7 +117,6 @@ func (f *FirehoseNozzle) handleError(err error) {
 	default:
 		logging.LogError("Error while reading from the firehose", err)
 	}
-
 	logging.LogError("Closing connection with traffic controller due to error", err)
 	f.consumer.Close()
 }
