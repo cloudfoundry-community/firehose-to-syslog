@@ -35,18 +35,23 @@ Flags:
   --client-secret=CLIENT-SECRET  Client secret.
   --skip-ssl-validation          Please don't
   --fh-keep-alive=25s            Keep Alive duration for the firehose consumer
-  --log-event-totals             Logs the counters for all selected events since nozzle was last started.
-  --log-event-totals-time=30s    How frequently the event totals are calculated (in sec).
-  --events="LogMessage"          Comma separated list of events you would like. Valid options are ContainerMetric, CounterEvent, Error,
-                                 HttpStartStop, LogMessage, ValueMetric
+  --min-retry-delay=500ms        Doppler Cloud Foundry Doppler min. retry delay duration
+  --max-retry-delay=1m           Doppler Cloud Foundry Doppler max. retry delay duration
+  --max-retry-count=1000         Doppler Cloud Foundry Doppler max. retry Count duration
+  --logs-buffer-size=10000      Number of envelope to be buffered
+  --events="LogMessage"          Comma separated list of events you would like. Valid options are ContainerMetric, CounterEvent,
+                                 Error, HttpStartStop, LogMessage, ValueMetric
+  --enable-stats-server          Will enable stats server on 8080
   --boltdb-path="my.db"          Bolt Database path
   --cc-pull-time=60s             CloudController Polling time in sec
-  --extra-fields=""              Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other
+  --extra-fields=""              Extra fields you want to annotate your events with, example:
+                                 '--extra-fields=env:dev,something:other
   --mode-prof=""                 Enable profiling mode, one of [cpu, mem, block]
   --path-prof=""                 Set the Path to write profiling file
   --log-formatter-type=LOG-FORMATTER-TYPE
                                  Log formatter type to use. Valid options are text, json. If none provided, defaults to json.
   --cert-pem-syslog=""           Certificate Pem file
+  --ignore-missing-apps          Enable throttling on cache lookup for missing apps
   --version                      Show application version.
 ```
 
@@ -60,11 +65,6 @@ Please refer to https://github.com/RackSec/srslog/blob/master/script/gen-certs.p
 for Cert generation.
 
 
-# Endpoint definition
-
-We use [gocf-client](https://github.com/cloudfoundry-community/go-cfclient) which will call the CF endpoint /v2/info to get Auth., doppler endpoint.
-
-But for doppler endpoint you can overwrite it with ``` --doppler-address ``` as we know some people may use a different endpoint.
 
 # Event documentation
 
@@ -86,56 +86,21 @@ We have 3 caching strategies:
     cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
 
     # Test
-	ginkgo -r .
+	    ginkgo -r .
 
     # Build binary
-    godep go build
+    go build
 
 # Deploy with Bosh
 
 [logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
-
-# Run against a bosh-lite CF deployment
-
-    godep go run main.go \
-		--debug \
-		--skip-ssl-validation \
-		--api-endpoint="https://api.10.244.0.34.xip.io"
 
 # Parsing the logs with Logstash
 
 [logsearch-for-cloudfoundry](https://github.com/logsearch/logsearch-for-cloudfoundry)
 
 
-# Docker (tested with docker 1.7.1 / Kitematic)
-We use DockerInDocker to built the image
-Since is around 7MG
 
-* For Github Master branch Image
-```bash
-# Make the image
-make docker-final
-
-#Run the image
-docker run getourneau/firehose-to-syslog
-
-```
-
-* For development
-```bash
-#Build the image
-make docker-dev
-
-#Run the image
-docker run getourneau/firehose-to-syslog-dev
-```
-
-
-# Development
-
-This is a
-[Git Flow](http://nvie.com/posts/a-successful-git-branching-model/)
-project. Please fork and branch your features from develop.
 
 # Profiling
 
@@ -175,21 +140,13 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
         --authorized_grant_types client_credentials,refresh_token \
         --authorities doppler.firehose,cloud_controller.admin
       ```
-    - Create user **No Longer supported since 2.5.0**
-      ```
-      uaac target https://uaa.[your cf system domain] --skip-ssl-validation
-      uaac token client get admin -s [your admin-secret] 
-      cf create-user [firehose user] [firehose password]
-      uaac member add cloud_controller.admin [your firehose user]
-      uaac member add doppler.firehose [your firehose user]
-      ```
-      
+
 1. Download the latest release of firehose-to-syslog.
     ```
     git clone https://github.com/cloudfoundry-community/firehose-to-syslog
     cd firehose-to-syslog
     ```
-  
+
 1. Utilize the CF cli to authenticate with your PCF instance.
     ```
     cf login -a https://api.[your cf system domain] -u [your id] --skip-ssl-validation
@@ -221,6 +178,3 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
     ```
     cf push firehose-to-syslog --no-route
     ```
-
-	If you are using the offline version of the go buildpack and your app fails to stage then open up the Godeps/Godeps.json file and change the `GoVersion` to a supported one by the buildpacks and repush.
-
