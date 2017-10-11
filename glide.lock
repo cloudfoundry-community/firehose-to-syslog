@@ -1,5 +1,5 @@
-hash: 6297b2a4fcde2c3955fc1878d96c56754e7840ec8462868e3991fdf5e718914a
-updated: 2017-10-02T13:26:34.825332359+09:00
+hash: 3de5065ead3b094abfd1425fcf7782435b2488ffabadc9a1ceaad132c85544de
+updated: 2017-10-11T12:42:58.63046038+09:00
 imports:
 - name: code.cloudfoundry.org/diodes
   version: 000f8f1e7fb802e51b52e293b6edf4dd247cd20c
@@ -25,6 +25,8 @@ imports:
   version: 78019103037ae46207993c8816e970d85bf1a9e4
   subpackages:
   - events
+- name: github.com/fukata/golang-stats-api-handler
+  version: 90f0b59102629831cc109845475a8d77043412ec
 - name: github.com/gogo/protobuf
   version: a4cceea7a401a73fefafd1a21fedbd4694124a82
   subpackages:
@@ -122,7 +124,7 @@ testImports:
   - matchers/support/goraph/util
   - types
 - name: golang.org/x/text
-  version: 1cbadb444a806fd9430d14ad08967ed91da4fa0a
+  version: 825fc78a2fd6fa0a5447e300189e3219e05e1f25
   subpackages:
   - encoding
   - encoding/charmap

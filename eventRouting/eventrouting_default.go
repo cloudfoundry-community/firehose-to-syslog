@@ -4,34 +4,30 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	fevents "github.com/cloudfoundry-community/firehose-to-syslog/events"
 	"github.com/cloudfoundry-community/firehose-to-syslog/extrafields"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
+	"github.com/cloudfoundry-community/firehose-to-syslog/stats"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/sirupsen/logrus"
 )
 
 type EventRoutingDefault struct {
-	CachingClient       caching.Caching
-	selectedEvents      map[string]bool
-	selectedEventsCount map[string]uint64
-	mutex               *sync.Mutex
-	log                 logging.Logging
-	ExtraFields         map[string]string
+	CachingClient  caching.Caching
+	selectedEvents map[string]bool
+	Stats          *stats.Stats
+	log            logging.Logging
+	ExtraFields    map[string]string
 }
 
-func NewEventRouting(caching caching.Caching, logging logging.Logging) EventRouting {
+func NewEventRouting(caching caching.Caching, logging logging.Logging, stats *stats.Stats) EventRouting {
 	return &EventRoutingDefault{
-		CachingClient:       caching,
-		selectedEvents:      make(map[string]bool),
-		selectedEventsCount: make(map[string]uint64),
-		log:                 logging,
-		mutex:               &sync.Mutex{},
-		ExtraFields:         make(map[string]string),
+		CachingClient:  caching,
+		selectedEvents: make(map[string]bool),
+		log:            logging,
+		Stats:          stats,
+		ExtraFields:    make(map[string]string),
 	}
 }
 
@@ -48,16 +44,22 @@ func (e *EventRoutingDefault) RouteEvent(msg *events.Envelope) {
 		switch eventType {
 		case events.Envelope_HttpStartStop:
 			event = fevents.HttpStartStop(msg)
+			e.Stats.Inc(stats.ConsumeHttpStartStop)
 		case events.Envelope_LogMessage:
 			event = fevents.LogMessage(msg)
+			e.Stats.Inc(stats.ConsumeLogMessage)
 		case events.Envelope_ValueMetric:
 			event = fevents.ValueMetric(msg)
+			e.Stats.Inc(stats.ConsumeValueMetric)
 		case events.Envelope_CounterEvent:
 			event = fevents.CounterEvent(msg)
+			e.Stats.Inc(stats.ConsumeCounterEvent)
 		case events.Envelope_Error:
 			event = fevents.ErrorEvent(msg)
+			e.Stats.Inc(stats.ConsumeError)
 		case events.Envelope_ContainerMetric:
 			event = fevents.ContainerMetric(msg)
+			e.Stats.Inc(stats.ConsumeContainerMetric)
 		}
 
 		event.AnnotateWithEnveloppeData(msg)
@@ -67,16 +69,14 @@ func (e *EventRoutingDefault) RouteEvent(msg *events.Envelope) {
 			event.AnnotateWithAppData(e.CachingClient)
 		}
 
-		e.mutex.Lock()
 		//We do not ship Event
 		if ignored, hasIgnoredField := event.Fields["cf_ignored_app"]; ignored == true && hasIgnoredField {
-			e.selectedEventsCount["ignored_app_message"]++
+			e.Stats.Inc(stats.Ignored)
 		} else {
 			e.log.ShipEvents(event.Fields, event.Msg)
-			e.selectedEventsCount[eventType.String()]++
+			e.Stats.Inc(stats.Publish)
 
 		}
-		e.mutex.Unlock()
 	}
 }
 
@@ -105,60 +105,4 @@ func (e *EventRoutingDefault) SetExtraFields(extraEventsString string) {
 		os.Exit(1)
 	}
 	e.ExtraFields = extraFields
-}
-
-func (e *EventRoutingDefault) GetTotalCountOfSelectedEvents() uint64 {
-	var total = uint64(0)
-	for _, count := range e.GetSelectedEventsCount() {
-		total += count
-	}
-	return total
-}
-
-func (e *EventRoutingDefault) GetSelectedEventsCount() map[string]uint64 {
-	return e.selectedEventsCount
-}
-
-func (e *EventRoutingDefault) LogEventTotals(logTotalsTime time.Duration) {
-	firehoseEventTotals := time.NewTicker(logTotalsTime)
-	count := uint64(0)
-	startTime := time.Now()
-	totalTime := startTime
-
-	go func() {
-		for range firehoseEventTotals.C {
-			elapsedTime := time.Since(startTime).Seconds()
-			totalElapsedTime := time.Since(totalTime).Seconds()
-			startTime = time.Now()
-			event, lastCount := e.getEventTotals(totalElapsedTime, elapsedTime, count)
-			count = lastCount
-			e.log.ShipEvents(event.Fields, event.Msg)
-		}
-	}()
-}
-
-func (e *EventRoutingDefault) getEventTotals(totalElapsedTime float64, elapsedTime float64, lastCount uint64) (*fevents.Event, uint64) {
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-	totalCount := e.GetTotalCountOfSelectedEvents()
-	sinceLastTime := float64(int(elapsedTime*10)) / 10
-	if sinceLastTime == 0 {
-		sinceLastTime = 1
-	}
-	fields := logrus.Fields{
-		"total_count":   totalCount,
-		"by_sec_Events": int((totalCount - lastCount) / uint64(sinceLastTime)),
-	}
-
-	for eventtype, count := range e.GetSelectedEventsCount() {
-		fields[eventtype] = count
-	}
-
-	event := &fevents.Event{
-		Type:   "firehose_to_syslog_stats",
-		Msg:    "Statistic for firehose to syslog",
-		Fields: fields,
-	}
-	event.AnnotateWithMetaData(map[string]string{})
-	return event, totalCount
 }

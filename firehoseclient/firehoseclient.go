@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cloudfoundry-community/firehose-to-syslog/stats"
+
 	gendiodes "code.cloudfoundry.org/diodes"
 	"github.com/cloudfoundry-community/firehose-to-syslog/diodes"
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
@@ -24,6 +26,7 @@ type FirehoseNozzle struct {
 	uaaRefresher   consumer.TokenRefresher
 	envelopeBuffer *diodes.OneToOneEnvelope
 	doneCh         chan struct{}
+	Stats          *stats.Stats
 }
 
 type FirehoseConfig struct {
@@ -37,7 +40,10 @@ type FirehoseConfig struct {
 	BufferSize             int
 }
 
-func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting eventRouting.EventRouting, firehoseconfig *FirehoseConfig) *FirehoseNozzle {
+func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher,
+	eventRouting eventRouting.EventRouting,
+	firehoseconfig *FirehoseConfig,
+	stats *stats.Stats) *FirehoseNozzle {
 	return &FirehoseNozzle{
 		errs:         make(<-chan error),
 		messages:     make(<-chan *events.Envelope),
@@ -48,6 +54,7 @@ func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher, eventRouting e
 			logging.LogError("Missed Logs ", missed)
 		})),
 		doneCh: make(chan struct{}),
+		Stats:  stats,
 	}
 }
 
@@ -86,6 +93,7 @@ func (f *FirehoseNozzle) ReadLogsBuffer() {
 			envelope := f.envelopeBuffer.Next()
 			f.handleMessage(envelope)
 			f.eventRouting.RouteEvent(envelope)
+			f.Stats.Dec(stats.SubInputBuffer)
 		}
 	}
 }
@@ -95,6 +103,7 @@ func (f *FirehoseNozzle) routeEvent() error {
 		select {
 		case envelope := <-f.messages:
 			f.envelopeBuffer.Set(envelope)
+			f.Stats.Inc(stats.SubInputBuffer)
 		case err := <-f.errs:
 			f.handleError(err)
 			return err
