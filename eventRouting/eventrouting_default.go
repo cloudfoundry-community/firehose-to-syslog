@@ -37,47 +37,44 @@ func (e *EventRoutingDefault) GetSelectedEvents() map[string]bool {
 
 func (e *EventRoutingDefault) RouteEvent(msg *events.Envelope) {
 
-	eventType := msg.GetEventType()
-
-	if e.selectedEvents[eventType.String()] {
-		var event *fevents.Event
-		switch eventType {
-		case events.Envelope_HttpStartStop:
-			event = fevents.HttpStartStop(msg)
-			e.Stats.Inc(stats.ConsumeHttpStartStop)
-		case events.Envelope_LogMessage:
-			event = fevents.LogMessage(msg)
-			e.Stats.Inc(stats.ConsumeLogMessage)
-		case events.Envelope_ValueMetric:
-			event = fevents.ValueMetric(msg)
-			e.Stats.Inc(stats.ConsumeValueMetric)
-		case events.Envelope_CounterEvent:
-			event = fevents.CounterEvent(msg)
-			e.Stats.Inc(stats.ConsumeCounterEvent)
-		case events.Envelope_Error:
-			event = fevents.ErrorEvent(msg)
-			e.Stats.Inc(stats.ConsumeError)
-		case events.Envelope_ContainerMetric:
-			event = fevents.ContainerMetric(msg)
-			e.Stats.Inc(stats.ConsumeContainerMetric)
-		}
-
-		event.AnnotateWithEnveloppeData(msg)
-
-		event.AnnotateWithMetaData(e.ExtraFields)
-		if _, hasAppId := event.Fields["cf_app_id"]; hasAppId {
-			event.AnnotateWithAppData(e.CachingClient)
-		}
-
-		//We do not ship Event
-		if ignored, hasIgnoredField := event.Fields["cf_ignored_app"]; ignored == true && hasIgnoredField {
-			e.Stats.Inc(stats.Ignored)
-		} else {
-			e.log.ShipEvents(event.Fields, event.Msg)
-			e.Stats.Inc(stats.Publish)
-
-		}
+	var event *fevents.Event
+	switch msg.GetEventType() {
+	case events.Envelope_HttpStartStop:
+		event = fevents.HttpStartStop(msg)
+		e.Stats.Inc(stats.ConsumeHttpStartStop)
+	case events.Envelope_LogMessage:
+		event = fevents.LogMessage(msg)
+		e.Stats.Inc(stats.ConsumeLogMessage)
+	case events.Envelope_ValueMetric:
+		event = fevents.ValueMetric(msg)
+		e.Stats.Inc(stats.ConsumeValueMetric)
+	case events.Envelope_CounterEvent:
+		event = fevents.CounterEvent(msg)
+		e.Stats.Inc(stats.ConsumeCounterEvent)
+	case events.Envelope_Error:
+		event = fevents.ErrorEvent(msg)
+		e.Stats.Inc(stats.ConsumeError)
+	case events.Envelope_ContainerMetric:
+		event = fevents.ContainerMetric(msg)
+		e.Stats.Inc(stats.ConsumeContainerMetric)
 	}
+
+	event.AnnotateWithEnveloppeData(msg)
+
+	event.AnnotateWithMetaData(e.ExtraFields)
+	if _, hasAppId := event.Fields["cf_app_id"]; hasAppId {
+		event.AnnotateWithAppData(e.CachingClient)
+	}
+
+	//We do not ship Event
+	if ignored, hasIgnoredField := event.Fields["cf_ignored_app"]; ignored == true && hasIgnoredField {
+		e.Stats.Inc(stats.Ignored)
+	} else {
+		e.log.ShipEvents(event.Fields, event.Msg)
+		e.Stats.Inc(stats.Publish)
+
+	}
+
 }
 
 func (e *EventRoutingDefault) SetupEventRouting(wantedEvents string) error {

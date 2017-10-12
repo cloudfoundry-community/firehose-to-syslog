@@ -99,11 +99,15 @@ func (f *FirehoseNozzle) ReadLogsBuffer() {
 }
 
 func (f *FirehoseNozzle) routeEvent() error {
+	eventsSelected := f.eventRouting.GetSelectedEvents()
 	for {
 		select {
 		case envelope := <-f.messages:
-			f.envelopeBuffer.Set(envelope)
-			f.Stats.Inc(stats.SubInputBuffer)
+			//Only take what we need
+			if eventsSelected[envelope.GetEventType().String()] {
+				f.envelopeBuffer.Set(envelope)
+				f.Stats.Inc(stats.SubInputBuffer)
+			}
 		case err := <-f.errs:
 			f.handleError(err)
 			return err
