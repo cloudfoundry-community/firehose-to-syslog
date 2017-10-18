@@ -13,7 +13,9 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/firehose-to-syslog/uaatokenrefresher"
 	"github.com/cloudfoundry/noaa/consumer"
+	noaerrors "github.com/cloudfoundry/noaa/errors"
 	"github.com/cloudfoundry/sonde-go/events"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -110,7 +112,10 @@ func (f *FirehoseNozzle) routeEvent() error {
 			}
 		case err := <-f.errs:
 			f.handleError(err)
-			return err
+			retryrerr := f.handleError(err)
+			if !retryrerr {
+				return err
+			}
 		case <-f.doneCh:
 			return fmt.Errorf("Closing Go routine")
 		}
@@ -118,20 +123,24 @@ func (f *FirehoseNozzle) routeEvent() error {
 
 }
 
-func (f *FirehoseNozzle) handleError(err error) {
+func (f *FirehoseNozzle) handleError(err error) bool {
+	logging.LogError("Error while reading from the Firehose: ", err)
 
-	switch {
-	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
-		logging.LogError("Normal Websocket Closure", err)
-	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
-		logging.LogError("Error while reading from the firehose", err)
-		logging.LogError("Disconnected because nozzle couldn't keep up. Please try scaling up the nozzle.", nil)
-
-	default:
-		logging.LogError("Error while reading from the firehose", err)
+	switch err.(type) {
+	case noaerrors.RetryError:
+		switch noaRetryError := err.(noaerrors.RetryError).Err.(type) {
+		case *websocket.CloseError:
+			switch noaRetryError.Code {
+			case websocket.ClosePolicyViolation:
+				logging.LogError("Nozzle couldn't keep up. Please try scaling up the Nozzle.", err)
+			}
+		}
+		return true
 	}
-	logging.LogError("Closing connection with traffic controller due to error", err)
+
+	logging.LogStd("Closing connection with Firehose...", true)
 	f.consumer.Close()
+	return false
 }
 
 func (f *FirehoseNozzle) handleMessage(envelope *events.Envelope) {
