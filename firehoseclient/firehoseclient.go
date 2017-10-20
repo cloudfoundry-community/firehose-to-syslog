@@ -1,8 +1,9 @@
 package firehoseclient
 
 import (
+	"context"
 	"crypto/tls"
-	"fmt"
+	"sync"
 	"time"
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/stats"
@@ -21,13 +22,15 @@ import (
 
 type FirehoseNozzle struct {
 	errs           <-chan error
+	Readerrs       chan error
 	messages       <-chan *events.Envelope
 	consumer       *consumer.Consumer
 	eventRouting   eventRouting.EventRouting
 	config         *FirehoseConfig
 	uaaRefresher   consumer.TokenRefresher
 	envelopeBuffer *diodes.OneToOneEnvelope
-	doneCh         chan struct{}
+	stopReading    chan struct{}
+	stopRouting    chan struct{}
 	Stats          *stats.Stats
 }
 
@@ -42,12 +45,17 @@ type FirehoseConfig struct {
 	BufferSize             int
 }
 
+var (
+	wg sync.WaitGroup
+)
+
 func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher,
 	eventRouting eventRouting.EventRouting,
 	firehoseconfig *FirehoseConfig,
 	stats *stats.Stats) *FirehoseNozzle {
 	return &FirehoseNozzle{
 		errs:         make(<-chan error),
+		Readerrs:     make(chan error),
 		messages:     make(<-chan *events.Envelope),
 		eventRouting: eventRouting,
 		config:       firehoseconfig,
@@ -55,22 +63,26 @@ func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher,
 		envelopeBuffer: diodes.NewOneToOneEnvelope(firehoseconfig.BufferSize, gendiodes.AlertFunc(func(missed int) {
 			logging.LogError("Missed Logs ", missed)
 		})),
-		doneCh: make(chan struct{}),
-		Stats:  stats,
+		stopReading: make(chan struct{}),
+		stopRouting: make(chan struct{}),
+		Stats:       stats,
 	}
 }
 
-func (f *FirehoseNozzle) Stop() {
-	logging.LogStd("Stopping Channel ", true)
-	close(f.doneCh)
+func (f *FirehoseNozzle) Start(ctx context.Context) {
+	f.consumeFirehose()
+	wg.Add(2)
+	go f.routeEvent(ctx)
+	go f.ReadLogsBuffer(ctx)
+	return
 }
 
-func (f *FirehoseNozzle) Start() error {
-	defer f.Stop()
-	f.consumeFirehose()
-	go f.ReadLogsBuffer()
-	err := f.routeEvent()
-	return err
+func (f *FirehoseNozzle) StopReading() {
+	close(f.stopRouting)
+	close(f.stopReading)
+	//Need to be sure both of the GoRoutine are stop
+	wg.Wait()
+	return
 }
 
 func (f *FirehoseNozzle) consumeFirehose() {
@@ -86,13 +98,42 @@ func (f *FirehoseNozzle) consumeFirehose() {
 	f.messages, f.errs = f.consumer.Firehose(f.config.FirehoseSubscriptionID, "")
 }
 
-func (f *FirehoseNozzle) ReadLogsBuffer() {
+func (f *FirehoseNozzle) ReadLogsBuffer(ctx context.Context) {
+	defer wg.Done()
 	for {
 		select {
-		case <-f.doneCh:
+		case <-ctx.Done():
+			logging.LogStd("Cancel ReadLogsBuffer Goroutine", true)
+			return
+		case <-f.stopRouting:
+			logging.LogStd("Stopping Routing Loop", true)
 			return
 		default:
-			envelope := f.envelopeBuffer.Next()
+			envelope, empty := f.envelopeBuffer.TryNext()
+			if envelope == nil && !empty {
+				continue
+			}
+			f.handleMessage(envelope)
+			f.eventRouting.RouteEvent(envelope)
+			f.Stats.Dec(stats.SubInputBuffer)
+		}
+	}
+
+}
+
+func (f *FirehoseNozzle) Draining(ctx context.Context) {
+	logging.LogStd("Starting Draining", true)
+	for {
+		select {
+		case <-ctx.Done():
+			logging.LogStd("Stopping ReadLogsBuffer Goroutine", true)
+			return
+		default:
+			envelope, empty := f.envelopeBuffer.TryNext()
+			if envelope == nil && !empty {
+				logging.LogStd("Finishing Draining", true)
+				return
+			}
 			f.handleMessage(envelope)
 			f.eventRouting.RouteEvent(envelope)
 			f.Stats.Dec(stats.SubInputBuffer)
@@ -100,7 +141,8 @@ func (f *FirehoseNozzle) ReadLogsBuffer() {
 	}
 }
 
-func (f *FirehoseNozzle) routeEvent() error {
+func (f *FirehoseNozzle) routeEvent(ctx context.Context) {
+	defer wg.Done()
 	eventsSelected := f.eventRouting.GetSelectedEvents()
 	for {
 		select {
@@ -114,10 +156,15 @@ func (f *FirehoseNozzle) routeEvent() error {
 			f.handleError(err)
 			retryrerr := f.handleError(err)
 			if !retryrerr {
-				return err
+				logging.LogError("RouteEvent Loop Error ", err)
+				return
 			}
-		case <-f.doneCh:
-			return fmt.Errorf("Closing Go routine")
+		case <-ctx.Done():
+			logging.LogStd("Closing routing event routine", true)
+			return
+		case <-f.stopReading:
+			logging.LogStd("Stopping Reading from Firehose", true)
+			return
 		}
 	}
 
