@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
@@ -187,9 +188,11 @@ func (cli *CLI) Run(args []string) int {
 	signal.Notify(signalChan, os.Interrupt, os.Kill)
 	go func() {
 		for _ = range signalChan {
-			fmt.Println("\nReceived an interrupt, stopping services...\n")
+			fmt.Println("\nSignal Received, Stop reading and starting Draining...\n")
 			firehoseClient.StopReading()
-			firehoseClient.Draining(ctx)
+			cctx, tcancel := context.WithTimeout(context.TODO(), 30*time.Second)
+			tcancel()
+			firehoseClient.Draining(cctx)
 			cleanupDone <- true
 		}
 	}()
