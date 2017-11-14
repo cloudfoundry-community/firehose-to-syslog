@@ -1,6 +1,8 @@
-hash: 7dd23430c6867dc11332a880976be362b6d30dde344ef48324cadf5b7e062b46
-updated: 2017-09-21T14:18:22.963369484+09:00
+hash: 3de5065ead3b094abfd1425fcf7782435b2488ffabadc9a1ceaad132c85544de
+updated: 2017-10-11T12:42:58.63046038+09:00
 imports:
+- name: code.cloudfoundry.org/diodes
+  version: 000f8f1e7fb802e51b52e293b6edf4dd247cd20c
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
   subpackages:
@@ -23,6 +25,8 @@ imports:
   version: 78019103037ae46207993c8816e970d85bf1a9e4
   subpackages:
   - events
+- name: github.com/fukata/golang-stats-api-handler
+  version: 90f0b59102629831cc109845475a8d77043412ec
 - name: github.com/gogo/protobuf
   version: a4cceea7a401a73fefafd1a21fedbd4694124a82
   subpackages:
@@ -30,7 +34,7 @@ imports:
   - proto
   - protoc-gen-gogo/descriptor
 - name: github.com/golang/protobuf
-  version: 11b8df160996e00fd4b55cbaafb3d84ec6d50fa8
+  version: 83cd65fc365ace80eb6b6ecfc45203e43edfbc70
   subpackages:
   - proto
 - name: github.com/gorilla/websocket
@@ -120,7 +124,7 @@ testImports:
   - matchers/support/goraph/util
   - types
 - name: golang.org/x/text
-  version: 14c0d48ead0cd47e3104ada247d91be04afc7a5a
+  version: 825fc78a2fd6fa0a5447e300189e3219e05e1f25
   subpackages:
   - encoding
   - encoding/charmap
