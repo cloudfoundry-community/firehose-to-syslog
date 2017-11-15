@@ -81,7 +81,6 @@ func TestStatsJson(t *testing.T) {
   "publish_fail": 50,
   "slow_consumer_alert": 0,
   "subinupt_buffer": 50,
-  "delay": 0,
   "instance_id": 0
 }`
 
