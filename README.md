@@ -38,14 +38,12 @@ Flags:
   --min-retry-delay=500ms        Doppler Cloud Foundry Doppler min. retry delay duration
   --max-retry-delay=1m           Doppler Cloud Foundry Doppler max. retry delay duration
   --max-retry-count=1000         Doppler Cloud Foundry Doppler max. retry Count duration
-  --logs-buffer-size=10000      Number of envelope to be buffered
-  --events="LogMessage"          Comma separated list of events you would like. Valid options are ContainerMetric, CounterEvent,
-                                 Error, HttpStartStop, LogMessage, ValueMetric
+  --logs-buffer-size=10000       Number of envelope to be buffered
+  --events="LogMessage"          Comma separated list of events you would like. Valid options are ContainerMetric, CounterEvent, Error, HttpStartStop, LogMessage, ValueMetric
   --enable-stats-server          Will enable stats server on 8080
   --boltdb-path="my.db"          Bolt Database path
   --cc-pull-time=60s             CloudController Polling time in sec
-  --extra-fields=""              Extra fields you want to annotate your events with, example:
-                                 '--extra-fields=env:dev,something:other
+  --extra-fields=""              Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other
   --mode-prof=""                 Enable profiling mode, one of [cpu, mem, block]
   --path-prof=""                 Set the Path to write profiling file
   --log-formatter-type=LOG-FORMATTER-TYPE
