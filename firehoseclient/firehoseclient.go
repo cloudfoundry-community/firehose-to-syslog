@@ -111,6 +111,8 @@ func (f *FirehoseNozzle) ReadLogsBuffer(ctx context.Context) {
 		default:
 			envelope, empty := f.envelopeBuffer.TryNext()
 			if envelope == nil && !empty {
+				// Brief sleep to Avoid hammering on CPU
+				time.Sleep(1 * time.Millisecond)
 				continue
 			}
 			f.handleMessage(envelope)
