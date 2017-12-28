@@ -11,8 +11,6 @@ import (
 	"github.com/cloudfoundry/noaa/test_helpers"
 	"github.com/cloudfoundry/sonde-go/events"
 
-	"net/url"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -28,8 +26,6 @@ var _ = Describe("Consumer (Synchronous)", func() {
 		appGuid        string
 		authToken      string
 		messagesToSend chan []byte
-
-		recentPathBuilder consumer.RecentPathBuilder
 	)
 
 	BeforeEach(func() {
@@ -41,16 +37,10 @@ var _ = Describe("Consumer (Synchronous)", func() {
 		appGuid = ""
 		authToken = ""
 		messagesToSend = make(chan []byte, 256)
-
-		recentPathBuilder = nil
 	})
 
 	JustBeforeEach(func() {
 		cnsmr = consumer.New(trafficControllerURL, tlsSettings, nil)
-
-		if recentPathBuilder != nil {
-			cnsmr.SetRecentPathBuilder(recentPathBuilder)
-		}
 	})
 
 	AfterEach(func() {
@@ -209,30 +199,6 @@ var _ = Describe("Consumer (Synchronous)", func() {
 				Expect(recentError).To(HaveOccurred())
 				Expect(recentError.Error()).To(ContainSubstring("You are not authorized. Helpful message"))
 				Expect(recentError).To(BeAssignableToTypeOf(&errors.UnauthorizedError{}))
-			})
-		})
-
-		Context("when a recent path builder is provided", func() {
-			var pathUsed bool
-
-			BeforeEach(func() {
-				pathUsed = false
-				recentPathBuilder = func(trafficControllerUrl *url.URL, appGuid string, endpoint string) string {
-					return fmt.Sprintf("http://%s/logs/%s/%s", trafficControllerUrl.Host, endpoint, appGuid)
-				}
-
-				serverMux := http.NewServeMux()
-				serverMux.HandleFunc("/logs/recentlogs/appGuid", func(resp http.ResponseWriter, req *http.Request) {
-					pathUsed = true
-					resp.WriteHeader(http.StatusUnauthorized) // Avoid having to do more
-				})
-				testServer = httptest.NewServer(serverMux)
-				trafficControllerURL = "ws://" + testServer.Listener.Addr().String()
-			})
-
-			It("uses the path provided by the recent path builder", func() {
-				Expect(pathUsed).To(BeTrue())
-				Expect(recentError).To(MatchError((&errors.UnauthorizedError{}).Error()))
 			})
 		})
 	})

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -184,9 +185,7 @@ func (a *App) Space() (Space, error) {
 	if err != nil {
 		return Space{}, errors.Wrap(err, "Error unmarshalling body")
 	}
-	spaceResource.Entity.Guid = spaceResource.Meta.Guid
-	spaceResource.Entity.c = a.c
-	return spaceResource.Entity, nil
+	return a.c.mergeSpaceResource(spaceResource), nil
 }
 
 // ListAppsByQueryWithLimits queries totalPages app info. When totalPages is
@@ -232,13 +231,7 @@ func (c *Client) listApps(requestUrl string, totalPages int) ([]App, error) {
 		}
 
 		for _, app := range appResp.Resources {
-			app.Entity.Guid = app.Meta.Guid
-			app.Entity.CreatedAt = app.Meta.CreatedAt
-			app.Entity.UpdatedAt = app.Meta.UpdatedAt
-			app.Entity.SpaceData.Entity.Guid = app.Entity.SpaceData.Meta.Guid
-			app.Entity.SpaceData.Entity.OrgData.Entity.Guid = app.Entity.SpaceData.Entity.OrgData.Meta.Guid
-			app.Entity.c = c
-			apps = append(apps, app.Entity)
+			apps = append(apps, c.mergeAppResource(app))
 		}
 
 		requestUrl = appResp.NextUrl
@@ -352,11 +345,7 @@ func (c *Client) GetAppByGuid(guid string) (App, error) {
 	if err != nil {
 		return App{}, errors.Wrap(err, "Error unmarshalling app")
 	}
-	appResource.Entity.Guid = appResource.Meta.Guid
-	appResource.Entity.SpaceData.Entity.Guid = appResource.Entity.SpaceData.Meta.Guid
-	appResource.Entity.SpaceData.Entity.OrgData.Entity.Guid = appResource.Entity.SpaceData.Entity.OrgData.Meta.Guid
-	appResource.Entity.c = c
-	return appResource.Entity, nil
+	return c.mergeAppResource(appResource), nil
 }
 
 func (c *Client) AppByGuid(guid string) (App, error) {
@@ -381,4 +370,25 @@ func (c *Client) AppByName(appName, spaceGuid, orgGuid string) (app App, err err
 	}
 	app = apps[0]
 	return
+}
+
+func (c *Client) DeleteApp(guid string) error {
+	resp, err := c.DoRequest(c.NewRequest("DELETE", fmt.Sprintf("/v2/apps/%s", guid)))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return errors.Wrapf(err, "Error deleting app %s, response code: %d", guid, resp.StatusCode)
+	}
+	return nil
+}
+
+func (c *Client) mergeAppResource(app AppResource) App {
+	app.Entity.Guid = app.Meta.Guid
+	app.Entity.CreatedAt = app.Meta.CreatedAt
+	app.Entity.UpdatedAt = app.Meta.UpdatedAt
+	app.Entity.SpaceData.Entity.Guid = app.Entity.SpaceData.Meta.Guid
+	app.Entity.SpaceData.Entity.OrgData.Entity.Guid = app.Entity.SpaceData.Entity.OrgData.Meta.Guid
+	app.Entity.c = c
+	return app.Entity
 }

@@ -1,8 +1,6 @@
-# go-cfclient
+# go-cfclient &middot; [![Travis-CI](https://travis-ci.org/cloudfoundry-community/go-cfclient.svg)](https://travis-ci.org/cloudfoundry-community/go-cfclient) [![GoDoc](https://godoc.org/github.com/cloudfoundry-community/go-cfclient?status.svg)](http://godoc.org/github.com/cloudfoundry-community/go-cfclient) [![Report card](https://goreportcard.com/badge/github.com/cloudfoundry-community/go-cfclient)](https://goreportcard.com/report/github.com/cloudfoundry-community/go-cfclient)
 
 ### Overview
-
-[![Build Status](https://img.shields.io/travis/cloudfoundry-community/go-cfclient.svg)](https://travis-ci.org/cloudfoundry-community/go-cfclient) [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/cloudfoundry-community/go-cfclient)
 
 `cfclient` is a package to assist you in writing apps that need information out of [Cloud Foundry](http://cloudfoundry.org). It provides functions and structures to retrieve
 
@@ -36,12 +34,18 @@ func main() {
 }
 ```
 
-### Developing & Contributing
+### Development
 
-You can use Godep to restore the dependency
-Tested with go1.5.3
-```bash
-godep go build
+#### Errors
+
+If the Cloud Foundry error definitions change at https://github.com/cloudfoundry/cloud_controller_ng/blob/master/vendor/errors/v2.yml then the error predicate functions in this package need to be regenerated.
+
+To do this, simply use Go to regenerate the code:
+
 ```
+go generate
+```
+
+### Contributing
 
 Pull requests welcome.

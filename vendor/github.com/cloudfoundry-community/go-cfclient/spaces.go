@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -19,8 +20,8 @@ type SpaceRequest struct {
 	AuditorGuid        []string `json:"auditor_guids"`
 	DomainGuid         []string `json:"domain_guids"`
 	SecurityGroupGuids []string `json:"security_group_guids"`
-	SpaceQuotaDefGuid  []string `json:"space_quota_definition_guid"`
-	AllowSSH           []string `json:"allow_ssh"`
+	SpaceQuotaDefGuid  string   `json:"space_quota_definition_guid"`
+	AllowSSH           bool     `json:"allow_ssh"`
 }
 
 type SpaceResponse struct {
@@ -35,13 +36,74 @@ type SpaceResource struct {
 	Entity Space `json:"entity"`
 }
 
+type ServicePlanEntity struct {
+	Name                string                  `json:"name"`
+	Free                bool                    `json:"free"`
+	Public              bool                    `json:"public"`
+	Active              bool                    `json:"active"`
+	Description         string                  `json:"description"`
+	ServiceOfferingGUID string                  `json:"service_guid"`
+	ServiceOffering     ServiceOfferingResource `json:"service"`
+}
+
+type ServiceOfferingExtra struct {
+	DisplayName      string `json:"displayName"`
+	DocumentationURL string `json:"documentationURL"`
+	LongDescription  string `json:"longDescription"`
+}
+
+type ServiceOfferingEntity struct {
+	Label        string
+	Description  string
+	Provider     string        `json:"provider"`
+	BrokerGUID   string        `json:"service_broker_guid"`
+	Requires     []string      `json:"requires"`
+	ServicePlans []interface{} `json:"service_plans"`
+	Extra        ServiceOfferingExtra
+}
+
+type ServiceOfferingResource struct {
+	Metadata Meta
+	Entity   ServiceOfferingEntity
+}
+
+type ServiceOfferingResponse struct {
+	Count     int                       `json:"total_results"`
+	Pages     int                       `json:"total_pages"`
+	NextUrl   string                    `json:"next_url"`
+	PrevUrl   string                    `json:"prev_url"`
+	Resources []ServiceOfferingResource `json:"resources"`
+}
+
+type SpaceManagerResponse struct {
+	Count     int            `json:"total_results"`
+	Pages     int            `json:"total_pages"`
+	NextURL   string         `json:"next_url"`
+	Resources []UserResource `json:"resources"`
+}
+type SpaceAuditorResponse struct {
+	Count     int            `json:"total_results"`
+	Pages     int            `json:"total_pages"`
+	NextURL   string         `json:"next_url"`
+	Resources []UserResource `json:"resources"`
+}
+type SpaceDeveloperResponse struct {
+	Count     int            `json:"total_results"`
+	Pages     int            `json:"total_pages"`
+	NextURL   string         `json:"next_url"`
+	Resources []UserResource `json:"resources"`
+}
+
 type Space struct {
 	Guid                string      `json:"guid"`
+	CreatedAt           string      `json:"created_at"`
+	UpdatedAt           string      `json:"updated_at"`
 	Name                string      `json:"name"`
 	OrganizationGuid    string      `json:"organization_guid"`
 	OrgURL              string      `json:"organization_url"`
 	OrgData             OrgResource `json:"organization"`
 	QuotaDefinitionGuid string      `json:"space_quota_definition_guid"`
+	AllowSSH            bool        `json:"allow_ssh"`
 	c                   *Client
 }
 
@@ -97,9 +159,7 @@ func (s *Space) Org() (Org, error) {
 	if err != nil {
 		return Org{}, errors.Wrap(err, "Error unmarshaling org")
 	}
-	orgResource.Entity.Guid = orgResource.Meta.Guid
-	orgResource.Entity.c = s.c
-	return orgResource.Entity, nil
+	return s.c.mergeOrgResource(orgResource), nil
 }
 
 func (s *Space) Quota() (*SpaceQuota, error) {
@@ -185,6 +245,86 @@ func (c *Client) CreateSpace(req SpaceRequest) (Space, error) {
 		return Space{}, fmt.Errorf("CF API returned with status code %d", resp.StatusCode)
 	}
 	return c.handleSpaceResp(resp)
+}
+
+func (c *Client) DeleteSpace(guid string, recursive, async bool) error {
+	resp, err := c.DoRequest(c.NewRequest("DELETE", fmt.Sprintf("/v2/spaces/%s?recursive=%t&async=%t", guid, recursive, async)))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return errors.Wrapf(err, "Error deleting space %s, response code: %d", guid, resp.StatusCode)
+	}
+	return nil
+}
+
+func (c *Client) ListSpaceManagersByQuery(spaceGUID string, query url.Values) ([]User, error) {
+	var users []User
+	requestURL := fmt.Sprintf("/v2/spaces/%s/managers?%s", spaceGUID, query.Encode())
+	for {
+		smResp, err := c.getSpaceManagerResponse(requestURL)
+		if err != nil {
+			return []User{}, err
+		}
+		for _, u := range smResp.Resources {
+			users = append(users, c.mergeUserResource(u))
+		}
+		requestURL = smResp.NextURL
+		if requestURL == "" {
+			break
+		}
+	}
+	return users, nil
+}
+
+func (c *Client) ListSpaceManagers(spaceGUID string) ([]User, error) {
+	return c.ListSpaceManagersByQuery(spaceGUID, nil)
+}
+
+func (c *Client) ListSpaceAuditorsByQuery(spaceGUID string, query url.Values) ([]User, error) {
+	var users []User
+	requestURL := fmt.Sprintf("/v2/spaces/%s/auditors?%s", spaceGUID, query.Encode())
+	for {
+		saResp, err := c.getSpaceAuditorResponse(requestURL)
+		if err != nil {
+			return []User{}, err
+		}
+		for _, u := range saResp.Resources {
+			users = append(users, c.mergeUserResource(u))
+		}
+		requestURL = saResp.NextURL
+		if requestURL == "" {
+			break
+		}
+	}
+	return users, nil
+}
+
+func (c *Client) ListSpaceAuditors(spaceGUID string) ([]User, error) {
+	return c.ListSpaceAuditorsByQuery(spaceGUID, nil)
+}
+
+func (c *Client) ListSpaceDevelopersByQuery(spaceGUID string, query url.Values) ([]User, error) {
+	var users []User
+	requestURL := fmt.Sprintf("/v2/spaces/%s/developers?%s", spaceGUID, query.Encode())
+	for {
+		saResp, err := c.getSpaceDeveloperResponse(requestURL)
+		if err != nil {
+			return []User{}, err
+		}
+		for _, u := range saResp.Resources {
+			users = append(users, c.mergeUserResource(u))
+		}
+		requestURL = saResp.NextURL
+		if requestURL == "" {
+			break
+		}
+	}
+	return users, nil
+}
+
+func (c *Client) ListSpaceDevelopers(spaceGUID string) ([]User, error) {
+	return c.ListSpaceDevelopersByQuery(spaceGUID, nil)
 }
 
 func (c *Client) AssociateSpaceDeveloperByUsername(spaceGUID, name string) (Space, error) {
@@ -278,6 +418,29 @@ func (s *Space) RemoveAuditorByUsername(name string) error {
 	return nil
 }
 
+func (s *Space) GetServiceOfferings() (ServiceOfferingResponse, error) {
+	var response ServiceOfferingResponse
+	requestURL := fmt.Sprintf("/v2/spaces/%s/services", s.Guid)
+	req := s.c.NewRequest("GET", requestURL)
+
+	resp, err := s.c.DoRequest(req)
+	if err != nil {
+		return ServiceOfferingResponse{}, errors.Wrap(err, "Error requesting service offerings")
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ServiceOfferingResponse{}, errors.Wrap(err, "Error reading service offering response")
+	}
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return ServiceOfferingResponse{}, errors.Wrap(err, "Error unmarshalling service offering response")
+	}
+
+	return response, nil
+}
+
 func (c *Client) ListSpacesByQuery(query url.Values) ([]Space, error) {
 	return c.fetchSpaces("/v2/spaces?" + query.Encode())
 }
@@ -294,9 +457,7 @@ func (c *Client) fetchSpaces(requestUrl string) ([]Space, error) {
 			return []Space{}, err
 		}
 		for _, space := range spaceResp.Resources {
-			space.Entity.Guid = space.Meta.Guid
-			space.Entity.c = c
-			spaces = append(spaces, space.Entity)
+			spaces = append(spaces, c.mergeSpaceResource(space))
 		}
 		requestUrl = spaceResp.NextUrl
 		if requestUrl == "" {
@@ -382,8 +543,89 @@ func (c *Client) handleSpaceResp(resp *http.Response) (Space, error) {
 	if err != nil {
 		return Space{}, err
 	}
-	space := spaceResource.Entity
-	space.Guid = spaceResource.Meta.Guid
-	space.c = c
-	return space, nil
+	return c.mergeSpaceResource(spaceResource), nil
+}
+
+func (c *Client) mergeSpaceResource(space SpaceResource) Space {
+	space.Entity.Guid = space.Meta.Guid
+	space.Entity.CreatedAt = space.Meta.CreatedAt
+	space.Entity.UpdatedAt = space.Meta.UpdatedAt
+	space.Entity.c = c
+	return space.Entity
+}
+
+type serviceOfferingExtra ServiceOfferingExtra
+
+func (resource *ServiceOfferingExtra) UnmarshalJSON(rawData []byte) error {
+	if string(rawData) == "null" {
+		return nil
+	}
+
+	extra := serviceOfferingExtra{}
+
+	unquoted, err := strconv.Unquote(string(rawData))
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal([]byte(unquoted), &extra)
+	if err != nil {
+		return err
+	}
+
+	*resource = ServiceOfferingExtra(extra)
+
+	return nil
+}
+
+func (c *Client) getSpaceManagerResponse(requestURL string) (SpaceManagerResponse, error) {
+	var smResp SpaceManagerResponse
+	r := c.NewRequest("GET", requestURL)
+	resp, err := c.DoRequest(r)
+	if err != nil {
+		return SpaceManagerResponse{}, errors.Wrap(err, "error requesting space managers")
+	}
+	defer resp.Body.Close()
+	resBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return SpaceManagerResponse{}, errors.Wrap(err, "error reading space managers response body")
+	}
+	if err := json.Unmarshal(resBody, &smResp); err != nil {
+		return SpaceManagerResponse{}, errors.Wrap(err, "error unmarshaling space managers")
+	}
+	return smResp, nil
+}
+func (c *Client) getSpaceAuditorResponse(requestURL string) (SpaceAuditorResponse, error) {
+	var saResp SpaceAuditorResponse
+	r := c.NewRequest("GET", requestURL)
+	resp, err := c.DoRequest(r)
+	if err != nil {
+		return SpaceAuditorResponse{}, errors.Wrap(err, "error requesting space auditors")
+	}
+	defer resp.Body.Close()
+	resBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return SpaceAuditorResponse{}, errors.Wrap(err, "error reading space auditors response body")
+	}
+	if err := json.Unmarshal(resBody, &saResp); err != nil {
+		return SpaceAuditorResponse{}, errors.Wrap(err, "error unmarshaling space auditors")
+	}
+	return saResp, nil
+}
+func (c *Client) getSpaceDeveloperResponse(requestURL string) (SpaceDeveloperResponse, error) {
+	var sdResp SpaceDeveloperResponse
+	r := c.NewRequest("GET", requestURL)
+	resp, err := c.DoRequest(r)
+	if err != nil {
+		return SpaceDeveloperResponse{}, errors.Wrap(err, "error requesting space developers")
+	}
+	defer resp.Body.Close()
+	resBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return SpaceDeveloperResponse{}, errors.Wrap(err, "error reading space developers response body")
+	}
+	if err := json.Unmarshal(resBody, &sdResp); err != nil {
+		return SpaceDeveloperResponse{}, errors.Wrap(err, "error unmarshaling space developers")
+	}
+	return sdResp, nil
 }

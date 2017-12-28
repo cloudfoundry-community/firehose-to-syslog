@@ -12,11 +12,15 @@ Go implementation of Cloud Foundry's Dropsonde Protocol
 
    ```bash
    # Currently, the command below installs v3.X
-   brew install protobuf --devel
+   brew install protobuf
    ```
-1. Generate go code
+
+2. Generate go code
+
    ```bash
    ./generate-go.sh
    ```
 
 Code will be generated within this directory using the proto files from [Dropsonde Protocol](https://github.com/cloudfoundry/dropsonde-protocol). For other languages, message documentation, and communication protocols, reference [Dropsonde Protocol](https://github.com/cloudfoundry/dropsonde-protocol).
+
+In addition, generate-go.sh will also generate [easyjson](https://github.com/mailru/easyjson) [optimized marshalers/unmarshalers](events/events_easyjson.go).

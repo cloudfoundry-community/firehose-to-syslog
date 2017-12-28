@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Client struct {
@@ -56,7 +57,8 @@ func (c *Client) GetAuthTokenWithExpiresIn(username, password string, insecureSk
 	if resp.StatusCode != http.StatusOK {
 		return "", -1, fmt.Errorf("Received a status code %v", resp.Status)
 	}
-
+	defer resp.Body.Close()
+	
 	jsonData := make(map[string]interface{})
 	decoder := json.NewDecoder(resp.Body)
 	err = decoder.Decode(&jsonData)
@@ -105,6 +107,6 @@ func (c *Client) TokenIsAuthorized(username, password, token, client_id string, 
 
 func (c *Client) httpClient(insecureSkipVerify bool) *http.Client {
 	config := &tls.Config{InsecureSkipVerify: insecureSkipVerify}
-	tr := &http.Transport{TLSClientConfig: config}
-	return &http.Client{Transport: tr}
+	tr := &http.Transport{TLSClientConfig: config, Proxy: http.ProxyFromEnvironment}
+	return &http.Client{Timeout: 10 * time.Second, Transport: tr}
 }
