@@ -29,6 +29,8 @@ type Caching interface {
 type AppClient interface {
 	AppByGuid(appGuid string) (cfclient.App, error)
 	ListApps() ([]cfclient.App, error)
+	ListOrgs() ([]cfclient.Org, error)
+	OrgSpaces(guid string) ([]cfclient.Space, error)
 }
 
 func IsNeeded(wantedEvents string) bool {

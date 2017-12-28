@@ -74,7 +74,7 @@ func (c *CachingBolt) populateCache() error {
 
 	if len(apps) == 0 {
 		// populate from remote
-		apps, err = c.getAllAppsFromRemote()
+		apps, err = c.getAllAppsFromRemotev2()
 		if err != nil {
 			return err
 		}
@@ -189,27 +189,6 @@ func (c *CachingBolt) getAllAppsFromBoltDB() (map[string]*App, error) {
 	return apps, nil
 }
 
-func (c *CachingBolt) getAllAppsFromRemote() (map[string]*App, error) {
-	logging.LogStd("Retrieving Apps for Cache...", false)
-
-	cfApps, err := c.appClient.ListApps()
-	if err != nil {
-		return nil, err
-	}
-
-	apps := make(map[string]*App, len(cfApps))
-	for i := range cfApps {
-		logging.LogStd(fmt.Sprintf("App [%s] Found...", cfApps[i].Name), false)
-		app := c.fromPCFApp(&cfApps[i])
-		apps[app.Guid] = app
-	}
-
-	c.fillDatabase(apps)
-	logging.LogStd(fmt.Sprintf("Found [%d] Apps!", len(apps)), false)
-
-	return apps, nil
-}
-
 func (c *CachingBolt) createBucket() error {
 	return c.appdb.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(APP_BUCKET))
@@ -233,7 +212,7 @@ func (c *CachingBolt) invalidateCache() {
 			select {
 			case <-ticker.C:
 				// continue
-				apps, err := c.getAllAppsFromRemote()
+				apps, err := c.getAllAppsFromRemotev2()
 				if err == nil {
 					c.lock.Lock()
 					c.cache = apps
@@ -246,20 +225,24 @@ func (c *CachingBolt) invalidateCache() {
 	}()
 }
 
+func (c *CachingBolt) addRecord(app *App) {
+	c.appdb.Update(func(tx *bolt.Tx) error {
+		serialize, err := json.Marshal(app)
+		if err != nil {
+			return fmt.Errorf("Error Marshaling data: %s", err)
+		}
+
+		b := tx.Bucket([]byte(APP_BUCKET))
+		if err := b.Put([]byte(app.Guid), serialize); err != nil {
+			return fmt.Errorf("Error inserting data: %s", err)
+		}
+		return nil
+	})
+}
+
 func (c *CachingBolt) fillDatabase(apps map[string]*App) {
 	for _, app := range apps {
-		c.appdb.Update(func(tx *bolt.Tx) error {
-			serialize, err := json.Marshal(app)
-			if err != nil {
-				return fmt.Errorf("Error Marshaling data: %s", err)
-			}
-
-			b := tx.Bucket([]byte(APP_BUCKET))
-			if err := b.Put([]byte(app.Guid), serialize); err != nil {
-				return fmt.Errorf("Error inserting data: %s", err)
-			}
-			return nil
-		})
+		c.addRecord(app)
 	}
 }
 
@@ -276,14 +259,14 @@ func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
 }
 
 func (c *CachingBolt) getAppFromRemote(appGuid string) (*App, error) {
+	logging.LogError("Loooking for app ", appGuid)
 	cfApp, err := c.appClient.AppByGuid(appGuid)
 	if err != nil {
 		return nil, err
 	}
 
 	app := c.fromPCFApp(&cfApp)
-	c.fillDatabase(map[string]*App{app.Guid: app})
-
+	c.addRecord(app)
 	return app, nil
 }
 
@@ -292,4 +275,91 @@ func (c *CachingBolt) isOptOut(envVar map[string]interface{}) bool {
 		return true
 	}
 	return false
+}
+
+//Inspired by cf exporter
+func (c *CachingBolt) getAllAppsFromRemotev2() (map[string]*App, error) {
+	logging.LogStd("Retrieving Apps from Remote v2...", false)
+	apps := make(map[string]*App)
+	// Listing Orgs
+	organizations, err := c.appClient.ListOrgs()
+	if err != nil {
+		logging.LogError("Error while listing organization: %v", err)
+		return apps, err
+	}
+	var wg = &sync.WaitGroup{}
+
+	for _, organization := range organizations {
+		wg.Add(1)
+		go func(organization cfclient.Org) {
+			defer wg.Done()
+
+			err := c.getOrgSpaces(&organization)
+			if err != nil {
+				logging.LogError("Error gettings Org", err)
+			}
+		}(organization)
+	}
+
+	wg.Wait()
+	logging.LogStd(fmt.Sprintf("Found [%d] Apps!", len(apps)), false)
+	apps, err = c.getAllAppsFromBoltDB()
+	if err != nil {
+		logging.LogError("Error while gettings all apps from BoltDB: %v", err)
+		return apps, err
+	}
+	return apps, nil
+}
+func (c *CachingBolt) getOrgSpaces(organization *cfclient.Org) error {
+	spaces, err := c.appClient.OrgSpaces(organization.Guid)
+	if err != nil {
+		logging.LogError("Error while listing spaces for organization `%s`: %v", err)
+		return err
+	}
+
+	var wg = &sync.WaitGroup{}
+	errChannel := make(chan error, len(spaces))
+
+	for _, space := range spaces {
+		wg.Add(1)
+		go func(space cfclient.Space) {
+			defer wg.Done()
+
+			err := c.getSpaceSummary(organization, &space)
+			if err != nil {
+				errChannel <- err
+			}
+		}(space)
+	}
+
+	wg.Wait()
+	close(errChannel)
+
+	return <-errChannel
+}
+
+func (c *CachingBolt) getSpaceSummary(organization *cfclient.Org, space *cfclient.Space) error {
+	spaceSummary, err := space.Summary()
+	if err != nil {
+		logging.LogError("Error while getting summary for space `%s`: %v", err)
+		return err
+	}
+
+	for _, application := range spaceSummary.Apps {
+		app := c.fromPCFAppSummary(&application, organization, space)
+		c.addRecord(app)
+	}
+	return nil
+}
+
+func (c *CachingBolt) fromPCFAppSummary(app *cfclient.AppSummary, organization *cfclient.Org, space *cfclient.Space) *App {
+	return &App{
+		app.Name,
+		app.Guid,
+		space.Name,
+		space.Guid,
+		organization.Name,
+		organization.Guid,
+		c.isOptOut(app.Environment),
+	}
 }
