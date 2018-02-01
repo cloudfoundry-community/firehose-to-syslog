@@ -16,19 +16,15 @@ import (
 )
 
 type mockAppClient struct {
-	lock   sync.RWMutex
-	apps   map[string]cfclient.App
-	orgs   map[string]cfclient.Org
-	spaces map[string]cfclient.Space
-	n      int
+	lock sync.RWMutex
+	apps map[string]cfclient.App
+	n    int
 }
 
 func newMockAppClient(n int) *mockAppClient {
 	apps := getApps(n)
-	orgs := getOrgs(n)
 	return &mockAppClient{
 		apps: apps,
-		orgs: orgs,
 		n:    n,
 	}
 }
@@ -36,7 +32,6 @@ func newMockAppClient(n int) *mockAppClient {
 func (m *mockAppClient) AppByGuid(guid string) (cfclient.App, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
-
 	app, ok := m.apps[guid]
 	if ok {
 		return app, nil
@@ -44,37 +39,9 @@ func (m *mockAppClient) AppByGuid(guid string) (cfclient.App, error) {
 	return app, errors.New("No such app")
 }
 
-func (m *mockAppClient) ListApps() ([]cfclient.App, error) {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	var apps []cfclient.App
-	for k := range m.apps {
-		apps = append(apps, m.apps[k])
-	}
-	return apps, nil
-}
-
-func (m *mockAppClient) ListOrgs() ([]cfclient.Org, error) {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	var orgs []cfclient.Org
-	for k := range m.orgs {
-		orgs = append(orgs, m.orgs[k])
-	}
-	return orgs, nil
-}
-
+func (m *mockAppClient) ListOrgs() ([]cfclient.Org, error) { return []cfclient.Org{}, nil }
 func (m *mockAppClient) OrgSpaces(org string) ([]cfclient.Space, error) {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	var spaces []cfclient.Space
-	for k := range m.spaces {
-		spaces = append(spaces, m.spaces[k])
-	}
-	return spaces, nil
+	return []cfclient.Space{}, nil
 }
 
 func (m *mockAppClient) CreateApp(appID, spaceID, orgID string) {
@@ -101,24 +68,6 @@ func (m *mockAppClient) CreateApp(appID, spaceID, orgID string) {
 	m.apps[appID] = app
 }
 
-func getOrgs(n int) map[string]cfclient.Org {
-	orgs := make(map[string]cfclient.Org, n)
-	for i := 0; i < n; i++ {
-		org := cfclient.Org{Guid: fmt.Sprintf("cf_org_id_%d", i%100), Name: fmt.Sprintf("cf_org_name_%d", i%100)}
-		orgs[org.Guid] = org
-	}
-	return orgs
-}
-
-func getSpaces(n int) map[string]cfclient.Space {
-	spaces := make(map[string]cfclient.Space, n)
-	for i := 0; i < n; i++ {
-		space := cfclient.Space{Guid: fmt.Sprintf("cf_space_id_%d", i%100), Name: fmt.Sprintf("cf_space_name_%d", i%100)}
-		spaces[space.Guid] = space
-	}
-	return spaces
-}
-
 func getApps(n int) map[string]cfclient.App {
 	apps := make(map[string]cfclient.App, n)
 	for i := 0; i < n; i++ {
@@ -141,6 +90,14 @@ func getApps(n int) map[string]cfclient.App {
 		apps[app.Guid] = app
 	}
 	return apps
+}
+
+// Little bit hacky test.
+// To preload in cache we just look for every apps first.
+func (m *mockAppClient) ingestApps(cache Caching) {
+	for _, app := range m.apps {
+		cache.GetApp(app.Guid)
+	}
 }
 
 var _ = Describe("Caching", func() {
@@ -168,10 +125,12 @@ var _ = Describe("Caching", func() {
 		os.Remove(boltdbPath)
 		client = newMockAppClient(n)
 		cache, gerr = NewCachingBolt(client, config)
+
 		Ω(gerr).ShouldNot(HaveOccurred())
 
 		gerr = cache.Open()
 		Ω(gerr).ShouldNot(HaveOccurred())
+		client.ingestApps(cache)
 	})
 
 	AfterEach(func() {
@@ -185,7 +144,9 @@ var _ = Describe("Caching", func() {
 
 	Context("Get app good case", func() {
 		It("Have 10 apps", func() {
+			client.ingestApps(cache)
 			apps, err := cache.GetAllApps()
+
 			Ω(err).ShouldNot(HaveOccurred())
 
 			Expect(apps).NotTo(Equal(nil))
@@ -256,10 +217,12 @@ var _ = Describe("Caching", func() {
 			dup := *config
 			dup.Path = fmt.Sprintf("/tmp/%d", time.Now().UnixNano())
 			bcache, err := NewCachingBolt(client, &dup)
+
 			Ω(err).ShouldNot(HaveOccurred())
 
 			err = bcache.Open()
 			Ω(err).ShouldNot(HaveOccurred())
+			client.ingestApps(bcache)
 
 			defer os.Remove(dup.Path)
 			time.Sleep(time.Second)

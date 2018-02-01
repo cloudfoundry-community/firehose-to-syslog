@@ -25,9 +25,8 @@ type CachingBoltConfig struct {
 }
 
 type CachingBolt struct {
-	appClient AppClient
-	appdb     *bolt.DB
-
+	appClient   AppClient
+	appdb       *bolt.DB
 	lock        sync.RWMutex
 	cache       map[string]*App
 	missingApps map[string]struct{}
@@ -261,8 +260,6 @@ func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
 }
 
 func (c *CachingBolt) getAppFromRemote(appGuid string) (*App, error) {
-
-	logging.LogError("Loooking for app ", appGuid)
 	cfApp, err := c.appClient.AppByGuid(appGuid)
 	if err != nil {
 		return nil, err
