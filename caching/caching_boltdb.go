@@ -10,6 +10,7 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 	json "github.com/mailru/easyjson"
+	rate "go.uber.org/ratelimit"
 )
 
 const (
@@ -20,6 +21,7 @@ type CachingBoltConfig struct {
 	Path               string
 	IgnoreMissingApps  bool
 	CacheInvalidateTTL time.Duration
+	RequestBySec       int
 }
 
 type CachingBolt struct {
@@ -74,7 +76,7 @@ func (c *CachingBolt) populateCache() error {
 
 	if len(apps) == 0 {
 		// populate from remote
-		apps, err = c.getAllAppsFromRemotev2()
+		apps, err = c.getAllAppsFromRemote()
 		if err != nil {
 			return err
 		}
@@ -212,7 +214,7 @@ func (c *CachingBolt) invalidateCache() {
 			select {
 			case <-ticker.C:
 				// continue
-				apps, err := c.getAllAppsFromRemotev2()
+				apps, err := c.getAllAppsFromRemote()
 				if err == nil {
 					c.lock.Lock()
 					c.cache = apps
@@ -259,6 +261,7 @@ func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
 }
 
 func (c *CachingBolt) getAppFromRemote(appGuid string) (*App, error) {
+
 	logging.LogError("Loooking for app ", appGuid)
 	cfApp, err := c.appClient.AppByGuid(appGuid)
 	if err != nil {
@@ -278,8 +281,8 @@ func (c *CachingBolt) isOptOut(envVar map[string]interface{}) bool {
 }
 
 //Inspired by cf exporter
-func (c *CachingBolt) getAllAppsFromRemotev2() (map[string]*App, error) {
-	logging.LogStd("Retrieving Apps from Remote v2...", false)
+func (c *CachingBolt) getAllAppsFromRemote() (map[string]*App, error) {
+	logging.LogStd("Retrieving Apps from Remote ...", false)
 	apps := make(map[string]*App)
 	// Listing Orgs
 	organizations, err := c.appClient.ListOrgs()
@@ -289,16 +292,19 @@ func (c *CachingBolt) getAllAppsFromRemotev2() (map[string]*App, error) {
 	}
 	var wg = &sync.WaitGroup{}
 
+	//Adding Global Rate limitings 50sec
+	rl := rate.New(c.config.RequestBySec, rate.WithoutSlack)
+
 	for _, organization := range organizations {
 		wg.Add(1)
-		go func(organization cfclient.Org) {
+		go func(organization cfclient.Org, rl rate.Limiter) {
 			defer wg.Done()
-
-			err := c.getOrgSpaces(&organization)
+			rl.Take()
+			err := c.getOrgSpaces(&organization, rl)
 			if err != nil {
 				logging.LogError("Error gettings Org", err)
 			}
-		}(organization)
+		}(organization, rl)
 	}
 
 	wg.Wait()
@@ -310,7 +316,7 @@ func (c *CachingBolt) getAllAppsFromRemotev2() (map[string]*App, error) {
 	}
 	return apps, nil
 }
-func (c *CachingBolt) getOrgSpaces(organization *cfclient.Org) error {
+func (c *CachingBolt) getOrgSpaces(organization *cfclient.Org, l rate.Limiter) error {
 	spaces, err := c.appClient.OrgSpaces(organization.Guid)
 	if err != nil {
 		logging.LogError("Error while listing spaces for organization `%s`: %v", err)
@@ -324,7 +330,7 @@ func (c *CachingBolt) getOrgSpaces(organization *cfclient.Org) error {
 		wg.Add(1)
 		go func(space cfclient.Space) {
 			defer wg.Done()
-
+			l.Take()
 			err := c.getSpaceSummary(organization, &space)
 			if err != nil {
 				errChannel <- err

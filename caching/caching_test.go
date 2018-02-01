@@ -16,15 +16,19 @@ import (
 )
 
 type mockAppClient struct {
-	lock sync.RWMutex
-	apps map[string]cfclient.App
-	n    int
+	lock   sync.RWMutex
+	apps   map[string]cfclient.App
+	orgs   map[string]cfclient.Org
+	spaces map[string]cfclient.Space
+	n      int
 }
 
 func newMockAppClient(n int) *mockAppClient {
 	apps := getApps(n)
+	orgs := getOrgs(n)
 	return &mockAppClient{
 		apps: apps,
+		orgs: orgs,
 		n:    n,
 	}
 }
@@ -51,6 +55,28 @@ func (m *mockAppClient) ListApps() ([]cfclient.App, error) {
 	return apps, nil
 }
 
+func (m *mockAppClient) ListOrgs() ([]cfclient.Org, error) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	var orgs []cfclient.Org
+	for k := range m.orgs {
+		orgs = append(orgs, m.orgs[k])
+	}
+	return orgs, nil
+}
+
+func (m *mockAppClient) OrgSpaces(org string) ([]cfclient.Space, error) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	var spaces []cfclient.Space
+	for k := range m.spaces {
+		spaces = append(spaces, m.spaces[k])
+	}
+	return spaces, nil
+}
+
 func (m *mockAppClient) CreateApp(appID, spaceID, orgID string) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
@@ -73,6 +99,24 @@ func (m *mockAppClient) CreateApp(appID, spaceID, orgID string) {
 	}
 
 	m.apps[appID] = app
+}
+
+func getOrgs(n int) map[string]cfclient.Org {
+	orgs := make(map[string]cfclient.Org, n)
+	for i := 0; i < n; i++ {
+		org := cfclient.Org{Guid: fmt.Sprintf("cf_org_id_%d", i%100), Name: fmt.Sprintf("cf_org_name_%d", i%100)}
+		orgs[org.Guid] = org
+	}
+	return orgs
+}
+
+func getSpaces(n int) map[string]cfclient.Space {
+	spaces := make(map[string]cfclient.Space, n)
+	for i := 0; i < n; i++ {
+		space := cfclient.Space{Guid: fmt.Sprintf("cf_space_id_%d", i%100), Name: fmt.Sprintf("cf_space_name_%d", i%100)}
+		spaces[space.Guid] = space
+	}
+	return spaces
 }
 
 func getApps(n int) map[string]cfclient.App {
@@ -112,6 +156,7 @@ var _ = Describe("Caching", func() {
 			Path:               boltdbPath,
 			IgnoreMissingApps:  ignoreMissingApps,
 			CacheInvalidateTTL: cacheInvalidateTTL,
+			RequestBySec:       50,
 		}
 
 		client *mockAppClient = nil
