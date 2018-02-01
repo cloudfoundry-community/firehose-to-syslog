@@ -16,8 +16,6 @@ type App struct {
 	IgnoredApp bool
 }
 
-//go:generate counterfeiter . Caching
-
 type Caching interface {
 	Open() error
 	Close() error
