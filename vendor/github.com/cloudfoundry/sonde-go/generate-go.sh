@@ -13,6 +13,7 @@ TARGET=`dir_resolve $TARGET`
 cd $TARGET
 
 go get github.com/gogo/protobuf/{proto,protoc-gen-gogo,gogoproto}
+go get -u github.com/mailru/easyjson/...
 
 rm -rf generate-go-tmp
 mkdir -p generate-go-tmp/events
@@ -29,3 +30,6 @@ popd > /dev/null
 
 rm -r generate-go-tmp
 
+# generate easyjson marshalers/unmarshalers
+# use -no_std_marshalers so that using the optimized easyjson marshalers is opt-in
+easyjson -all -no_std_marshalers -pkg events

@@ -216,7 +216,7 @@ func (c *Consumer) runStream(appGuid, authToken string, retry bool) (<-chan *eve
 }
 
 func (c *Consumer) streamAppDataTo(conn *connection, appGuid, authToken string, callback func(*events.Envelope), errors chan<- error, retry bool) {
-	streamPath := c.streamPathBuilder(appGuid)
+	streamPath := fmt.Sprintf("/apps/%s/stream", appGuid)
 	if retry {
 		c.retryAction(c.listenAction(conn, streamPath, authToken, callback), errors)
 		return

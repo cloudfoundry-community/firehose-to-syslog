@@ -1,5 +1,123 @@
 package cfclient
 
+const listEventsPage1Payload = `{
+  "total_results": 4,
+  "total_pages": 2,
+  "prev_url": null,
+  "next_url": "/v2/events-2?page=2",
+  "resources": [
+    {
+      "metadata": {
+        "guid": "b8ede8e1-afc8-40a1-baae-236a0a77b27b",
+        "url": "/v2/events/b8ede8e1-afc8-40a1-baae-236a0a77b27b",
+        "created_at": "2016-06-08T16:41:23Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "type": "name-167",
+        "actor": "guid-008640fc-d316-4602-9251-c8d09bbdc750",
+        "actor_type": "name-168",
+        "actor_name": "name-169",
+        "actee": "guid-e7790fa4-be2b-4a0f-aa82-c124342b0bb4",
+        "actee_type": "name-170",
+        "actee_name": "name-171",
+        "timestamp": "2016-06-08T16:41:23Z",
+        "metadata": {
+
+        },
+        "space_guid": "3a1368e7-e3b7-46af-a98d-57b9c71445e7",
+        "organization_guid": "86aa12ee-8c4f-4b26-b391-2be6c1730dbc"
+      }
+    },
+    {
+      "metadata": {
+        "guid": "2ccf53a8-d0eb-4807-9bb9-7dd844e65267",
+        "url": "/v2/events/2ccf53a8-d0eb-4807-9bb9-7dd844e65267",
+        "created_at": "2016-06-08T16:41:23Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "type": "name-175",
+        "actor": "guid-52cb38f4-d52d-4201-87e3-8e5650efc8c1",
+        "actor_type": "name-176",
+        "actor_name": "name-177",
+        "actee": "guid-5c4214a1-f295-42ae-bd92-38e7cb8be538",
+        "actee_type": "name-178",
+        "actee_name": "name-179",
+        "timestamp": "2016-06-08T16:41:23Z",
+        "metadata": {
+
+        },
+        "space_guid": "10f0fd9d-dd68-428e-8e93-c00bb8eff0a6",
+        "organization_guid": "aa3fdaaa-42c8-4141-bc22-9792c37aa62f"
+      }
+    },
+    {
+      "metadata": {
+        "guid": "4f9b1fef-2ce4-4877-85e1-0da9114a92cb",
+        "url": "/v2/events/4f9b1fef-2ce4-4877-85e1-0da9114a92cb",
+        "created_at": "2016-06-08T16:41:23Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "type": "name-183",
+        "actor": "guid-d3be7ed1-1c08-43f6-a20d-5cd9287492e1",
+        "actor_type": "name-184",
+        "actor_name": "name-185",
+        "actee": "guid-9844795f-943d-47ed-a997-2c04ee611f5a",
+        "actee_type": "name-186",
+        "actee_name": "name-187",
+        "timestamp": "2016-06-08T16:41:23Z",
+        "metadata": {
+
+        },
+        "space_guid": "f9ef235c-25df-4aa1-bcb4-15eec6f92146",
+        "organization_guid": "24a920db-f551-46af-bf73-e1db972f652a"
+      }
+    }
+  ]
+}`
+
+const listEventsPage2Payload = `{
+  "total_results": 4,
+  "total_pages": 2,
+  "prev_url": null,
+  "next_url": null,
+  "resources": [
+    {
+      "metadata": {
+        "guid": "4f9b1fef-2ce4-4877-85e1-0da9114a92cb",
+        "url": "/v2/events/4f9b1fef-2ce4-4877-85e1-0da9114a92cb",
+        "created_at": "2016-06-08T16:41:23Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "type": "name-183",
+        "actor": "guid-d3be7ed1-1c08-43f6-a20d-5cd9287492e1",
+        "actor_type": "name-184",
+        "actor_name": "name-185",
+        "actee": "guid-9844795f-943d-47ed-a997-2c04ee611f5a",
+        "actee_type": "name-186",
+        "actee_name": "name-187",
+        "timestamp": "2016-06-08T16:41:23Z",
+        "metadata": {
+
+        },
+        "space_guid": "f9ef235c-25df-4aa1-bcb4-15eec6f92146",
+        "organization_guid": "24a920db-f551-46af-bf73-e1db972f652a"
+      }
+    }
+  ]
+}`
+
+const totalEventsPayload = `{
+  "total_results": 4,
+  "total_pages": 1,
+  "prev_url": null,
+  "next_url": null,
+  "resources": []
+}`
+
 const listOrgsPayload = `{
 "total_results": 6,
 "total_pages": 1,
@@ -113,6 +231,59 @@ const listOrgsPayloadPage2 = `{
   }
 ]
 }`
+
+const listOrgPeoplePayload = `
+{
+  "total_results": 2,
+  "total_pages": 1,
+  "prev_url": null,
+  "next_url": null,
+  "resources": [
+    {
+      "metadata": {
+        "guid": "uaa-id-231",
+        "url": "/v2/users/uaa-id-231",
+        "created_at": "2016-06-08T16:41:34Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "admin": false,
+        "active": false,
+        "default_space_guid": null,
+        "username": "user1",
+        "spaces_url": "/v2/users/uaa-id-231/spaces",
+        "organizations_url": "/v2/users/uaa-id-231/organizations",
+        "managed_organizations_url": "/v2/users/uaa-id-231/managed_organizations",
+        "billing_managed_organizations_url": "/v2/users/uaa-id-231/billing_managed_organizations",
+        "audited_organizations_url": "/v2/users/uaa-id-231/audited_organizations",
+        "managed_spaces_url": "/v2/users/uaa-id-231/managed_spaces",
+        "audited_spaces_url": "/v2/users/uaa-id-231/audited_spaces"
+      }
+    },
+    {
+      "metadata": {
+        "guid": "uaa-id-232",
+        "url": "/v2/users/uaa-id-232",
+        "created_at": "2016-06-08T16:41:34Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "admin": false,
+        "active": false,
+        "default_space_guid": null,
+        "username": "user2",
+        "spaces_url": "/v2/users/uaa-id-232/spaces",
+        "organizations_url": "/v2/users/uaa-id-232/organizations",
+        "managed_organizations_url": "/v2/users/uaa-id-232/managed_organizations",
+        "billing_managed_organizations_url": "/v2/users/uaa-id-232/billing_managed_organizations",
+        "audited_organizations_url": "/v2/users/uaa-id-232/audited_organizations",
+        "managed_spaces_url": "/v2/users/uaa-id-232/managed_spaces",
+        "audited_spaces_url": "/v2/users/uaa-id-232/audited_spaces"
+      }
+    }
+  ]
+}
+`
 
 const orgByGuidPayload = `{
   "metadata": {
@@ -392,7 +563,7 @@ const listSpacesPayload = `{
             "guid": "8efd7c5c-d83c-4786-b399-b7bd548839e1",
             "url": "/v2/spaces/8efd7c5c-d83c-4786-b399-b7bd548839e1",
             "created_at": "2014-09-24T13:54:54+00:00",
-            "updated_at": null
+            "updated_at": "2014-09-24T13:54:54+00:00"
          },
          "entity": {
             "name": "dev",
@@ -416,7 +587,7 @@ const listSpacesPayload = `{
             "guid": "657b5923-7de0-486a-9928-b4d78ee24931",
             "url": "/v2/spaces/657b5923-7de0-486a-9928-b4d78ee24931",
             "created_at": "2014-09-26T13:37:31+00:00",
-            "updated_at": null
+            "updated_at": "2014-09-26T13:37:31+00:00"
          },
          "entity": {
             "name": "demo",
@@ -449,7 +620,7 @@ const listSpacesPayloadPage2 = `{
             "guid": "9ffd7c5c-d83c-4786-b399-b7bd54883977",
             "url": "/v2/spaces/9ffd7c5c-d83c-4786-b399-b7bd54883977",
             "created_at": "2014-09-24T13:54:54+00:00",
-            "updated_at": null
+            "updated_at": "2014-09-24T13:54:54+00:00"
          },
          "entity": {
             "name": "test",
@@ -473,7 +644,7 @@ const listSpacesPayloadPage2 = `{
             "guid": "329b5923-7de0-486a-9928-b4d78ee24982",
             "url": "/v2/spaces/329b5923-7de0-486a-9928-b4d78ee24982",
             "created_at": "2014-09-26T13:37:31+00:00",
-            "updated_at": null
+            "updated_at": "2014-09-26T13:37:31+00:00"
          },
          "entity": {
             "name": "prod",
@@ -493,6 +664,57 @@ const listSpacesPayloadPage2 = `{
          }
       }
    ]
+}`
+
+const listSpacePeoplePayload = `{
+  "total_results": 2,
+  "total_pages": 1,
+  "prev_url": null,
+  "next_url": null,
+  "resources": [
+    {
+      "metadata": {
+        "guid": "uaa-id-411",
+        "url": "/v2/users/uaa-id-411",
+        "created_at": "2016-06-08T16:41:42Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "admin": false,
+        "active": false,
+        "default_space_guid": null,
+        "username": "user1",
+        "spaces_url": "/v2/users/uaa-id-411/spaces",
+        "organizations_url": "/v2/users/uaa-id-411/organizations",
+        "managed_organizations_url": "/v2/users/uaa-id-411/managed_organizations",
+        "billing_managed_organizations_url": "/v2/users/uaa-id-411/billing_managed_organizations",
+        "audited_organizations_url": "/v2/users/uaa-id-411/audited_organizations",
+        "managed_spaces_url": "/v2/users/uaa-id-411/managed_spaces",
+        "audited_spaces_url": "/v2/users/uaa-id-411/audited_spaces"
+      }
+    },
+    {
+      "metadata": {
+        "guid": "uaa-id-412",
+        "url": "/v2/users/uaa-id-412",
+        "created_at": "2016-06-08T16:41:42Z",
+        "updated_at": "2016-06-08T16:41:26Z"
+      },
+      "entity": {
+        "admin": false,
+        "active": false,
+        "default_space_guid": null,
+        "username": "user2",
+        "spaces_url": "/v2/users/uaa-id-412/spaces",
+        "organizations_url": "/v2/users/uaa-id-412/organizations",
+        "managed_organizations_url": "/v2/users/uaa-id-412/managed_organizations",
+        "billing_managed_organizations_url": "/v2/users/uaa-id-412/billing_managed_organizations",
+        "audited_organizations_url": "/v2/users/uaa-id-412/audited_organizations",
+        "managed_spaces_url": "/v2/users/uaa-id-412/managed_spaces",
+        "audited_spaces_url": "/v2/users/uaa-id-412/audited_spaces"
+      }
+    }
+  ]
 }`
 
 const spaceByGuidPayload = `{
@@ -1115,7 +1337,7 @@ const appEnvPayload = `{
   }
 }`
 
-const appPayloadWithEnvironment_json = `{
+const appPayloadWithEnvironment = `{
    "metadata": {
    },
    "entity": {
@@ -1304,6 +1526,46 @@ const spacePayload = `{
       "events_url": "/v2/spaces/a72fa1e8-c694-47b3-85f2-55f61fd00d73/events",
       "security_groups_url": "/v2/spaces/a72fa1e8-c694-47b3-85f2-55f61fd00d73/security_groups"
    }
+}`
+
+const spaceServiceOfferingsPayload = `{
+  "total_results": 1,
+  "total_pages": 1,
+  "prev_url": null,
+  "next_url": null,
+  "resources": [
+    {
+      "metadata": {
+        "guid": "6ec97e21-e879-4f72-9a80-8ec550ffec30",
+        "url": "/v2/services/6ec97e21-e879-4f72-9a80-8ec550ffec30",
+        "created_at": "2017-10-03T23:47:16Z",
+        "updated_at": "2017-10-10T20:53:28Z"
+      },
+      "entity": {
+        "label": "cool-service",
+        "provider": null,
+        "url": null,
+        "description": "Cool service for CF",
+        "long_description": null,
+        "version": null,
+        "info_url": null,
+        "active": 1,
+        "bindable": 1,
+        "unique_id": "beb05948-0fa8-48bf-bfb2-7b09e6687d37",
+        "extra": "{\"displayName\":\"Super cool service\",\"longDescription\":\"Very cool service.\",\"documentationUrl\":\"https://readthedocs.org\"}",
+        "tags": [
+          "cool"
+        ],
+        "requires": [
+
+        ],
+        "documentation_url": null,
+        "service_broker_guid": "6b3da2f0-c530-4f2b-8fd2-7cd68a21e907",
+        "plan_updateable": 1,
+        "service_plans_url": "/v2/services/6ec97e21-e879-4f72-9a80-8ec550ffec30/service_plans"
+      }
+    }
+  ]
 }`
 
 const orgPayload = `{
@@ -1647,7 +1909,7 @@ var serviceInstancePayload = `{
       "guid": "8423ca96-90ad-411f-b77a-0907844949fc",
       "url": "/v2/service_instances/8423ca96-90ad-411f-b77a-0907844949fc",
       "created_at": "2016-10-21T18:22:56Z",
-      "updated_at": null
+      "updated_at": "2016-10-21T18:22:56Z"
    },
    "entity": {
       "name": "fortunes-db",
@@ -2278,6 +2540,28 @@ const ListBuildpacksPayload2 = `{
   ]
 }`
 
+const userByGUIDPayload = `{
+  "metadata": {
+    "guid": "72ccf759-43aa-4954-903f-7d892c268e80",
+    "url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80",
+    "created_at": "2017-11-03T01:33:31Z",
+    "updated_at": "2017-11-03T01:33:31Z"
+  },
+  "entity": {
+    "admin": false,
+    "active": false,
+    "default_space_guid": null,
+    "username": "user@example.com",
+    "spaces_url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80/spaces",
+    "organizations_url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80/organizations",
+    "managed_organizations_url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80/managed_organizations",
+    "billing_managed_organizations_url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80/billing_managed_organizations",
+    "audited_organizations_url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80/audited_organizations",
+    "managed_spaces_url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80/managed_spaces",
+    "audited_spaces_url": "/v2/users/72ccf759-43aa-4954-903f-7d892c268e80/audited_spaces"
+  }
+}`
+
 const listUsersPayload = `{
    "total_results": 8,
    "total_pages": 2,
@@ -2540,24 +2824,6 @@ const listIsolationSegmentsPayload = `{
    ]
 }`
 
-const addOrgToIsolationSegmentPayload = `{
-   "guid": "033b4c58-12bb-499a-b05d-4b6fc9e2993b",
-   "name": "shared",
-   "created_at": "2016-10-19T20:25:04Z",
-   "updated_at": "2016-11-08T16:41:26Z",
-   "links": {
-      "self": {
-         "href": "https://api.example.org/v3/isolation_segments/033b4c58-12bb-499a-b05d-4b6fc9e2993b"
-      },
-      "spaces": {
-         "href": "https://api.example.org/v3/isolation_segments/033b4c58-12bb-499a-b05d-4b6fc9e2993b/relationships/spaces"
-      },
-      "organizations": {
-         "href": "https://api.example.org/v3/isolation_segments/033b4c58-12bb-499a-b05d-4b6fc9e2993b/relationships/organizations"
-      }
-   }
-}`
-
 const listServiceKeysPayload = `{
    "total_results": 2,
    "total_pages": 1,
@@ -2637,7 +2903,7 @@ const getServiceKeyPayload = `{
                "amqp": "amqp://100.100.100.100:9008",
                "nhp": "nhp://100.100.100.100:9009",
                "mqtt": "tcp://100.100.100.100:9008",
-               "name": "fcf26687-e176-4784-b181-b3c942fecb62",
+               "name": "ecf26687-e176-4784-b181-b3c942fecb62",
                "nsp": "nsp://100.100.100.100:9008",
                "userid": "cfu-9be3911b-c621-4467-8866-f8b924aaee57",
                "uri": "nhp://100.100.100.100:9008",
@@ -2648,8 +2914,180 @@ const getServiceKeyPayload = `{
                   }
                ]
             },
-            "service_instance_url": "/v2/service_instances/fcf26687-e176-4784-b181-b3c942fecb62"
+            "service_instance_url": "/v2/service_instances/ecf26687-e176-4784-b181-b3c942fecb62"
         }
     }
   ]
 }`
+
+const getServiceKeysPayload = `{
+  "total_results": 2,
+  "total_pages": 1,
+  "prev_url": null,
+  "next_url": null,
+  "resources": [
+      {
+          "metadata": {
+              "guid": "8be3911b-c621-4467-8866-f8b924aaee57",
+              "url": "/v2/service_keys/8be3911b-c621-4467-8866-f8b924aaee57",
+              "created_at": "2017-05-16T12:14:46Z",
+              "updated_at": "2017-05-16T12:14:46Z"
+          },
+          "entity": {
+              "name": "test01_key",
+              "service_instance_guid": "ecf26687-e176-4784-b181-b3c942fecb62",
+              "credentials": {
+                  "jms": "nhp://100.100.100.100:9008",
+                  "js_uri": "http://100.100.100.100:9008",
+                  "amqp": "amqp://100.100.100.100:9008",
+                  "nhp": "nhp://100.100.100.100:9009",
+                  "mqtt": "tcp://100.100.100.100:9008",
+                  "name": "ecf26687-e176-4784-b181-b3c942fecb62",
+                  "nsp": "nsp://100.100.100.100:9008",
+                  "userid": "cfu-9be3911b-c621-4467-8866-f8b924aaee57",
+                  "uri": "nhp://100.100.100.100:9008",
+                  "uriInfos": [
+                      {
+                          "host": "100.100.100.100",
+                          "port": 9008
+                      }
+                  ]
+              },
+              "service_instance_url": "/v2/service_instances/ecf26687-e176-4784-b181-b3c942fecb62"
+          }
+      },
+      {
+          "metadata": {
+              "guid": "9361b5dc-9262-4a83-8969-9b3469211884",
+              "url": "/v2/service_keys/9361b5dc-9262-4a83-8969-9b3469211884",
+              "created_at": "2017-10-24T17:00:46Z",
+              "updated_at": "2017-10-24T17:00:46Z"
+          },
+          "entity": {
+              "name": "test02_key",
+              "service_instance_guid": "ecf26687-e176-4784-b181-b3c942fecb62",
+              "credentials": {
+                  "jms": "nhp://100.100.47.11:9008",
+                  "js_uri": "http://100.100.47.11:9008",
+                  "amqp": "amqp://100.100.47.11:9008",
+                  "nhp": "nhp://100.100.47.11:9009",
+                  "mqtt": "tcp://100.100.47.11.100:9008",
+                  "name": "ecf26687-e176-4784-b181-b3c942fecb62",
+                  "nsp": "nsp://100.100.47.11:9008",
+                  "userid": "cfu-7fb486c4-4d9e-49cb-b121-3241ece5dc10",
+                  "uri": "nhp://100.100.47.11:9008",
+                  "uriInfos": [
+                      {
+                          "host": "100.100.47.11",
+                          "port": 9008
+                      }
+                  ]
+              },
+              "service_instance_url": "/v2/service_instances/ecf26687-e176-4784-b181-b3c942fecb62"
+          }
+      }
+
+  ]
+}`
+
+const postServiceKeysPayload = `{
+  "metadata": {
+    "guid": "9361b5dc-9262-4a83-8969-9b3469211884",
+    "url": "/v2/service_keys/9361b5dc-9262-4a83-8969-9b3469211884",
+    "created_at": "2017-10-25T17:31:23Z",
+    "updated_at": "2017-10-25T17:31:23Z"
+  },
+  "entity": {
+    "name": "key1",
+    "service_instance_guid": "ecf26687-e176-4784-b181-b3c942fecb62",
+    "credentials": {
+      "jms": "nhp://100.100.47.11:9008",
+      "js_uri": "http://100.100.47.11:9008",
+      "amqp": "amqp://100.100.47.11:9008",
+      "nhp": "nhp://100.100.47.11:9009",
+      "mqtt": "tcp://100.100.47.11.100:9008",
+      "name": "ecf26687-e176-4784-b181-b3c942fecb62",
+      "nsp": "nsp://100.100.47.11:9008",
+      "userid": "cfu-7fb486c4-4d9e-49cb-b121-3241ece5dc10",
+      "uri": "nhp://100.100.47.11:9008",
+      "uriInfos": [
+        {
+          "host": "100.100.47.11",
+          "port": 9008
+        }
+      ]
+    },
+    "service_instance_url": "/v2/service_instances/ecf26687-e176-4784-b181-b3c942fecb62"
+  }
+}`
+
+const postServiceKeysDuplicatePayload = `{
+    "description": "The service key name is taken: key1",
+    "error_code": "CF-ServiceKeyNameTaken",
+    "code": 360001
+}`
+
+const postServiceKeysBadPayload = `{
+  "description": "The service key name is taken: key1",
+  "error_code": "CF-ServiceKeyNameTaken",
+  "code": 360001
+`
+
+const listServiceBrokersPayload = `
+{
+  "total_results": 3,
+  "total_pages": 1,
+  "prev_url": null,
+  "next_url": null,
+  "resources": [
+    {
+      "metadata": {
+        "guid": "90a413fd-a636-4133-8bfb-a94b07839e96",
+        "url": "/v2/service_brokers/90a413fd-a636-4133-8bfb-a94b07839e96",
+        "created_at": "2016-06-08T16:41:22Z",
+        "updated_at": "2016-06-08T16:41:22Z"
+      },
+      "entity": {
+        "name": "name-85",
+        "broker_url": "https://foo.com/url-2",
+        "auth_username": "auth_username-2",
+        "space_guid": "1d43e64d-ed64-43dd-9046-11f422bd407b"
+      }
+    }
+  ]
+}
+`
+
+const getServiceByGuidPayload = `
+{
+  "metadata": {
+    "guid": "53f52780-e93c-4af7-a96c-6958311c40e5",
+    "url": "/v2/services/53f52780-e93c-4af7-a96c-6958311c40e5",
+    "created_at": "2016-06-08T16:41:32Z",
+    "updated_at": "2016-06-08T16:41:26Z"
+  },
+  "entity": {
+    "label": "label-58",
+    "provider": null,
+    "url": null,
+    "description": "desc-135",
+    "long_description": null,
+    "version": null,
+    "info_url": null,
+    "active": true,
+    "bindable": true,
+    "unique_id": "c181996b-f233-43d1-8901-3a43eafcaacf",
+    "extra": null,
+    "tags": [
+
+    ],
+    "requires": [
+
+    ],
+    "documentation_url": null,
+    "service_broker_guid": "0e7250aa-364f-42c2-8fd2-808b0224376f",
+    "plan_updateable": false,
+    "service_plans_url": "/v2/services/53f52780-e93c-4af7-a96c-6958311c40e5/service_plans"
+  }
+}
+`

@@ -105,7 +105,7 @@ func TestAppByGuid(t *testing.T) {
 	})
 
 	Convey("App By GUID with environment variables with different types", t, func() {
-		setup(MockRoute{"GET", "/v2/apps/9902530c-c634-4864-a189-71d763cb12e2", appPayloadWithEnvironment_json, "", 200, "inline-relations-depth=2", nil}, t)
+		setup(MockRoute{"GET", "/v2/apps/9902530c-c634-4864-a189-71d763cb12e2", appPayloadWithEnvironment, "", 200, "inline-relations-depth=2", nil}, t)
 		defer teardown()
 		c := &Config{
 			ApiAddress: server.URL,
@@ -312,5 +312,21 @@ func TestAppSpace(t *testing.T) {
 
 		So(space.Name, ShouldEqual, "test-space")
 		So(space.Guid, ShouldEqual, "a72fa1e8-c694-47b3-85f2-55f61fd00d73")
+	})
+}
+
+func TestDeleteApps(t *testing.T) {
+	Convey("Delete app", t, func() {
+		setup(MockRoute{"DELETE", "/v2/apps/a537761f-9d93-4b30-af17-3d73dbca181b", "", "", 204, "", nil}, t)
+		defer teardown()
+		c := &Config{
+			ApiAddress: server.URL,
+			Token:      "foobar",
+		}
+		client, err := NewClient(c)
+		So(err, ShouldBeNil)
+
+		err = client.DeleteApp("a537761f-9d93-4b30-af17-3d73dbca181b")
+		So(err, ShouldBeNil)
 	})
 }
