@@ -21,14 +21,14 @@ type App struct {
 type Caching interface {
 	Open() error
 	Close() error
-
 	GetAllApps() (map[string]*App, error)
 	GetApp(string) (*App, error)
 }
 
 type AppClient interface {
 	AppByGuid(appGuid string) (cfclient.App, error)
-	ListApps() ([]cfclient.App, error)
+	ListOrgs() ([]cfclient.Org, error)
+	OrgSpaces(guid string) ([]cfclient.Space, error)
 }
 
 func IsNeeded(wantedEvents string) bool {

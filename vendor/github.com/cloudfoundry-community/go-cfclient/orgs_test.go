@@ -7,7 +7,7 @@ import (
 )
 
 func TestListOrgs(t *testing.T) {
-	Convey("List Org", t, func() {
+	Convey("List Orgs", t, func() {
 		mocks := []MockRoute{
 			{"GET", "/v2/organizations", listOrgsPayload, "", 200, "", nil},
 			{"GET", "/v2/orgsPage2", listOrgsPayloadPage2, "", 200, "", nil},
@@ -31,7 +31,7 @@ func TestListOrgs(t *testing.T) {
 }
 
 func TestGetOrgByGuid(t *testing.T) {
-	Convey("List Org", t, func() {
+	Convey("Get org by GUID", t, func() {
 		setup(MockRoute{"GET", "/v2/organizations/1c0e6074-777f-450e-9abc-c42f39d9b75b", orgByGuidPayload, "", 200, "", nil}, t)
 		defer teardown()
 		c := &Config{
@@ -66,6 +66,61 @@ func TestOrgSpaces(t *testing.T) {
 		So(len(spaces), ShouldEqual, 1)
 		So(spaces[0].Guid, ShouldEqual, "b8aff561-175d-45e8-b1e7-67e2aedb03b6")
 		So(spaces[0].Name, ShouldEqual, "test")
+	})
+}
+
+func TestListOrgManagers(t *testing.T) {
+	Convey("Get Org Managers for an org", t, func() {
+		setup(MockRoute{"GET", "/v2/organizations/foo/managers", listOrgPeoplePayload, "", 200, "", nil}, t)
+		defer teardown()
+		c := &Config{
+			ApiAddress: server.URL,
+			Token:      "foobar",
+		}
+		client, err := NewClient(c)
+		So(err, ShouldBeNil)
+
+		managers, err := client.ListOrgManagers("foo")
+		So(err, ShouldBeNil)
+		So(len(managers), ShouldEqual, 2)
+		So(managers[0].Username, ShouldEqual, "user1")
+		So(managers[1].Username, ShouldEqual, "user2")
+	})
+}
+func TestListOrgAuditors(t *testing.T) {
+	Convey("Get Org Auditors for an org", t, func() {
+		setup(MockRoute{"GET", "/v2/organizations/foo/auditors", listOrgPeoplePayload, "", 200, "", nil}, t)
+		defer teardown()
+		c := &Config{
+			ApiAddress: server.URL,
+			Token:      "foobar",
+		}
+		client, err := NewClient(c)
+		So(err, ShouldBeNil)
+
+		users, err := client.ListOrgAuditors("foo")
+		So(err, ShouldBeNil)
+		So(len(users), ShouldEqual, 2)
+		So(users[0].Username, ShouldEqual, "user1")
+		So(users[1].Username, ShouldEqual, "user2")
+	})
+}
+func TestListBillingManagers(t *testing.T) {
+	Convey("Get Billing Manager for an org", t, func() {
+		setup(MockRoute{"GET", "/v2/organizations/foo/billing_managers", listOrgPeoplePayload, "", 200, "", nil}, t)
+		defer teardown()
+		c := &Config{
+			ApiAddress: server.URL,
+			Token:      "foobar",
+		}
+		client, err := NewClient(c)
+		So(err, ShouldBeNil)
+
+		managers, err := client.ListBillingManagers("foo")
+		So(err, ShouldBeNil)
+		So(len(managers), ShouldEqual, 2)
+		So(managers[0].Username, ShouldEqual, "user1")
+		So(managers[1].Username, ShouldEqual, "user2")
 	})
 }
 
@@ -155,7 +210,7 @@ func TestCreateOrg(t *testing.T) {
 
 func TestDeleteOrg(t *testing.T) {
 	Convey("Delete org", t, func() {
-		setup(MockRoute{"DELETE", "/v2/organizations/a537761f-9d93-4b30-af17-3d73dbca181b", "", "", 204, "recursive=false", nil}, t)
+		setup(MockRoute{"DELETE", "/v2/organizations/a537761f-9d93-4b30-af17-3d73dbca181b", "", "", 204, "recursive=false&async=false", nil}, t)
 		defer teardown()
 		c := &Config{
 			ApiAddress: server.URL,
@@ -164,7 +219,7 @@ func TestDeleteOrg(t *testing.T) {
 		client, err := NewClient(c)
 		So(err, ShouldBeNil)
 
-		err = client.DeleteOrg("a537761f-9d93-4b30-af17-3d73dbca181b", false)
+		err = client.DeleteOrg("a537761f-9d93-4b30-af17-3d73dbca181b", false, false)
 		So(err, ShouldBeNil)
 	})
 }

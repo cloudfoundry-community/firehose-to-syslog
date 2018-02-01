@@ -8,7 +8,7 @@ import (
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/stats"
 
-	gendiodes "code.cloudfoundry.org/diodes"
+	gendiodes "code.cloudfoundry.org/go-diodes"
 	"github.com/cloudfoundry-community/firehose-to-syslog/diodes"
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
@@ -69,20 +69,20 @@ func NewFirehoseNozzle(uaaR *uaatokenrefresher.UAATokenRefresher,
 	}
 }
 
+//Start consumer and reading ingest loop
 func (f *FirehoseNozzle) Start(ctx context.Context) {
 	f.consumeFirehose()
 	wg.Add(2)
 	go f.routeEvent(ctx)
 	go f.ReadLogsBuffer(ctx)
-	return
 }
 
+//Stop reading loop
 func (f *FirehoseNozzle) StopReading() {
 	close(f.stopRouting)
 	close(f.stopReading)
 	//Need to be sure both of the GoRoutine are stop
 	wg.Wait()
-	return
 }
 
 func (f *FirehoseNozzle) consumeFirehose() {

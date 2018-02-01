@@ -72,7 +72,12 @@ func (c *Consumer) readTC(appGuid string, authToken string, endpoint string) ([]
 		return nil, err
 	}
 
-	recentPath := c.recentPathBuilder(trafficControllerUrl, appGuid, endpoint)
+	scheme := "https"
+	if trafficControllerUrl.Scheme == "ws" {
+		scheme = "http"
+	}
+
+	recentPath := fmt.Sprintf("%s://%s/apps/%s/%s", scheme, trafficControllerUrl.Host, appGuid, endpoint)
 
 	resp, err := c.requestTC(recentPath, authToken)
 	if err != nil {
