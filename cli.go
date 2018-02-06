@@ -175,7 +175,7 @@ func (cli *CLI) Run(args []string) int {
 	if loggingClient.Connect() || *debug {
 		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
 	} else {
-		logging.LogError("Failed connecting to the Fluentd Server...Please check settings and try again!", "")
+		logging.LogError("Failed connecting to the Syslog Server...Please check settings and try again!", "")
 		return ExitCodeError
 	}
 
