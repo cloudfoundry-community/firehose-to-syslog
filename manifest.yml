@@ -1,5 +1,6 @@
 applications:
 - name: firehose-to-syslog
+  health-check-type: process
 env:
   API_ENDPOINT: https://api.bosh-lite.com
   DEBUG: false
