@@ -2,6 +2,7 @@ applications:
 - name: firehose-to-syslog
   health-check-type: process
   env:
+    GOPACKAGENAME: github.com/cloudfoundry-community/firehose-to-syslog
     API_ENDPOINT: https://api.bosh-lite.com
     DEBUG: false
     DOPPLER_ENDPOINT: wss://doppler.bosh-lite.com:443
