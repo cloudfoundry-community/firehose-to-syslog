@@ -170,7 +170,7 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
     ```
 1. Turn off the health check if you're staging to Diego.
     ```
-    cf set-health-check firehose-to-syslog none
+    cf set-health-check firehose-to-syslog process
     ```
 1. Push the app.
     ```
