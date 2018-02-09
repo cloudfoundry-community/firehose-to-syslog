@@ -38,7 +38,7 @@
   branch = "master"
   name = "github.com/cloudfoundry-community/go-cfclient"
   packages = ["."]
-  revision = "bdb31282431a30516bb8d28628e95dd47e577df6"
+  revision = "9e1e72f8532b6ca741b8e75bcd7b2a0053406d37"
 
 [[projects]]
   branch = "master"
@@ -76,14 +76,14 @@
     "proto",
     "protoc-gen-gogo/descriptor"
   ]
-  revision = "342cbe0a04158f6dcb03ca0079991a51a4248c02"
-  version = "v0.5"
+  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/gorilla/websocket"
@@ -177,7 +177,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "1875d0a70c90e57f11972aefd42276df65e895b9"
+  revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
 
 [[projects]]
   branch = "master"
@@ -189,7 +189,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
+  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
 
 [[projects]]
   branch = "master"
@@ -199,7 +199,7 @@
     "clientcredentials",
     "internal"
   ]
-  revision = "a032972e28060ca4f5644acffae3dfc268cc09db"
+  revision = "543e37812f10c46c622c9575afd7ad22f22a12ba"
 
 [[projects]]
   branch = "master"
@@ -208,7 +208,7 @@
     "unix",
     "windows"
   ]
-  revision = "ff2a66f350cefa5c93a634eadb5d25bb60c85a9c"
+  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [[projects]]
   branch = "master"
@@ -232,7 +232,7 @@
     "transform",
     "unicode/cldr"
   ]
-  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
+  revision = "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1"
 
 [[projects]]
   name = "google.golang.org/appengine"

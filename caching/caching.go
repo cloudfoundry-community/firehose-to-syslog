@@ -27,6 +27,7 @@ type AppClient interface {
 	AppByGuid(appGuid string) (cfclient.App, error)
 	ListOrgs() ([]cfclient.Org, error)
 	OrgSpaces(guid string) ([]cfclient.Space, error)
+	GetAppByGuidNoInlineCall(appGuid string) (cfclient.App, error)
 }
 
 func IsNeeded(wantedEvents string) bool {

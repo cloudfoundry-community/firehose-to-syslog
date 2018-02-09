@@ -260,7 +260,7 @@ func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
 }
 
 func (c *CachingBolt) getAppFromRemote(appGuid string) (*App, error) {
-	cfApp, err := c.appClient.AppByGuid(appGuid)
+	cfApp, err := c.appClient.GetAppByGuidNoInlineCall(appGuid)
 	if err != nil {
 		return nil, err
 	}
