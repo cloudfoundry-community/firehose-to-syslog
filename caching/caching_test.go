@@ -39,6 +39,16 @@ func (m *mockAppClient) AppByGuid(guid string) (cfclient.App, error) {
 	return app, errors.New("No such app")
 }
 
+func (m *mockAppClient) GetAppByGuidNoInlineCall(guid string) (cfclient.App, error) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	app, ok := m.apps[guid]
+	if ok {
+		return app, nil
+	}
+	return app, errors.New("No such app")
+}
+
 func (m *mockAppClient) ListOrgs() ([]cfclient.Org, error) { return []cfclient.Org{}, nil }
 func (m *mockAppClient) OrgSpaces(org string) ([]cfclient.Space, error) {
 	return []cfclient.Space{}, nil

@@ -127,16 +127,15 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
 # Push as an App to Cloud Foundry
 
 1. Create `doppler.firehose` enabled user or client
-  Since `cf v241`  you can use `cloud_controller.admin_read_only` instead of `cloud_controller.admin`
-    - Use Client id / Client Secret
+    - Use Client ID / Client Secret
       ```
-      uaac target https://uaa.[your cf system domain] --skip-ssl-validation
+      uaac target https://uaa.[your cf system domain]
       uaac token client get admin -s [your admin-secret]
       uaac client add firehose-to-syslog \
         --name firehose-to-syslog \
         --secret [your_client_secret] \
         --authorized_grant_types client_credentials,refresh_token \
-        --authorities doppler.firehose,cloud_controller.admin
+        --authorities doppler.firehose,cloud_controller.global_auditor
       ```
 
 1. Download the latest release of firehose-to-syslog.
@@ -170,7 +169,7 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
     ```
 1. Turn off the health check if you're staging to Diego.
     ```
-    cf set-health-check firehose-to-syslog none
+    cf set-health-check firehose-to-syslog process
     ```
 1. Push the app.
     ```
