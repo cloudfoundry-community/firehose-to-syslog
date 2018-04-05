@@ -3,6 +3,7 @@ package caching_test
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -50,6 +51,9 @@ func (m *mockAppClient) GetAppByGuidNoInlineCall(guid string) (cfclient.App, err
 }
 
 func (m *mockAppClient) ListOrgs() ([]cfclient.Org, error) { return []cfclient.Org{}, nil }
+func (m *mockAppClient) ListAppsByQuery(query url.Values) ([]cfclient.App, error) {
+	return []cfclient.App{}, nil
+}
 func (m *mockAppClient) OrgSpaces(org string) ([]cfclient.Space, error) {
 	return []cfclient.Space{}, nil
 }

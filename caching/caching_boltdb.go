@@ -3,6 +3,7 @@ package caching
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"sync"
 	"time"
 
@@ -328,7 +329,7 @@ func (c *CachingBolt) getOrgSpaces(organization *cfclient.Org, l rate.Limiter) e
 		go func(space cfclient.Space) {
 			defer wg.Done()
 			l.Take()
-			err := c.getSpaceSummary(organization, &space)
+			err := c.getSpaceApps(organization, &space)
 			if err != nil {
 				errChannel <- err
 			}
@@ -341,21 +342,21 @@ func (c *CachingBolt) getOrgSpaces(organization *cfclient.Org, l rate.Limiter) e
 	return <-errChannel
 }
 
-func (c *CachingBolt) getSpaceSummary(organization *cfclient.Org, space *cfclient.Space) error {
-	spaceSummary, err := space.Summary()
+func (c *CachingBolt) getSpaceApps(organization *cfclient.Org, space *cfclient.Space) error {
+	q := url.Values{}
+	q.Set("space_guid", space.Guid)
+	apps, err := c.appClient.ListAppsByQuery(q)
 	if err != nil {
-		logging.LogError("Error while getting summary for space `%s`: %v", err)
 		return err
 	}
-
-	for _, application := range spaceSummary.Apps {
-		app := c.fromPCFAppSummary(&application, organization, space)
+	for _, application := range apps {
+		app := c.fromPCFAppSpaces(&application, organization, space)
 		c.addRecord(app)
 	}
 	return nil
 }
 
-func (c *CachingBolt) fromPCFAppSummary(app *cfclient.AppSummary, organization *cfclient.Org, space *cfclient.Space) *App {
+func (c *CachingBolt) fromPCFAppSpaces(app *cfclient.App, organization *cfclient.Org, space *cfclient.Space) *App {
 	return &App{
 		app.Name,
 		app.Guid,

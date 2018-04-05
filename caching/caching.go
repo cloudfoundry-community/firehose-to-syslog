@@ -1,6 +1,7 @@
 package caching
 
 import (
+	"net/url"
 	"regexp"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
@@ -28,6 +29,7 @@ type AppClient interface {
 	ListOrgs() ([]cfclient.Org, error)
 	OrgSpaces(guid string) ([]cfclient.Space, error)
 	GetAppByGuidNoInlineCall(appGuid string) (cfclient.App, error)
+	ListAppsByQuery(query url.Values) ([]cfclient.App, error)
 }
 
 func IsNeeded(wantedEvents string) bool {
