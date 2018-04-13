@@ -161,8 +161,6 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
     cf set-env firehose-to-syslog LOG_EVENT_TOTALS_TIME "10s"
     cf set-env firehose-to-syslog SKIP_SSL_VALIDATION true
     cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
-    cf set-env firehose-to-syslog FIREHOSE_USER  [your doppler.firehose enabled user]
-    cf set-env firehose-to-syslog FIREHOSE_PASSWORD  [your doppler.firehose enabled user password]
     cf set-env firehose-to-syslog FIREHOSE_CLIENT_ID  [your doppler.firehose enabled client id]
     cf set-env firehose-to-syslog FIREHOSE_CLIENT_SECRET  [your doppler.firehose enabled client secret]
     cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter type to use. Valid options are : text, json]
