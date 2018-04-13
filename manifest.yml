@@ -7,8 +7,6 @@ applications:
     DEBUG: false
     DOPPLER_ENDPOINT: wss://doppler.bosh-lite.com:443
     EVENTS: LogMessage,ValueMetric,Error,ContainerMetric
-    FIREHOSE_USER: admin
-    FIREHOSE_PASSWORD: admin
     FIREHOSE_CLIENT_ID: admin
     FIREHOSE_CLIENT_SECRET: admin
     FIREHOSE_SUBSCRIPTION_ID: firehose-a
