@@ -37,7 +37,7 @@ func NewUAATokenRefresher(authEndpoint string,
 func (uaa *UAATokenRefresher) RefreshAuthToken() (string, error) {
 	authToken, err := uaa.client.GetAuthToken(uaa.clientID, uaa.clientSecret, uaa.skipSSLValidation)
 	if err != nil {
-		logging.LogStd(fmt.Sprint("Error getting oauth token: %s. Please check your Client ID and Secret.", err.Error()), false)
+		logging.LogStd(fmt.Sprintf("Error getting oauth token: %s. Please check your Client ID and Secret.", err.Error()), false)
 		return "", err
 	}
 
