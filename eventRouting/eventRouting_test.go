@@ -153,7 +153,7 @@ var _ = Describe("Events", func() {
 				EventType:  &eventType,
 				LogMessage: logMessage3,
 			}
-			filters = append(filters, NotInCertainOrgs("org1|org3"))
+			filters = append(filters, NotInCertainOrgs("org1,org3"))
 			eventRouting = NewEventRouting(caching, logging, stats, filters)
 
 			stubValue := map[string]string{

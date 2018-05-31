@@ -22,7 +22,7 @@ func NotInCertainOrgs(orgFilters string) EventFilter {
 		if orgFilters == "" || orgName == nil {
 			return false
 		}
-		orgs := strings.Split(orgFilters, "|")
+		orgs := strings.Split(orgFilters, ",")
 		for _, org := range orgs {
 			if org == orgName {
 				return false
