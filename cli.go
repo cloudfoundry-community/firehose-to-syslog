@@ -39,7 +39,7 @@ var (
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Polling time in sec").Default("60s").Envar("CF_PULL_TIME").Duration()
 	requestLimit      = kingpin.Flag("cc-rps", "CloudController Polling request by second").Default("50").Envar("CF_RPS").Int()
 	extraFields       = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").Envar("EXTRA_FIELDS").String()
-	cfOrgs            = kingpin.Flag("cf-orgs", "stream only certain cloudfoundry orgs' LogMessage'--cf-orgs=env:dev,something:org1|org2").Default("").Envar("CF_ORGS").String()
+	orgs              = kingpin.Flag("orgs", "Forwarded on the app logs from theses organisations' example: --orgs=org1,org2").Default("").Envar("ORGS").String()
 	modeProf          = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").Envar("MODE_PROF").String()
 	pathProf          = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").Envar("PATH_PROF").String()
 	logFormatterType  = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
@@ -141,7 +141,7 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	//Creating Events
-	eventFilters := []eventRouting.EventFilter{eventRouting.HasIgnoreField, eventRouting.NotInCertainOrgs(*cfOrgs)}
+	eventFilters := []eventRouting.EventFilter{eventRouting.HasIgnoreField, eventRouting.NotInCertainOrgs(*orgs)}
 	events := eventRouting.NewEventRouting(cachingClient, loggingClient, statistic, eventFilters)
 	err = events.SetupEventRouting(*wantedEvents)
 	if err != nil {
