@@ -19,15 +19,17 @@ type EventRoutingDefault struct {
 	Stats          *stats.Stats
 	log            logging.Logging
 	ExtraFields    map[string]string
+	eventFilters   []EventFilter
 }
 
-func NewEventRouting(caching caching.Caching, logging logging.Logging, stats *stats.Stats) EventRouting {
+func NewEventRouting(caching caching.Caching, logging logging.Logging, stats *stats.Stats, filters []EventFilter) EventRouting {
 	return &EventRoutingDefault{
 		CachingClient:  caching,
 		selectedEvents: make(map[string]bool),
 		log:            logging,
 		Stats:          stats,
 		ExtraFields:    make(map[string]string),
+		eventFilters:   filters,
 	}
 }
 
@@ -64,16 +66,17 @@ func (e *EventRoutingDefault) RouteEvent(msg *events.Envelope) {
 	event.AnnotateWithMetaData(e.ExtraFields)
 	if _, hasAppId := event.Fields["cf_app_id"]; hasAppId {
 		event.AnnotateWithAppData(e.CachingClient)
+		//We do not ship Event for now event only concern app type of stream
+		for _, filter := range e.eventFilters {
+			if filter(event) {
+				e.Stats.Inc(stats.Ignored)
+				return
+			}
+		}
 	}
 
-	//We do not ship Event
-	if ignored, hasIgnoredField := event.Fields["cf_ignored_app"]; ignored == true && hasIgnoredField {
-		e.Stats.Inc(stats.Ignored)
-	} else {
-		e.log.ShipEvents(event.Fields, event.Msg)
-		e.Stats.Inc(stats.Publish)
-
-	}
+	e.log.ShipEvents(event.Fields, event.Msg)
+	e.Stats.Inc(stats.Publish)
 
 }
 

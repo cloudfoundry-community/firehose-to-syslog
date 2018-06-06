@@ -17,9 +17,10 @@ type LoggingLogrus struct {
 	logFormatterType string
 	certPath         string
 	syslogProtocol   string
+	skipSSL          bool
 }
 
-func NewLogging(SyslogServerFlag string, SysLogProtocolFlag string, LogFormatterFlag string, certP string, DebugFlag bool) Logging {
+func NewLogging(SyslogServerFlag string, SysLogProtocolFlag string, LogFormatterFlag string, certP string, DebugFlag bool, skipSSLFlag bool) Logging {
 	return &LoggingLogrus{
 		Logger:           logrus.New(),
 		syslogServer:     SyslogServerFlag,
@@ -27,6 +28,7 @@ func NewLogging(SyslogServerFlag string, SysLogProtocolFlag string, LogFormatter
 		syslogProtocol:   SysLogProtocolFlag,
 		certPath:         certP,
 		debugFlag:        DebugFlag,
+		skipSSL:          skipSSLFlag,
 	}
 }
 
@@ -45,7 +47,7 @@ func (l *LoggingLogrus) Connect() bool {
 		var hook logrus.Hook
 		var err error
 		if l.syslogProtocol == logrus_syslog.SecureProto {
-			hook, err = logrus_syslog.NewSyslogHookTls(l.syslogServer, syslog.LOG_INFO, "doppler", l.certPath)
+			hook, err = logrus_syslog.NewSyslogHookTls(l.syslogServer, syslog.LOG_INFO, "doppler", l.certPath, l.skipSSL)
 
 		} else {
 			hook, err = logrus_syslog.NewSyslogHook(l.syslogProtocol, l.syslogServer, syslog.LOG_INFO, "doppler")
