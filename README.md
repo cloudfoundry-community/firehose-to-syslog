@@ -23,34 +23,57 @@ CloudFoundry.
 usage: firehose-to-syslog --api-endpoint=API-ENDPOINT --client-id=CLIENT-ID --client-secret=CLIENT-SECRET [<flags>]
 
 Flags:
-  --help                         Show context-sensitive help (also try --help-long and --help-man).
-  --debug                        Enable debug mode. This disables forwarding to syslog
-  --api-endpoint=API-ENDPOINT    Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io
+  --help                         Show context-sensitive help (also try
+                                 --help-long and --help-man).
+  --debug                        Enable debug mode. This disables
+                                 forwarding to syslog
+  --api-endpoint=API-ENDPOINT    Api endpoint address. For bosh-lite
+                                 installation of CF:
+                                 https://api.10.244.0.34.xip.io
   --doppler-endpoint=DOPPLER-ENDPOINT
-                                 Overwrite default doppler endpoint return by /v2/info
+                                 Overwrite default doppler endpoint return
+                                 by /v2/info
   --syslog-server=SYSLOG-SERVER  Syslog server.
   --syslog-protocol="tcp"        Syslog protocol (tcp/udp/tcp+tls).
+  --skip-ssl-validation-syslog   Skip Ssl validation for syslog
   --subscription-id="firehose"   Id for the subscription.
   --client-id=CLIENT-ID          Client ID.
   --client-secret=CLIENT-SECRET  Client secret.
   --skip-ssl-validation          Please don't
-  --fh-keep-alive=25s            Keep Alive duration for the firehose consumer
-  --min-retry-delay=500ms        Doppler Cloud Foundry Doppler min. retry delay duration
-  --max-retry-delay=1m           Doppler Cloud Foundry Doppler max. retry delay duration
-  --max-retry-count=1000         Doppler Cloud Foundry Doppler max. retry Count duration
+  --fh-keep-alive=25s            Keep Alive duration for the firehose
+                                 consumer
+  --min-retry-delay=500ms        Doppler Cloud Foundry Doppler min. retry
+                                 delay duration
+  --max-retry-delay=1m           Doppler Cloud Foundry Doppler max. retry
+                                 delay duration
+  --max-retry-count=1000         Doppler Cloud Foundry Doppler max. retry
+                                 Count duration
   --logs-buffer-size=10000       Number of envelope to be buffered
-  --events="LogMessage"          Comma separated list of events you would like. Valid options are ContainerMetric, CounterEvent, Error, HttpStartStop, LogMessage, ValueMetric
+  --events="LogMessage"          Comma separated list of events you would
+                                 like. Valid options are ContainerMetric,
+                                 CounterEvent, Error, HttpStartStop,
+                                 LogMessage, ValueMetric
   --enable-stats-server          Will enable stats server on 8080
   --boltdb-path="my.db"          Bolt Database path
   --cc-pull-time=60s             CloudController Polling time in sec
-  --extra-fields=""              Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other
-  --mode-prof=""                 Enable profiling mode, one of [cpu, mem, block]
+  --cc-rps=50                    CloudController Polling request by second
+  --extra-fields=""              Extra fields you want to annotate your
+                                 events with, example:
+                                 '--extra-fields=env:dev,something:other
+  --orgs=""                      Forwarded on the app logs from theses
+                                 organisations' example: --orgs=org1,org2
+  --mode-prof=""                 Enable profiling mode, one of [cpu, mem,
+                                 block]
   --path-prof=""                 Set the Path to write profiling file
   --log-formatter-type=LOG-FORMATTER-TYPE
-                                 Log formatter type to use. Valid options are text, json. If none provided, defaults to json.
+                                 Log formatter type to use. Valid options
+                                 are text, json. If none provided, defaults
+                                 to json.
   --cert-pem-syslog=""           Certificate Pem file
-  --ignore-missing-apps          Enable throttling on cache lookup for missing apps
+  --ignore-missing-apps          Enable throttling on cache lookup for
+                                 missing apps
   --version                      Show application version.
+
 ```
 
 ** !!! **--events** Please use --help to get last updated event.
