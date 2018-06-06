@@ -5,13 +5,13 @@
   branch = "master"
   name = "code.cloudfoundry.org/go-diodes"
   packages = ["."]
-  revision = "c71ea5e735942fdbb46405ec708cb3816d1c6dbf"
+  revision = "361f4b34988b402fbf4d5b744cc9b35959c2ac4e"
 
 [[projects]]
   branch = "master"
   name = "github.com/RackSec/srslog"
   packages = ["."]
-  revision = "f6152a1bd05565e87729ad672a792b951046d235"
+  revision = "1f7cff998e92763c026b26ab7c80a39e19acc368"
 
 [[projects]]
   branch = "master"
@@ -38,13 +38,19 @@
   branch = "master"
   name = "github.com/cloudfoundry-community/go-cfclient"
   packages = ["."]
-  revision = "9e1e72f8532b6ca741b8e75bcd7b2a0053406d37"
+  revision = "fc7caa77956f071ae0c416818bbb451e1754abcc"
 
 [[projects]]
   branch = "master"
   name = "github.com/cloudfoundry-incubator/uaago"
   packages = ["."]
-  revision = "62f94a1e205fd1523746191c8adb816007fa73bb"
+  revision = "be6a0cef0130f933079e4c958abac60fadea0c85"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/cloudfoundry/gofileutils"
+  packages = ["fileutils"]
+  revision = "4d0c80011a0f37da1711c184028bc40137cd45af"
 
 [[projects]]
   name = "github.com/cloudfoundry/noaa"
@@ -82,8 +88,8 @@
 [[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
-  version = "v1.0.0"
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/gorilla/websocket"
@@ -100,7 +106,7 @@
     "jlexer",
     "jwriter"
   ]
-  revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
+  revision = "9825584555aa620c53c265d4a09ace0df1346fd9"
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
@@ -156,13 +162,13 @@
   branch = "master"
   name = "github.com/shinji62/logrus-syslog-ng"
   packages = ["."]
-  revision = "8a6b62b97b5a08b31fe611b3f7940380945fb88f"
+  revision = "3974ebb047a06d099f17633f995201d9089434fb"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
 
 [[projects]]
   branch = "master"
@@ -171,13 +177,13 @@
     ".",
     "internal/clock"
   ]
-  revision = "d15fa2e2a63dd52104bc96d8ea7dc47ce8027de8"
+  revision = "c15da02342779cb6dc027fc95ee2277787698f36"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "5119cf507ed5294cc409c092980c7497ee5d6fd2"
+  revision = "b47b1587369238182299fe4dad77d05b8b461e06"
 
 [[projects]]
   branch = "master"
@@ -189,7 +195,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
+  revision = "1e491301e022f8f977054da4c2d852decd59571f"
 
 [[projects]]
   branch = "master"
@@ -199,7 +205,7 @@
     "clientcredentials",
     "internal"
   ]
-  revision = "543e37812f10c46c622c9575afd7ad22f22a12ba"
+  revision = "1e0a3fa8ba9a5c9eb35c271780101fdaf1b205d7"
 
 [[projects]]
   branch = "master"
@@ -208,10 +214,9 @@
     "unix",
     "windows"
   ]
-  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
+  revision = "c11f84a56e43e20a78cee75a7c034031ecf57d1f"
 
 [[projects]]
-  branch = "master"
   name = "golang.org/x/text"
   packages = [
     "encoding",
@@ -232,7 +237,8 @@
     "transform",
     "unicode/cldr"
   ]
-  revision = "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -255,10 +261,10 @@
   version = "v2.1.11"
 
 [[projects]]
-  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "d670f9405373e636a5a2765eea47fac0c9bc91a4"
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"

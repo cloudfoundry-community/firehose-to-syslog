@@ -3,7 +3,10 @@
 package logrus_syslog
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	syslog "github.com/RackSec/srslog"
@@ -27,8 +30,18 @@ func NewSyslogHook(network, raddr string, priority syslog.Priority, tag string) 
 	return &SyslogHook{w}, err
 }
 
-func NewSyslogHookTls(raddr string, priority syslog.Priority, tag string, certPath string) (*SyslogHook, error) {
-	w, err := syslog.DialWithTLSCertPath(SecureProto, raddr, priority, tag, certPath)
+func NewSyslogHookTls(raddr string, priority syslog.Priority, tag string, certPath string, insecure bool) (*SyslogHook, error) {
+	serverCert, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return nil, err
+	}
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(serverCert)
+	config := tls.Config{
+		RootCAs: pool,
+	}
+	config.InsecureSkipVerify = insecure
+	w, err := syslog.DialWithTLSConfig(SecureProto, raddr, priority, tag, &config)
 	return &SyslogHook{w}, err
 }
 

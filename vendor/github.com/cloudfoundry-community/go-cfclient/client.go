@@ -5,8 +5,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"time"
 
@@ -127,6 +129,8 @@ func NewClient(config *Config) (client *Client, err error) {
 		}
 		tp.TLSClientConfig.InsecureSkipVerify = config.SkipSslValidation
 	}
+
+	config.ApiAddress = strings.TrimRight(config.ApiAddress, "/")
 
 	client = &Client{
 		Config: *config,
@@ -252,8 +256,24 @@ func (c *Client) DoRequest(r *request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	return c.Do(req)
+}
+
+// DoRequestWithoutRedirects executes the request without following redirects
+func (c *Client) DoRequestWithoutRedirects(r *request) (*http.Response, error) {
+	prevCheckRedirect := c.Config.HttpClient.CheckRedirect
+	c.Config.HttpClient.CheckRedirect = func(httpReq *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	defer func() {
+		c.Config.HttpClient.CheckRedirect = prevCheckRedirect
+	}()
+	return c.DoRequest(r)
+}
+
+func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	req.Header.Set("User-Agent", c.Config.UserAgent)
-	if r.body != nil {
+	if req.Body != nil && req.Header.Get("Content-type") == "" {
 		req.Header.Set("Content-type", "application/json")
 	}
 
@@ -264,8 +284,21 @@ func (c *Client) DoRequest(r *request) (*http.Response, error) {
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		var cfErr CloudFoundryError
-		if err := decodeBody(resp, &cfErr); err != nil {
-			return resp, errors.Wrap(err, "Unable to decode body")
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return resp, CloudFoundryHTTPError{
+				StatusCode: resp.StatusCode,
+				Status:     resp.Status,
+				Body:       body,
+			}
+		}
+		defer resp.Body.Close()
+		if err := json.Unmarshal(body, &cfErr); err != nil {
+			return resp, CloudFoundryHTTPError{
+				StatusCode: resp.StatusCode,
+				Status:     resp.Status,
+				Body:       body,
+			}
 		}
 		return nil, cfErr
 	}

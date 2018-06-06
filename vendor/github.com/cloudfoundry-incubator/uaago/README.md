@@ -4,9 +4,18 @@ UAA client for golang.
 
 ## Usage
 
-See [sample_cli](/sample_cli). You can run this like this:
+See [samples](/samples).
+
+You can run the auth token sample like this:
 
 ```bash
-$ go build -o bin/sample-cli sample_cli/main.go
-$ ./bin/sample-cli [URL] [USER] [PASS]
+$ go build -o bin/auth_token samples/auth-token/main.go
+$ ./bin/auth_token [URL] [USER] [PASS]
+```
+
+You can run the refresh token sample like this:
+
+```bash
+$ go build -o bin/refresh_token samples/refresh-token/main.go
+$ ./bin/refresh_token [URL] [CLIENT_ID] [EXISTING_REFRESH_TOKEN]
 ```

@@ -66,15 +66,15 @@ func (e *EventRoutingDefault) RouteEvent(msg *events.Envelope) {
 	event.AnnotateWithMetaData(e.ExtraFields)
 	if _, hasAppId := event.Fields["cf_app_id"]; hasAppId {
 		event.AnnotateWithAppData(e.CachingClient)
-	}
-
-	//We do not ship Event
-	for _, filter := range e.eventFilters {
-		if filter(event) {
-			e.Stats.Inc(stats.Ignored)
-			return
+		//We do not ship Event for now event only concern app type of stream
+		for _, filter := range e.eventFilters {
+			if filter(event) {
+				e.Stats.Inc(stats.Ignored)
+				return
+			}
 		}
 	}
+
 	e.log.ShipEvents(event.Fields, event.Msg)
 	e.Stats.Inc(stats.Publish)
 

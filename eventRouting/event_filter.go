@@ -22,6 +22,7 @@ func NotInCertainOrgs(orgFilters string) EventFilter {
 		if orgFilters == "" || orgName == nil {
 			return false
 		}
+		//// TODO: No need to split for every record...
 		orgs := strings.Split(orgFilters, ",")
 		for _, org := range orgs {
 			if org == orgName {
