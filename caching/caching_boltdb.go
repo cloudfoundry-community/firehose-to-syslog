@@ -167,26 +167,21 @@ func (c *CachingBolt) getAppFromCache(appGuid string) (*App, error) {
 }
 
 func (c *CachingBolt) getAllAppsFromBoltDB() (map[string]*App, error) {
-	var allData [][]byte
-	c.appdb.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(APP_BUCKET))
-		b.ForEach(func(guid []byte, v []byte) error {
-			allData = append(allData, v)
+	apps := make(map[string]*App)
+	err := c.appdb.View(func(tx *bolt.Tx) error {
+		return tx.Bucket([]byte(APP_BUCKET)).ForEach(func(guid []byte, v []byte) error {
+			var app App
+			err := json.Unmarshal(v, &app)
+			if err != nil {
+				return err
+			}
+			apps[app.Guid] = &app
 			return nil
 		})
-		return nil
 	})
-
-	apps := make(map[string]*App, len(allData))
-	for i := range allData {
-		var app App
-		err := json.Unmarshal(allData[i], &app)
-		if err != nil {
-			return nil, err
-		}
-		apps[app.Guid] = &app
+	if err != nil {
+		return nil, err
 	}
-
 	return apps, nil
 }
 
