@@ -12,6 +12,7 @@ type EventFilter func(*fevents.Event) bool
 //HasIgnoreField Filter out the event has ignored app filed
 func HasIgnoreField(event *fevents.Event) bool {
 	ignored, hasIgnoredField := event.Fields["cf_ignored_app"]
+	delete(event.Fields, "cf_ignored_app")
 	return ignored == true && hasIgnoredField
 }
 
