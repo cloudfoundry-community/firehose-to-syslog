@@ -1,48 +1,54 @@
 package caching
 
 import (
+	"bytes"
+	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
+	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
-	json "github.com/mailru/easyjson"
-	rate "go.uber.org/ratelimit"
+	uuid "github.com/satori/go.uuid"
 )
 
-const (
-	APP_BUCKET = "AppBucket"
+var (
+	APP_BUCKET = []byte("AppBucketV2")
 )
+
+type entity struct {
+	Name             string                 `json:"name"`
+	SpaceGUID        string                 `json:"space_guid"`
+	OrganizationGUID string                 `json:"organization_guid"`
+	Environment      map[string]interface{} `json:"environment_json"`
+	TTL              time.Time
+}
+
+func (e *entity) appIsOptOut() bool {
+	return e.Environment["F2S_DISABLE_LOGGING"] == "true"
+}
 
 type CachingBoltConfig struct {
 	Path               string
 	IgnoreMissingApps  bool
 	CacheInvalidateTTL time.Duration
-	RequestBySec       int
 }
 
 type CachingBolt struct {
-	appClient   AppClient
-	appdb       *bolt.DB
-	lock        sync.RWMutex
-	cache       map[string]*App
-	missingApps map[string]struct{}
+	client *cfclient.Client
+	appdb  *bolt.DB
 
-	closing chan struct{}
-	wg      sync.WaitGroup
-	config  *CachingBoltConfig
+	config *CachingBoltConfig
 }
 
-func NewCachingBolt(client AppClient, config *CachingBoltConfig) (*CachingBolt, error) {
+func NewCachingBolt(client *cfclient.Client, config *CachingBoltConfig) (*CachingBolt, error) {
 	return &CachingBolt{
-		appClient:   client,
-		cache:       make(map[string]*App),
-		missingApps: make(map[string]struct{}),
-		closing:     make(chan struct{}),
-		config:      config,
+		client: client,
+		config: config,
 	}, nil
 }
 
@@ -55,309 +61,148 @@ func (c *CachingBolt) Open() error {
 	}
 	c.appdb = db
 
-	if err := c.createBucket(); err != nil {
-		logging.LogError("Fail to create bucket: ", err)
-		return err
-	}
-
-	if c.config.CacheInvalidateTTL != time.Duration(0) {
-		c.invalidateCache()
-	}
-
-	return c.populateCache()
-}
-
-func (c *CachingBolt) populateCache() error {
-	apps, err := c.getAllAppsFromBoltDB()
-	if err != nil {
-		return err
-	}
-
-	if len(apps) == 0 {
-		// populate from remote
-		apps, err = c.getAllAppsFromRemote()
-		if err != nil {
-			return err
-		}
-	}
-
-	c.cache = apps
-
-	return nil
-}
-
-func (c *CachingBolt) Close() error {
-	close(c.closing)
-
-	// Wait for background goroutine exit
-	c.wg.Wait()
-
-	return c.appdb.Close()
-}
-
-// GetAppInfo tries first get app info from cache. If caches doesn't have this
-// app info (cache miss), it issues API to retrieve the app info from remote
-// if the app is not already missing and clients don't ignore the missing app
-// info, and then add the app info to the cache
-// On the other hand, if the app is already missing and clients want to
-// save remote API and ignore missing app, then a nil app info and an error
-// will be returned.
-func (c *CachingBolt) GetApp(appGuid string) (*App, error) {
-	app, err := c.getAppFromCache(appGuid)
-	if err != nil {
-		return nil, err
-	}
-
-	// Find in cache
-	if app != nil {
-		return app, nil
-	}
-
-	// First time seeing app
-	app, err = c.getAppFromRemote(appGuid)
-	if err != nil {
-		if c.config.IgnoreMissingApps {
-			// Record this missing app
-			c.lock.Lock()
-			c.missingApps[appGuid] = struct{}{}
-			c.lock.Unlock()
-		}
-		return nil, err
-	}
-
-	// Add to in-memory cache
-	c.lock.Lock()
-	c.cache[app.Guid] = app
-	c.lock.Unlock()
-
-	return app, nil
-}
-
-// GetAllApps returns all apps info
-func (c *CachingBolt) GetAllApps() (map[string]*App, error) {
-	c.lock.RLock()
-	apps := make(map[string]*App, len(c.cache))
-	for _, app := range c.cache {
-		dup := *app
-		apps[dup.Guid] = &dup
-	}
-	c.lock.RUnlock()
-
-	return apps, nil
-}
-
-func (c *CachingBolt) getAppFromCache(appGuid string) (*App, error) {
-	c.lock.RLock()
-	if app, ok := c.cache[appGuid]; ok {
-		// in in-memory cache
-		c.lock.RUnlock()
-		return app, nil
-	}
-
-	_, alreadyMissed := c.missingApps[appGuid]
-	if c.config.IgnoreMissingApps && alreadyMissed {
-		// already missed
-		c.lock.RUnlock()
-		return nil, errors.New("App was missed and ignored")
-	}
-	c.lock.RUnlock()
-
-	// Didn't find in cache and it is not missed or we are not ignoring missed app
-	return nil, nil
-}
-
-func (c *CachingBolt) getAllAppsFromBoltDB() (map[string]*App, error) {
-	apps := make(map[string]*App)
-	err := c.appdb.View(func(tx *bolt.Tx) error {
-		return tx.Bucket([]byte(APP_BUCKET)).ForEach(func(guid []byte, v []byte) error {
-			var app App
-			err := json.Unmarshal(v, &app)
-			if err != nil {
-				return err
-			}
-			apps[app.Guid] = &app
-			return nil
-		})
-	})
-	if err != nil {
-		return nil, err
-	}
-	return apps, nil
-}
-
-func (c *CachingBolt) createBucket() error {
-	return c.appdb.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(APP_BUCKET))
+	err = c.appdb.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists(APP_BUCKET)
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
 		return nil
 	})
+	if err != nil {
+		logging.LogError("Fail to create bucket: ", err)
+		return err
+	}
+
+	return nil
 }
 
-// invalidateCache perodically fetches a full copy apps info from remote
-// and update boltdb and in-memory cache
-func (c *CachingBolt) invalidateCache() {
-	ticker := time.NewTicker(c.config.CacheInvalidateTTL)
-
-	c.wg.Add(1)
-	go func() {
-		defer c.wg.Done()
-
-		for {
-			select {
-			case <-ticker.C:
-				// continue
-				apps, err := c.getAllAppsFromRemote()
-				if err == nil {
-					c.lock.Lock()
-					c.cache = apps
-					c.lock.Unlock()
-				}
-			case <-c.closing:
-				return
-			}
-		}
-	}()
+func (c *CachingBolt) Close() error {
+	return c.appdb.Close()
 }
 
-func (c *CachingBolt) addRecord(app *App) {
-	c.appdb.Update(func(tx *bolt.Tx) error {
-		serialize, err := json.Marshal(app)
-		if err != nil {
-			return fmt.Errorf("Error Marshaling data: %s", err)
-		}
+var (
+	errNotFound = errors.New("not found")
+)
 
-		b := tx.Bucket([]byte(APP_BUCKET))
-		if err := b.Put([]byte(app.Guid), serialize); err != nil {
-			return fmt.Errorf("Error inserting data: %s", err)
+// entityType *must* be checked for safety by caller
+// guid will be validated as a guid by this function
+func (c *CachingBolt) getEntity(entityType, guid string) (*entity, error) {
+	// First verify the GUID is in fact that - else we could become a confused deputy due to path construction issues
+	u, err := uuid.FromString(guid)
+	if err != nil {
+		return nil, err
+	}
+	uuid := u.String()
+	key := []byte(fmt.Sprintf("%s/%s", entityType, uuid))
+
+	// Check if we have it already
+	var rv entity
+	err = c.appdb.View(func(tx *bolt.Tx) error {
+		v := tx.Bucket(APP_BUCKET).Get(key)
+		if len(v) == 0 {
+			return errNotFound
 		}
-		return nil
+		return gob.NewDecoder(bytes.NewReader(v)).Decode(&rv)
 	})
-}
-
-func (c *CachingBolt) fillDatabase(apps map[string]*App) {
-	for _, app := range apps {
-		c.addRecord(app)
+	switch err {
+	case nil:
+		if rv.TTL.Before(time.Now()) {
+			return &rv, nil
+		}
+		// else continue
+	case errNotFound:
+		// continue
+	default:
+		return nil, err
 	}
-}
 
-func (c *CachingBolt) fromPCFApp(app *cfclient.App) *App {
-	return &App{
-		app.Name,
-		app.Guid,
-		app.SpaceData.Entity.Name,
-		app.SpaceData.Entity.Guid,
-		app.SpaceData.Entity.OrgData.Entity.Name,
-		app.SpaceData.Entity.OrgData.Entity.Guid,
-		c.isOptOut(app.Environment),
+	// Fetch from remote
+	nv, err := c.fetchEntityFromAPI(entityType, uuid)
+	if err != nil {
+		if entityType == "apps" && c.config.IgnoreMissingApps {
+			nv = &entity{}
+		} else {
+			return nil, err
+		}
 	}
-}
 
-func (c *CachingBolt) getAppFromRemote(appGuid string) (*App, error) {
-	cfApp, err := c.appClient.GetAppByGuidNoInlineCall(appGuid)
+	// Set TTL to value between 75% and 125% of desired amount. This is to spread out cache invalidations
+	nv.TTL = time.Now().Add(time.Duration(float64(c.config.CacheInvalidateTTL.Nanoseconds()) * (0.75 + (rand.Float64() / 2.0))))
+	b := &bytes.Buffer{}
+	err = gob.NewEncoder(b).Encode(nv)
 	if err != nil {
 		return nil, err
 	}
 
-	app := c.fromPCFApp(&cfApp)
-	c.addRecord(app)
-	return app, nil
-}
-
-func (c *CachingBolt) isOptOut(envVar map[string]interface{}) bool {
-	if val, ok := envVar["F2S_DISABLE_LOGGING"]; ok && val == "true" {
-		return true
-	}
-	return false
-}
-
-//Inspired by cf exporter
-func (c *CachingBolt) getAllAppsFromRemote() (map[string]*App, error) {
-	logging.LogStd("Retrieving Apps from Remote ...", false)
-	apps := make(map[string]*App)
-	// Listing Orgs
-	organizations, err := c.appClient.ListOrgs()
+	// Write to DB
+	err = c.appdb.Update(func(tx *bolt.Tx) error {
+		return tx.Bucket(APP_BUCKET).Put(key, b.Bytes())
+	})
 	if err != nil {
-		logging.LogError("Error while listing organization: %v", err)
-		return apps, err
-	}
-	var wg = &sync.WaitGroup{}
-
-	//Adding Global Rate limitings 50sec
-	rl := rate.New(c.config.RequestBySec, rate.WithoutSlack)
-
-	for _, organization := range organizations {
-		wg.Add(1)
-		go func(organization cfclient.Org, rl rate.Limiter) {
-			defer wg.Done()
-			rl.Take()
-			err := c.getOrgSpaces(&organization, rl)
-			if err != nil {
-				logging.LogError("Error gettings Org", err)
-			}
-		}(organization, rl)
+		return nil, err
 	}
 
-	wg.Wait()
-	logging.LogStd(fmt.Sprintf("Found [%d] Apps!", len(apps)), false)
-	apps, err = c.getAllAppsFromBoltDB()
-	if err != nil {
-		logging.LogError("Error while gettings all apps from BoltDB: %v", err)
-		return apps, err
-	}
-	return apps, nil
-}
-func (c *CachingBolt) getOrgSpaces(organization *cfclient.Org, l rate.Limiter) error {
-	spaces, err := c.appClient.OrgSpaces(organization.Guid)
-	if err != nil {
-		logging.LogError("Error while listing spaces for organization `%s`: %v", err)
-		return err
-	}
-
-	var wg = &sync.WaitGroup{}
-	errChannel := make(chan error, len(spaces))
-
-	for _, space := range spaces {
-		wg.Add(1)
-		go func(space cfclient.Space) {
-			defer wg.Done()
-			l.Take()
-			err := c.getSpaceSummary(organization, &space)
-			if err != nil {
-				errChannel <- err
-			}
-		}(space)
-	}
-
-	wg.Wait()
-	close(errChannel)
-
-	return <-errChannel
+	return nv, nil
 }
 
-func (c *CachingBolt) getSpaceSummary(organization *cfclient.Org, space *cfclient.Space) error {
-	spaceSummary, err := space.Summary()
+// both entityType and guid must have been validated by the caller
+func (c *CachingBolt) fetchEntityFromAPI(entityType, guid string) (*entity, error) {
+	resp, err := c.client.DoRequestWithoutRedirects(c.client.NewRequest(http.MethodGet, fmt.Sprintf("/v2/%s/%s", entityType, guid)))
 	if err != nil {
-		logging.LogError("Error while getting summary for space `%s`: %v", err)
-		return err
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad status code: %s", resp.Status)
 	}
 
-	for _, application := range spaceSummary.Apps {
-		app := c.fromPCFAppSummary(&application, organization, space)
-		c.addRecord(app)
+	var md struct {
+		Entity entity `json:"entity"`
 	}
-	return nil
+	err = json.NewDecoder(resp.Body).Decode(&md)
+	if err != nil {
+		return nil, err
+	}
+
+	return &md.Entity, nil
 }
 
-func (c *CachingBolt) fromPCFAppSummary(app *cfclient.AppSummary, organization *cfclient.Org, space *cfclient.Space) *App {
+func (c *CachingBolt) GetApp(appGuid string) (*App, error) {
+	app, err := c.getEntity("apps", appGuid)
+	if err != nil {
+		if c.config.IgnoreMissingApps {
+			app = &entity{}
+		} else {
+			return nil, err
+		}
+	}
+
+	space, err := c.getEntity("spaces", app.SpaceGUID)
+	if err != nil {
+		if c.config.IgnoreMissingApps {
+			space = &entity{}
+		} else {
+			return nil, err
+		}
+	}
+
+	org, err := c.getEntity("organizations", space.OrganizationGUID)
+	if err != nil {
+		if c.config.IgnoreMissingApps {
+			org = &entity{}
+		} else {
+			return nil, err
+		}
+	}
+
 	return &App{
-		app.Name,
-		app.Guid,
-		space.Name,
-		space.Guid,
-		organization.Name,
-		organization.Guid,
-		c.isOptOut(app.Environment),
-	}
+		Guid:       appGuid,
+		Name:       app.Name,
+		SpaceGuid:  app.SpaceGUID,
+		SpaceName:  space.Name,
+		OrgGuid:    space.OrganizationGUID,
+		OrgName:    org.Name,
+		IgnoredApp: app.appIsOptOut(),
+	}, nil
 }

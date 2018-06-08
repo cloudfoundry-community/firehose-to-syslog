@@ -19,7 +19,6 @@ type App struct {
 type Caching interface {
 	Open() error
 	Close() error
-	GetAllApps() (map[string]*App, error)
 	GetApp(string) (*App, error)
 }
 

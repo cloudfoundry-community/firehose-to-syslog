@@ -38,7 +38,7 @@ var (
 	statServer        = kingpin.Flag("enable-stats-server", "Will enable stats server on 8080").Default("false").Envar("ENABLE_STATS_SERVER").Bool()
 	boltDatabasePath  = kingpin.Flag("boltdb-path", "Bolt Database path ").Default("my.db").Envar("BOLTDB_PATH").String()
 	tickerTime        = kingpin.Flag("cc-pull-time", "CloudController Polling time in sec").Default("60s").Envar("CF_PULL_TIME").Duration()
-	requestLimit      = kingpin.Flag("cc-rps", "CloudController Polling request by second").Default("50").Envar("CF_RPS").Int()
+	requestLimit      = kingpin.Flag("cc-rps", "CloudController Polling request by second (IGNORED)").Default("50").Envar("CF_RPS").Int()
 	extraFields       = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").Envar("EXTRA_FIELDS").String()
 	orgs              = kingpin.Flag("orgs", "Forwarded on the app logs from theses organisations' example: --orgs=org1,org2").Default("").Envar("ORGS").String()
 	modeProf          = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").Envar("MODE_PROF").String()
@@ -109,7 +109,6 @@ func (cli *CLI) Run(args []string) int {
 			Path:               *boltDatabasePath,
 			IgnoreMissingApps:  *ignoreMissingApps,
 			CacheInvalidateTTL: *tickerTime,
-			RequestBySec:       *requestLimit,
 		}
 		cachingClient, err = caching.NewCachingBolt(cfClient, config)
 
