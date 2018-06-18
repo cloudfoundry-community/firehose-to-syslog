@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
@@ -46,6 +47,7 @@ var (
 	logFormatterType  = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
 	certPath          = kingpin.Flag("cert-pem-syslog", "Certificate Pem file").Envar("CERT_PEM").Default("").String()
 	ignoreMissingApps = kingpin.Flag("ignore-missing-apps", "Enable throttling on cache lookup for missing apps").Envar("IGNORE_MISSING_APPS").Default("false").Bool()
+	stripAppSuffixes  = kingpin.Flag("strip-app-name-suffixes", "Suffixes that should be stripped from application names, comma separated").Envar("STRIP_APP_NAME_SUFFIXES").Default("").String()
 )
 
 const (
@@ -109,6 +111,7 @@ func (cli *CLI) Run(args []string) int {
 			Path:               *boltDatabasePath,
 			IgnoreMissingApps:  *ignoreMissingApps,
 			CacheInvalidateTTL: *tickerTime,
+			StripAppSuffixes:   strings.Split(*stripAppSuffixes, ","),
 		}
 		cachingClient, err = caching.NewCachingBolt(cfClient, config)
 

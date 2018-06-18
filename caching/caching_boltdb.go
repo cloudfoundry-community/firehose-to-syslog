@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -36,6 +37,7 @@ type CachingBoltConfig struct {
 	Path               string
 	IgnoreMissingApps  bool
 	CacheInvalidateTTL time.Duration
+	StripAppSuffixes   []string
 }
 
 type CachingBolt struct {
@@ -86,6 +88,8 @@ var (
 
 // entityType *must* be checked for safety by caller
 // guid will be validated as a guid by this function
+// apps are treated specially, in that if IgnoreMissingApps is set, then an error will result in an empty object returned.
+// Also for apps, we will strip anything that matches StripAppSuffixes from the name before storing.
 func (c *CachingBolt) getEntity(entityType, guid string) (*entity, error) {
 	// First verify the GUID is in fact that - else we could become a confused deputy due to path construction issues
 	u, err := uuid.FromString(guid)
@@ -123,6 +127,17 @@ func (c *CachingBolt) getEntity(entityType, guid string) (*entity, error) {
 			nv = &entity{}
 		} else {
 			return nil, err
+		}
+	}
+
+	// Strip name suffixes if applicable. This is intended for blue green deployments,
+	// so that things like -venerable can be stripped from renamed apps
+	if entityType == "apps" {
+		for _, suffix := range c.config.StripAppSuffixes {
+			if strings.HasSuffix(nv.Name, suffix) {
+				nv.Name = nv.Name[:len(nv.Name)-len(suffix)]
+				break
+			}
 		}
 	}
 
