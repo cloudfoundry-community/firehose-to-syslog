@@ -2,10 +2,8 @@ package caching
 
 import (
 	"errors"
-	"net/http"
+	"io"
 	"regexp"
-
-	cfclient "github.com/cloudfoundry-community/go-cfclient"
 )
 
 type App struct {
@@ -40,20 +38,15 @@ type CacheStore interface {
 	Set(key string, value interface{}) error
 }
 
+//go:generate counterfeiter . Caching
 type Caching interface {
 	FillCache() error
 	GetApp(string) (*App, error)
 }
 
+//go:generate counterfeiter . CFSimpleClient
 type CFSimpleClient interface {
-	DoGet(url string) (*http.Response, error)
-}
-
-type AppClient interface {
-	AppByGuid(appGuid string) (cfclient.App, error)
-	ListOrgs() ([]cfclient.Org, error)
-	OrgSpaces(guid string) ([]cfclient.Space, error)
-	GetAppByGuidNoInlineCall(appGuid string) (cfclient.App, error)
+	DoGet(url string) (io.ReadCloser, error)
 }
 
 func IsNeeded(wantedEvents string) bool {
