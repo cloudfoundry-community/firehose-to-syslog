@@ -159,6 +159,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/shinji62/logrus-syslog-ng"
   packages = ["."]
@@ -169,15 +175,6 @@
   packages = ["."]
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
   version = "v1.0.5"
-
-[[projects]]
-  branch = "master"
-  name = "go.uber.org/ratelimit"
-  packages = [
-    ".",
-    "internal/clock"
-  ]
-  revision = "c15da02342779cb6dc027fc95ee2277787698f36"
 
 [[projects]]
   branch = "master"
@@ -269,6 +266,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ab8f3ef8c768451cfd092d3f02c6d9e6e65197e249bb4e293b93a144a122c613"
+  inputs-digest = "096ce8d74ceb8fcdb9725712b020a1487fc6ed0f131fc7cbeeb9806b41727060"
   solver-name = "gps-cdcl"
   solver-version = 1

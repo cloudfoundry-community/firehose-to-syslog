@@ -8,34 +8,14 @@ import (
 )
 
 type FakeCaching struct {
-	OpenStub        func() error
-	openMutex       sync.RWMutex
-	openArgsForCall []struct{}
-	openReturns     struct {
+	FillCacheStub        func() error
+	fillCacheMutex       sync.RWMutex
+	fillCacheArgsForCall []struct{}
+	fillCacheReturns     struct {
 		result1 error
 	}
-	openReturnsOnCall map[int]struct {
+	fillCacheReturnsOnCall map[int]struct {
 		result1 error
-	}
-	CloseStub        func() error
-	closeMutex       sync.RWMutex
-	closeArgsForCall []struct{}
-	closeReturns     struct {
-		result1 error
-	}
-	closeReturnsOnCall map[int]struct {
-		result1 error
-	}
-	GetAllAppsStub        func() (map[string]*caching.App, error)
-	getAllAppsMutex       sync.RWMutex
-	getAllAppsArgsForCall []struct{}
-	getAllAppsReturns     struct {
-		result1 map[string]*caching.App
-		result2 error
-	}
-	getAllAppsReturnsOnCall map[int]struct {
-		result1 map[string]*caching.App
-		result2 error
 	}
 	GetAppStub        func(string) (*caching.App, error)
 	getAppMutex       sync.RWMutex
@@ -54,127 +34,44 @@ type FakeCaching struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeCaching) Open() error {
-	fake.openMutex.Lock()
-	ret, specificReturn := fake.openReturnsOnCall[len(fake.openArgsForCall)]
-	fake.openArgsForCall = append(fake.openArgsForCall, struct{}{})
-	fake.recordInvocation("Open", []interface{}{})
-	fake.openMutex.Unlock()
-	if fake.OpenStub != nil {
-		return fake.OpenStub()
+func (fake *FakeCaching) FillCache() error {
+	fake.fillCacheMutex.Lock()
+	ret, specificReturn := fake.fillCacheReturnsOnCall[len(fake.fillCacheArgsForCall)]
+	fake.fillCacheArgsForCall = append(fake.fillCacheArgsForCall, struct{}{})
+	fake.recordInvocation("FillCache", []interface{}{})
+	fake.fillCacheMutex.Unlock()
+	if fake.FillCacheStub != nil {
+		return fake.FillCacheStub()
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	return fake.openReturns.result1
+	return fake.fillCacheReturns.result1
 }
 
-func (fake *FakeCaching) OpenCallCount() int {
-	fake.openMutex.RLock()
-	defer fake.openMutex.RUnlock()
-	return len(fake.openArgsForCall)
+func (fake *FakeCaching) FillCacheCallCount() int {
+	fake.fillCacheMutex.RLock()
+	defer fake.fillCacheMutex.RUnlock()
+	return len(fake.fillCacheArgsForCall)
 }
 
-func (fake *FakeCaching) OpenReturns(result1 error) {
-	fake.OpenStub = nil
-	fake.openReturns = struct {
+func (fake *FakeCaching) FillCacheReturns(result1 error) {
+	fake.FillCacheStub = nil
+	fake.fillCacheReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeCaching) OpenReturnsOnCall(i int, result1 error) {
-	fake.OpenStub = nil
-	if fake.openReturnsOnCall == nil {
-		fake.openReturnsOnCall = make(map[int]struct {
+func (fake *FakeCaching) FillCacheReturnsOnCall(i int, result1 error) {
+	fake.FillCacheStub = nil
+	if fake.fillCacheReturnsOnCall == nil {
+		fake.fillCacheReturnsOnCall = make(map[int]struct {
 			result1 error
 		})
 	}
-	fake.openReturnsOnCall[i] = struct {
+	fake.fillCacheReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
-}
-
-func (fake *FakeCaching) Close() error {
-	fake.closeMutex.Lock()
-	ret, specificReturn := fake.closeReturnsOnCall[len(fake.closeArgsForCall)]
-	fake.closeArgsForCall = append(fake.closeArgsForCall, struct{}{})
-	fake.recordInvocation("Close", []interface{}{})
-	fake.closeMutex.Unlock()
-	if fake.CloseStub != nil {
-		return fake.CloseStub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.closeReturns.result1
-}
-
-func (fake *FakeCaching) CloseCallCount() int {
-	fake.closeMutex.RLock()
-	defer fake.closeMutex.RUnlock()
-	return len(fake.closeArgsForCall)
-}
-
-func (fake *FakeCaching) CloseReturns(result1 error) {
-	fake.CloseStub = nil
-	fake.closeReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeCaching) CloseReturnsOnCall(i int, result1 error) {
-	fake.CloseStub = nil
-	if fake.closeReturnsOnCall == nil {
-		fake.closeReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.closeReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeCaching) GetAllApps() (map[string]*caching.App, error) {
-	fake.getAllAppsMutex.Lock()
-	ret, specificReturn := fake.getAllAppsReturnsOnCall[len(fake.getAllAppsArgsForCall)]
-	fake.getAllAppsArgsForCall = append(fake.getAllAppsArgsForCall, struct{}{})
-	fake.recordInvocation("GetAllApps", []interface{}{})
-	fake.getAllAppsMutex.Unlock()
-	if fake.GetAllAppsStub != nil {
-		return fake.GetAllAppsStub()
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fake.getAllAppsReturns.result1, fake.getAllAppsReturns.result2
-}
-
-func (fake *FakeCaching) GetAllAppsCallCount() int {
-	fake.getAllAppsMutex.RLock()
-	defer fake.getAllAppsMutex.RUnlock()
-	return len(fake.getAllAppsArgsForCall)
-}
-
-func (fake *FakeCaching) GetAllAppsReturns(result1 map[string]*caching.App, result2 error) {
-	fake.GetAllAppsStub = nil
-	fake.getAllAppsReturns = struct {
-		result1 map[string]*caching.App
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeCaching) GetAllAppsReturnsOnCall(i int, result1 map[string]*caching.App, result2 error) {
-	fake.GetAllAppsStub = nil
-	if fake.getAllAppsReturnsOnCall == nil {
-		fake.getAllAppsReturnsOnCall = make(map[int]struct {
-			result1 map[string]*caching.App
-			result2 error
-		})
-	}
-	fake.getAllAppsReturnsOnCall[i] = struct {
-		result1 map[string]*caching.App
-		result2 error
-	}{result1, result2}
 }
 
 func (fake *FakeCaching) GetApp(arg1 string) (*caching.App, error) {
@@ -231,12 +128,8 @@ func (fake *FakeCaching) GetAppReturnsOnCall(i int, result1 *caching.App, result
 func (fake *FakeCaching) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.openMutex.RLock()
-	defer fake.openMutex.RUnlock()
-	fake.closeMutex.RLock()
-	defer fake.closeMutex.RUnlock()
-	fake.getAllAppsMutex.RLock()
-	defer fake.getAllAppsMutex.RUnlock()
+	fake.fillCacheMutex.RLock()
+	defer fake.fillCacheMutex.RUnlock()
 	fake.getAppMutex.RLock()
 	defer fake.getAppMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
