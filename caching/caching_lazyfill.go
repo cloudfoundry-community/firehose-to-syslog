@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"strings"
 	"time"
 
@@ -195,13 +194,9 @@ func (c *CacheLazyFill) makeRequestAndDecodeJSON(url string, rv interface{}) err
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status code: %s", resp.Status)
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(rv)
+	err = json.NewDecoder(resp).Decode(rv)
 	if err != nil {
 		return err
 	}
