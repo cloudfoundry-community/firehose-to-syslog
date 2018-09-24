@@ -23,7 +23,7 @@ func TestJSONCeeLoggingFormatter(t *testing.T) {
 	RegisterTestingT(t)
 
 	port := rand.Intn(65535 - 1080) + 1081
-	listeningUDPSocket := fmt.Sprintf("localhost:%d", port)
+	listeningUDPSocket := fmt.Sprintf("127.0.0.1:%d", port)
 
 	udp.SetAddr(listeningUDPSocket)
 	result := udp.ReceiveString(t, func() {
