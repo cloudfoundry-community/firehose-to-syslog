@@ -62,6 +62,9 @@ func (c *CacheLazyFill) FillCache() error {
 			return err
 		}
 		uuid := u.String()
+		if app == nil {
+			continue
+		}
 
 		// Save our app out
 		err = c.normaliseAndSaveEntityToDatabase("apps", uuid, app)
