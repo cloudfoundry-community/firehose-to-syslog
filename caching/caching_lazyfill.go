@@ -177,6 +177,9 @@ func (c *CacheLazyFill) fetchEntityListFromAPI(entityType string) (map[string]*e
 		}
 
 		for _, r := range md.Resources {
+			if r.Entity == nil {
+				return nil, fmt.Errorf("nil entity returned, URL: %s, GUID of nil resource: %s", url, r.Metadata.GUID)
+			}
 			rv[r.Metadata.GUID] = r.Entity
 		}
 
