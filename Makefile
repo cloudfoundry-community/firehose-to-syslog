@@ -4,6 +4,8 @@ compile: linux32 linux64 darwin64
 
 test:
 	ginkgo -r -v .
+	# For tests that aren't ginkgo based
+	go test ./logging
 
 linux32:
 	 CGO_ENABLED=0 GOARCH=386 GOOS=linux go build --ldflags="-X main.version=${BUILD_NUMBER}" -o dist/linux/386/firehose-to-syslog_linux_386
@@ -22,4 +24,4 @@ docker-dev:
 	$(SHELL) ./Docker/build-dev.sh
 
 docker-final:
-	$(SHELL) ./Docker/build.sh     
+	$(SHELL) ./Docker/build.sh

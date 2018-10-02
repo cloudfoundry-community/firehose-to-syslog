@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	syslog "github.com/RackSec/srslog"
 	logrus_syslog "github.com/shinji62/logrus-syslog-ng"
@@ -32,6 +33,18 @@ func NewLogging(SyslogServerFlag string, SysLogProtocolFlag string, LogFormatter
 	}
 }
 
+// This srslog formatter is based on srslog/formatter.go's RFC3164Formatter.
+// The default rsyslog input module expects RFC3164 formatted logs,  using srslog's DefaultFormatter with "@cee:" wasn't
+//  compatible enough to get it working.
+// some historical context on the efforts to standardize the syslog message
+//  format(s): https://www.rsyslog.com/doc/syslog_parsing.html
+func CeeFormatter(p syslog.Priority, hostname, tag, content string) string {
+	timestamp := time.Now().Format(time.Stamp)
+	msg := fmt.Sprintf("<%d>%s %s %s[%d]: @cee: %s",
+		p, timestamp, hostname, tag, os.Getpid(), content)
+	return msg
+}
+
 func (l *LoggingLogrus) Connect() bool {
 
 	success := false
@@ -55,6 +68,9 @@ func (l *LoggingLogrus) Connect() bool {
 		if err != nil {
 			LogError(fmt.Sprintf("Unable to connect to syslog server [%s]!\n", l.syslogServer), err.Error())
 		} else {
+			if l.logFormatterType == "json-cee" {
+				hook.(*logrus_syslog.SyslogHook).Writer.SetFormatter(CeeFormatter)
+			}
 			LogStd(fmt.Sprintf("Received hook to syslog server [%s]!\n", l.syslogServer), false)
 			l.Logger.Hooks.Add(hook)
 			success = true

@@ -67,8 +67,8 @@ Flags:
   --path-prof=""                 Set the Path to write profiling file
   --log-formatter-type=LOG-FORMATTER-TYPE
                                  Log formatter type to use. Valid options
-                                 are text, json. If none provided, defaults
-                                 to json.
+                                 are text, json, json-cee. If none
+                                 provided, defaults to json.
   --cert-pem-syslog=""           Certificate Pem file
   --ignore-missing-apps          Enable throttling on cache lookup for
                                  missing apps
@@ -85,7 +85,10 @@ Since v3 firehose-to-syslog support TLS syslog `--cert-pem-syslog` using PEM enc
 Please refer to https://github.com/RackSec/srslog/blob/master/script/gen-certs.py
 for Cert generation.
 
+#  JSON CEE rsyslog compatibility
+rsyslog supports parsing JSON log messages throught its [mmjsonparse module](https://www.rsyslog.com/doc/master/configuration/modules/mmjsonparse.html). This module expects a parsable JSON log message to be prepended with the value `@cee:`.
 
+For `LOG-FORMATTER-TYPE`, using `json-cee` will yield the same result as using `json` but the JSON sent will have `@cee:` prepended to it. The `json-cee` formatter type also ensures that a RFC3164 compatible log message is sent, which was found to be required by rsyslog when using the mmjsonparse module. 
 
 # Event documentation
 
@@ -107,7 +110,7 @@ We have 3 caching strategies:
     cd $GOPATH/src/github.com/cloudfoundry-community/firehose-to-syslog
 
     # Test
-	    ginkgo -r .
+	make test
 
     # Build binary
     go build
@@ -186,7 +189,7 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
     cf set-env firehose-to-syslog FIREHOSE_SUBSCRIPTION_ID firehose-to-syslog
     cf set-env firehose-to-syslog FIREHOSE_CLIENT_ID  [your doppler.firehose enabled client id]
     cf set-env firehose-to-syslog FIREHOSE_CLIENT_SECRET  [your doppler.firehose enabled client secret]
-    cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter type to use. Valid options are : text, json]
+    cf set-env firehose-to-syslog LOG_FORMATTER_TYPE [Log formatter type to use. Valid options are : text, json, json-cee]
     ```
 1. Turn off the health check if you're staging to Diego.
     ```
