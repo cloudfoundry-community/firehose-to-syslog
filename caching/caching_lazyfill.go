@@ -212,9 +212,13 @@ func (c *CacheLazyFill) fetchEntityFromAPI(entityType, guid string) (*entity, er
 	var md struct {
 		Entity *entity `json:"entity"`
 	}
-	err := c.makeRequestAndDecodeJSON(fmt.Sprintf("/v2/%s/%s", entityType, guid), &md)
+	url := fmt.Sprintf("/v2/%s/%s", entityType, guid)
+	err := c.makeRequestAndDecodeJSON(url, &md)
 	if err != nil {
 		return nil, err
+	}
+	if md.Entity == nil {
+		return nil, fmt.Errorf("nil entity returned, URL: %s", url)
 	}
 	return md.Entity, nil
 }
