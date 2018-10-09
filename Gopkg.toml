@@ -43,3 +43,7 @@
 [[constraint]]
   name = "gopkg.in/alecthomas/kingpin.v2"
   version = "~2.1.11"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/stvp/go-udp-testing"

@@ -44,7 +44,7 @@ var (
 	orgs              = kingpin.Flag("orgs", "Forwarded on the app logs from theses organisations' example: --orgs=org1,org2").Default("").Envar("ORGS").String()
 	modeProf          = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").Envar("MODE_PROF").String()
 	pathProf          = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").Envar("PATH_PROF").String()
-	logFormatterType  = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
+	logFormatterType  = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json, json-cee. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
 	certPath          = kingpin.Flag("cert-pem-syslog", "Certificate Pem file").Envar("CERT_PEM").Default("").String()
 	ignoreMissingApps = kingpin.Flag("ignore-missing-apps", "Enable throttling on cache lookup for missing apps").Envar("IGNORE_MISSING_APPS").Default("false").Bool()
 	stripAppSuffixes  = kingpin.Flag("strip-app-name-suffixes", "Suffixes that should be stripped from application names, comma separated").Envar("STRIP_APP_NAME_SUFFIXES").Default("").String()

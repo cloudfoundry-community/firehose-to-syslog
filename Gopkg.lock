@@ -263,6 +263,15 @@
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
 
+[[projects]]
+  branch = "master"
+  digest = "1:41da83b5ccde4d8c66fa0c8590cf3947c51e1f42ba6eb450e91d2703abb47a9a"
+  name = "github.com/stvp/go-udp-testing"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c4434f09ec131ecf30f986d5dcb1636508bfa49a"
+
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
