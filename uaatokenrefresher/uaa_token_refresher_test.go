@@ -31,7 +31,8 @@ var _ = Describe("UAATokenRefresher", func() {
 	})
 
 	It("fetches a token from the UAA", func() {
-		authToken, err := authTokenRefresher.RefreshAuthToken()
+		var authToken string
+		authToken, err = authTokenRefresher.RefreshAuthToken()
 		Expect(fakeUAA.Requested()).To(BeTrue())
 		Expect(authToken).To(Equal(fakeToken))
 		Expect(err).ToNot(HaveOccurred())
