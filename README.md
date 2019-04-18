@@ -62,6 +62,9 @@ Flags:
                                  '--extra-fields=env:dev,something:other
   --orgs=""                      Forwarded on the app logs from theses
                                  organisations' example: --orgs=org1,org2
+  --space=""                     Forwarded on the app logs from a specific 
+                                 space' example: --space=org1:space1. 
+                                 Specify multiple times for multiple spaces.
   --mode-prof=""                 Enable profiling mode, one of [cpu, mem,
                                  block]
   --path-prof=""                 Set the Path to write profiling file
