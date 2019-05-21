@@ -65,6 +65,27 @@
   version = "v1.3.1"
 
 [[projects]]
+  branch = "develop"
+  digest = "1:8b899a646d214e2585e9ead801c7df7ecc37aa7a9fd26805f814c1ab32c9b266"
+  name = "github.com/cloudfoundry-community/firehose-to-syslog"
+  packages = [
+    "authclient",
+    "caching",
+    "caching/cachingfakes",
+    "diodes",
+    "eventRouting",
+    "events",
+    "extrafields",
+    "firehoseclient",
+    "logging",
+    "logging/loggingfakes",
+    "stats",
+    "utils",
+  ]
+  pruneopts = ""
+  revision = "0324cba8f46364119e36353997ec630e70bee008"
+
+[[projects]]
   branch = "master"
   digest = "1:2871a7af94e4b64c6a83c5daddf46e4dfe7c3673b4344ddc39c49922334076ec"
   name = "github.com/cloudfoundry-community/go-cfclient"
@@ -430,14 +451,24 @@
     "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2",
     "github.com/RackSec/srslog",
     "github.com/boltdb/bolt",
+    "github.com/cloudfoundry-community/firehose-to-syslog/authclient",
+    "github.com/cloudfoundry-community/firehose-to-syslog/caching",
+    "github.com/cloudfoundry-community/firehose-to-syslog/caching/cachingfakes",
+    "github.com/cloudfoundry-community/firehose-to-syslog/diodes",
+    "github.com/cloudfoundry-community/firehose-to-syslog/eventRouting",
+    "github.com/cloudfoundry-community/firehose-to-syslog/events",
+    "github.com/cloudfoundry-community/firehose-to-syslog/extrafields",
+    "github.com/cloudfoundry-community/firehose-to-syslog/firehoseclient",
+    "github.com/cloudfoundry-community/firehose-to-syslog/logging",
+    "github.com/cloudfoundry-community/firehose-to-syslog/logging/loggingfakes",
+    "github.com/cloudfoundry-community/firehose-to-syslog/stats",
+    "github.com/cloudfoundry-community/firehose-to-syslog/utils",
     "github.com/cloudfoundry-community/go-cfclient",
     "github.com/cloudfoundry-incubator/uaago",
     "github.com/cloudfoundry/noaa/consumer",
-    "github.com/cloudfoundry/noaa/errors",
     "github.com/cloudfoundry/sonde-go/events",
     "github.com/fukata/golang-stats-api-handler",
     "github.com/gogo/protobuf/proto",
-    "github.com/gorilla/websocket",
     "github.com/mailru/easyjson",
     "github.com/mailru/easyjson/jlexer",
     "github.com/mailru/easyjson/jwriter",
