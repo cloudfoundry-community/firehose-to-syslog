@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/cloudfoundry-community/firehose-to-syslog/authclient"
-	"github.com/cloudfoundry-incubator/uaago"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/cloudfoundry-community/firehose-to-syslog/authclient"
+	"github.com/cloudfoundry-incubator/uaago"
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	"github.com/cloudfoundry-community/firehose-to-syslog/eventRouting"
@@ -43,6 +44,7 @@ var (
 	requestLimit      = kingpin.Flag("cc-rps", "CloudController Polling request by second (IGNORED)").Default("50").Envar("CF_RPS").Int()
 	extraFields       = kingpin.Flag("extra-fields", "Extra fields you want to annotate your events with, example: '--extra-fields=env:dev,something:other ").Default("").Envar("EXTRA_FIELDS").String()
 	orgs              = kingpin.Flag("orgs", "Forwarded on the app logs from theses organisations' example: --orgs=org1,org2").Default("").Envar("ORGS").String()
+	spaces            = kingpin.Flag("space", "Forwarded on the app logs from a specific space' example: --space=org1:space1. Specify multiple times for multiple spaces.").Envar("SPACES").StringMap()
 	modeProf          = kingpin.Flag("mode-prof", "Enable profiling mode, one of [cpu, mem, block]").Default("").Envar("MODE_PROF").String()
 	pathProf          = kingpin.Flag("path-prof", "Set the Path to write profiling file").Default("").Envar("PATH_PROF").String()
 	logFormatterType  = kingpin.Flag("log-formatter-type", "Log formatter type to use. Valid options are text, json, json-cee. If none provided, defaults to json.").Envar("LOG_FORMATTER_TYPE").String()
@@ -159,7 +161,7 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	//Creating Events
-	eventFilters := []eventRouting.EventFilter{eventRouting.HasIgnoreField, eventRouting.NotInCertainOrgs(*orgs)}
+	eventFilters := []eventRouting.EventFilter{eventRouting.HasIgnoreField, eventRouting.NotInCertainOrgs(*orgs), eventRouting.NotInCertainSpaces(*spaces)}
 	events := eventRouting.NewEventRouting(cachingClient, loggingClient, statistic, eventFilters)
 	err = events.SetupEventRouting(*wantedEvents)
 	if err != nil {

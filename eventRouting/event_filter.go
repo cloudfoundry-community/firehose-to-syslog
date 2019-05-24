@@ -33,3 +33,22 @@ func NotInCertainOrgs(orgFilters string) EventFilter {
 		return true
 	}
 }
+
+//NotInCertainSpaces Filter out events not in certain spaces
+func NotInCertainSpaces(spaceFilters map[string]string) EventFilter {
+	return func(event *fevents.Event) bool {
+		if len(spaceFilters) == 0 {
+			return false
+		}
+		orgName := event.Fields["cf_org_name"]
+		spaceName := event.Fields["cf_space_name"]
+		for org, space := range spaceFilters {
+			if org == "" || orgName == nil || space == "" || spaceName == "" {
+				return false
+			} else if org == orgName && space == spaceName {
+				return false
+			}
+		}
+		return true
+	}
+}
