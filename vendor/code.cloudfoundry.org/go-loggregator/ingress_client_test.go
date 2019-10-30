@@ -312,6 +312,18 @@ var _ = Describe("IngressClient", func() {
 		Expect(e.GetCounter().GetDelta()).To(Equal(uint64(99)))
 	})
 
+	It("sets the counter's total and zeros the delta", func() {
+		e := &loggregator_v2.Envelope{
+			Message: &loggregator_v2.Envelope_Counter{
+				Counter: &loggregator_v2.Counter{},
+			},
+		}
+		loggregator.WithTotal(99)(e)
+
+		Expect(e.GetCounter().GetDelta()).To(Equal(uint64(0)))
+		Expect(e.GetCounter().GetTotal()).To(Equal(uint64(99)))
+	})
+
 	It("sets the app info for a counter", func() {
 		e := &loggregator_v2.Envelope{
 			Message: &loggregator_v2.Envelope_Counter{

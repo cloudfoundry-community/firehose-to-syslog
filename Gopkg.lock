@@ -10,7 +10,7 @@
   revision = "361f4b34988b402fbf4d5b744cc9b35959c2ac4e"
 
 [[projects]]
-  digest = "1:7f51a84a591b757d715cf849b9c70cf346eee852d8673a558058a6c1374014ab"
+  digest = "1:6451235c351fb19c3ae76b4098c7d92eef95c293027d0ea7e89dd8cd762fe96e"
   name = "code.cloudfoundry.org/go-loggregator"
   packages = [
     ".",
@@ -18,8 +18,8 @@
     "rpc/loggregator_v2",
   ]
   pruneopts = ""
-  revision = "68dff75fa667575c643afd33424cfd3860168b08"
-  version = "v7.3.0"
+  revision = "b8d176783c8a6280a34f0e19e0e8f57d722773a1"
+  version = "v7.7.0"
 
 [[projects]]
   branch = "master"
@@ -63,27 +63,6 @@
   pruneopts = ""
   revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
   version = "v1.3.1"
-
-[[projects]]
-  branch = "develop"
-  digest = "1:8b899a646d214e2585e9ead801c7df7ecc37aa7a9fd26805f814c1ab32c9b266"
-  name = "github.com/cloudfoundry-community/firehose-to-syslog"
-  packages = [
-    "authclient",
-    "caching",
-    "caching/cachingfakes",
-    "diodes",
-    "eventRouting",
-    "events",
-    "extrafields",
-    "firehoseclient",
-    "logging",
-    "logging/loggingfakes",
-    "stats",
-    "utils",
-  ]
-  pruneopts = ""
-  revision = "0324cba8f46364119e36353997ec630e70bee008"
 
 [[projects]]
   branch = "master"
@@ -451,18 +430,6 @@
     "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2",
     "github.com/RackSec/srslog",
     "github.com/boltdb/bolt",
-    "github.com/cloudfoundry-community/firehose-to-syslog/authclient",
-    "github.com/cloudfoundry-community/firehose-to-syslog/caching",
-    "github.com/cloudfoundry-community/firehose-to-syslog/caching/cachingfakes",
-    "github.com/cloudfoundry-community/firehose-to-syslog/diodes",
-    "github.com/cloudfoundry-community/firehose-to-syslog/eventRouting",
-    "github.com/cloudfoundry-community/firehose-to-syslog/events",
-    "github.com/cloudfoundry-community/firehose-to-syslog/extrafields",
-    "github.com/cloudfoundry-community/firehose-to-syslog/firehoseclient",
-    "github.com/cloudfoundry-community/firehose-to-syslog/logging",
-    "github.com/cloudfoundry-community/firehose-to-syslog/logging/loggingfakes",
-    "github.com/cloudfoundry-community/firehose-to-syslog/stats",
-    "github.com/cloudfoundry-community/firehose-to-syslog/utils",
     "github.com/cloudfoundry-community/go-cfclient",
     "github.com/cloudfoundry-incubator/uaago",
     "github.com/cloudfoundry/noaa/consumer",
