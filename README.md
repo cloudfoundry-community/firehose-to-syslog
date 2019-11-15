@@ -161,7 +161,7 @@ Showing top 10 nodes out of 44 (cum >= 20ms)
         --name firehose-to-syslog \
         --secret [your_client_secret] \
         --authorized_grant_types client_credentials,refresh_token \
-        --authorities doppler.firehose,cloud_controller.global_auditor
+        --authorities doppler.firehose,cloud_controller.admin_read_only
       ```
 
 1. Download the latest release of firehose-to-syslog.

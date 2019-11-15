@@ -47,3 +47,6 @@
 [[constraint]]
   branch = "master"
   name = "github.com/stvp/go-udp-testing"
+[[constraint]]
+  name = "code.cloudfoundry.org/go-loggregator"
+  version = "7.7.0"

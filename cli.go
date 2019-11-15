@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/cloudfoundry-community/firehose-to-syslog/authclient"
+	"github.com/cloudfoundry-incubator/uaago"
 	"log"
 	"os"
 	"os/signal"
@@ -14,7 +16,6 @@ import (
 	"github.com/cloudfoundry-community/firehose-to-syslog/firehoseclient"
 	"github.com/cloudfoundry-community/firehose-to-syslog/logging"
 	"github.com/cloudfoundry-community/firehose-to-syslog/stats"
-	"github.com/cloudfoundry-community/firehose-to-syslog/uaatokenrefresher"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -121,13 +122,16 @@ func (cli *CLI) Run(args []string) int {
 	}
 	defer cacheStore.Close()
 
-	cachingClient := caching.NewCacheLazyFill(&caching.CFClientAdapter{
-		CF: cfClient,
-	}, cacheStore, &caching.CacheLazyFillConfig{
-		IgnoreMissingApps:  *ignoreMissingApps,
-		CacheInvalidateTTL: *tickerTime,
-		StripAppSuffixes:   strings.Split(*stripAppSuffixes, ","),
-	})
+	cachingClient := caching.NewCacheLazyFill(
+		&caching.CFClientAdapter{
+			CF: cfClient,
+		},
+		cacheStore,
+		&caching.CacheLazyFillConfig{
+			IgnoreMissingApps:  *ignoreMissingApps,
+			CacheInvalidateTTL: *tickerTime,
+			StripAppSuffixes:   strings.Split(*stripAppSuffixes, ","),
+		})
 
 	if caching.IsNeeded(*wantedEvents) {
 		// Bootstrap cache
@@ -166,25 +170,10 @@ func (cli *CLI) Run(args []string) int {
 	//Set extrafields if needed
 	events.SetExtraFields(*extraFields)
 
-	uaaRefresher, err := uaatokenrefresher.NewUAATokenRefresher(
-		cfClient.Endpoint.AuthEndpoint,
-		*clientID,
-		*clientSecret,
-		*skipSSLValidation,
-	)
-
-	if err != nil {
-		logging.LogError(fmt.Sprint("Failed connecting to Get token from UAA..", err), "")
-	}
-
 	firehoseConfig := &firehoseclient.FirehoseConfig{
-		TrafficControllerURL:   cfClient.Endpoint.DopplerEndpoint,
+		RLPAddr:                strings.Replace(cfClient.Config.ApiAddress, "api", "log-stream", 1),
 		InsecureSSLSkipVerify:  *skipSSLValidation,
-		IdleTimeoutSeconds:     *keepAlive,
 		FirehoseSubscriptionID: *subscriptionId,
-		MinRetryDelay:          *minRetryDelay,
-		MaxRetryDelay:          *maxRetryDelay,
-		MaxRetryCount:          *maxRetryCount,
 		BufferSize:             *bufferSize,
 	}
 
@@ -195,7 +184,13 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeError
 	}
 
-	firehoseClient := firehoseclient.NewFirehoseNozzle(uaaRefresher, events, firehoseConfig, statistic)
+	uaa, err := uaago.NewClient(cfClient.Endpoint.AuthEndpoint)
+	if err != nil {
+		logging.LogError(fmt.Sprint("Failed connecting to Get token from UAA..", err), "")
+	}
+
+	ac := authclient.NewHttp(uaa, *clientID, *clientSecret, *skipSSLValidation)
+	firehoseClient := firehoseclient.NewFirehoseNozzle(events, firehoseConfig, statistic, ac)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -205,7 +200,7 @@ func (cli *CLI) Run(args []string) int {
 	cleanupDone := make(chan bool)
 	signal.Notify(signalChan, os.Interrupt, os.Kill)
 	go func() {
-		for _ = range signalChan {
+		for range signalChan {
 			fmt.Println("\nSignal Received, Stop reading and starting Draining...")
 			firehoseClient.StopReading()
 			cctx, tcancel := context.WithTimeout(context.TODO(), 30*time.Second)
