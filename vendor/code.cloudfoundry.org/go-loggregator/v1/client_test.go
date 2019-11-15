@@ -107,6 +107,18 @@ var _ = Describe("DropsondeClient", func() {
 					counter := env.GetCounterEvent()
 					Expect(counter.GetDelta()).To(Equal(uint64(404)))
 				})
+
+				It("emits a counter with total", func() {
+					client.EmitCounter("a-name", loggregator_v2.WithTotal(404))
+
+					var env *events.Envelope
+					Expect(spyEmitter.emittedEnvelopes).To(Receive(&env))
+					Expect(env.GetEventType()).To(Equal(events.Envelope_CounterEvent))
+
+					counter := env.GetCounterEvent()
+					Expect(counter.GetDelta()).To(Equal(uint64(0)))
+					Expect(counter.GetTotal()).To(Equal(uint64(404)))
+				})
 			})
 
 			Describe("EmitGauge", func() {
